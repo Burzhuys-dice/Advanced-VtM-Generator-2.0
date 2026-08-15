@@ -107,6 +107,11 @@
                     <h3 class="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-700 pb-1 mb-3">Результат</h3>
                     <div id="dice-container" class="flex flex-wrap gap-2 justify-center"></div>
                 </div>
+                
+                <div id="dice-history-container" class="mt-6 border-t border-gray-700 pt-4 hidden">
+                    <h3 class="text-xs text-gray-400 uppercase tracking-widest pb-2 mb-2">Історія кидків (останні 5)</h3>
+                    <ul id="dice-history-list" class="space-y-2"></ul>
+                </div>
             </div>
         </div>
     </div>
@@ -303,6 +308,24 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12" id="attributes-grid"></div>
+            
+            <!-- Health & Willpower Trackers -->
+            <div class="mt-12 pt-8 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 uppercase tracking-widest vtm-font">Здоров'я</h3>
+                        <div class="text-xs text-gray-500 italic">Витривалість + 3</div>
+                    </div>
+                    <div id="health-tracker-step2" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 uppercase tracking-widest vtm-font">Сила Волі</h3>
+                        <div class="text-xs text-gray-500 italic">Рішучість + Витримка</div>
+                    </div>
+                    <div id="willpower-tracker-step2" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
             
             <div class="mt-10 flex justify-between">
                 <button onclick="goToStep(1)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад</button>

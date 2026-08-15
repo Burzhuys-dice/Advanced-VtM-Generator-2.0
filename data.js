@@ -125,7 +125,9 @@ const state = {
     predatorData: [],
     selectedPredator: null,
     predatorChoices: { discipline: null, skill: null, specName: null },
-    humanity: 7 
+    humanity: 7,
+    healthDamage: [],
+    willpowerDamage: [] 
 };
 
 const attrTarget = { 4: 1, 3: 3, 2: 4, 1: 1 };

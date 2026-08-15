@@ -638,6 +638,11 @@ function renderAttributes() {
         colHTML += `</div></div>`;
         grid.innerHTML += colHTML;
     });
+    
+    // Оновлюємо трекери здоров'я та сили волі
+    if (typeof renderHealthWillpower === 'function') {
+        renderHealthWillpower();
+    }
 }
 function getDynamicSkillData(skillId) {
     let baseDots = state.skills[skillId] || 0;
@@ -717,6 +722,11 @@ function renderSkills() {
         colHTML += `</div></div>`;
         grid.innerHTML += colHTML;
     });
+    
+    // Оновлюємо трекери здоров'я та сили волі
+    if (typeof renderHealthWillpower === 'function') {
+        renderHealthWillpower();
+    }
 }
 
 function parseDotOptions(costStr) {
@@ -1255,7 +1265,29 @@ function finishGen() {
         });
     }
     summaryHTML += `</div></div>`;
+    
+    // Add Health and Willpower Trackers Placeholder to Summary
+    summaryHTML += `
+        <div class="mt-8 pt-8 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 uppercase tracking-widest vtm-font">Здоров'я</h3>
+                    <div class="text-xs text-gray-500 italic">Витривалість + 3</div>
+                </div>
+                <div id="health-tracker-step7" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 uppercase tracking-widest vtm-font">Сила Волі</h3>
+                    <div class="text-xs text-gray-500 italic">Рішучість + Витримка</div>
+                </div>
+                <div id="willpower-tracker-step7" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+    `;
+
     document.getElementById('summary-content').innerHTML = summaryHTML;
+    renderHealthWillpower();
 }
 
 function createSummaryDots(count, max = 5) {
@@ -1538,4 +1570,121 @@ function rollDice() {
     container.innerHTML = `<div class="flex flex-wrap gap-2 justify-center w-full">${diceHtml}</div>${summaryHtml}`;
     
     document.getElementById('dice-results')?.classList.remove('hidden');
+    
+    // Add to history
+    let rollName = '';
+    if (diceMode === 'free') {
+        rollName = 'Вільний кидок';
+    } else {
+        let parts = [];
+        ['dice-sheet-1', 'dice-sheet-2', 'dice-sheet-3'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.value) {
+                parts.push(el.options[el.selectedIndex].text);
+            }
+        });
+        
+        let bonus = parseInt(document.getElementById('dice-sheet-bonus')?.value) || 0;
+        if (bonus > 0) parts.push(`+${bonus}`);
+        else if (bonus < 0) parts.push(`${bonus}`);
+        
+        rollName = parts.length > 0 ? parts.join(' + ') : 'Кидок з аркуша';
+    }
+    
+    if (typeof diceHistory === 'undefined') {
+        window.diceHistory = [];
+    }
+    
+    window.diceHistory.unshift({ name: rollName, successes: successes, messy: messyCritical, bestial: bestialFailure });
+    if (window.diceHistory.length > 5) window.diceHistory.pop();
+    
+    renderDiceHistory();
+}
+
+function renderDiceHistory() {
+    const container = document.getElementById('dice-history-container');
+    const list = document.getElementById('dice-history-list');
+    if (!container || !list) return;
+
+    if (!window.diceHistory || window.diceHistory.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+
+    container.classList.remove('hidden');
+    list.innerHTML = '';
+    window.diceHistory.forEach(roll => {
+        let alerts = [];
+        if (roll.messy) alerts.push('<span class="text-yellow-500 text-[10px] ml-1 font-bold uppercase" title="Звіриний Розгром">!Розгром!</span>');
+        if (roll.bestial) alerts.push('<span class="text-red-500 text-[10px] ml-1 font-bold uppercase" title="Звіриний Провал">!Провал!</span>');
+        
+        list.innerHTML += `
+            <li class="bg-gray-800 p-2 rounded border border-gray-700 flex justify-between items-center">
+                <span class="text-xs text-gray-300 truncate max-w-[200px]" title="${roll.name}">${roll.name}</span>
+                <span class="text-sm font-bold text-white flex items-center">Успіхи: <span class="text-[#8b0000] ml-1 mr-1">${roll.successes}</span> ${alerts.join('')}</span>
+            </li>
+        `;
+    });
+}
+
+
+
+// --- Health & Willpower Trackers ---
+
+function getHealthMax() {
+    return (state.attributes['stamina'] || 1) + 3;
+}
+
+function getWillpowerMax() {
+    return (state.attributes['resolve'] || 1) + (state.attributes['composure'] || 1);
+}
+
+function handleDamageClick(type, index) {
+    let arr = type === 'health' ? state.healthDamage : state.willpowerDamage;
+    let max = type === 'health' ? getHealthMax() : getWillpowerMax();
+    
+    while(arr.length < max) arr.push(0);
+    if(arr.length > max) arr.splice(max);
+    
+    arr[index] = (arr[index] + 1) % 3;
+    
+    renderHealthWillpower();
+}
+
+function renderHealthWillpower() {
+    const healthMax = getHealthMax();
+    const wpMax = getWillpowerMax();
+    
+    if (!state.healthDamage) state.healthDamage = [];
+    if (!state.willpowerDamage) state.willpowerDamage = [];
+    
+    let hArr = state.healthDamage;
+    while(hArr.length < healthMax) hArr.push(0);
+    if(hArr.length > healthMax) hArr.splice(healthMax);
+    
+    let wArr = state.willpowerDamage;
+    while(wArr.length < wpMax) wArr.push(0);
+    if(wArr.length > wpMax) wArr.splice(wpMax);
+    
+    let hHtml = '';
+    for(let i=0; i<healthMax; i++) {
+        let content = hArr[i] === 1 ? '/' : (hArr[i] === 2 ? 'X' : '');
+        hHtml += `<div class="w-8 h-8 md:w-10 md:h-10 border-2 border-gray-400 bg-gray-50 flex items-center justify-center font-bold text-lg md:text-xl cursor-pointer hover:bg-gray-200 select-none text-red-600 print:border-gray-500" onclick="handleDamageClick('health', ${i})">${content}</div>`;
+    }
+    
+    let wHtml = '';
+    for(let i=0; i<wpMax; i++) {
+        let content = wArr[i] === 1 ? '/' : (wArr[i] === 2 ? 'X' : '');
+        wHtml += `<div class="w-8 h-8 md:w-10 md:h-10 border-2 border-gray-400 bg-gray-50 flex items-center justify-center font-bold text-lg md:text-xl cursor-pointer hover:bg-gray-200 select-none text-red-600 print:border-gray-500" onclick="handleDamageClick('willpower', ${i})">${content}</div>`;
+    }
+    
+    ['health-tracker-step2', 'health-tracker-step7'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = hHtml;
+    });
+    
+    ['willpower-tracker-step2', 'willpower-tracker-step7'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = wHtml;
+    });
 }
