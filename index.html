@@ -308,8 +308,14 @@
                     <input type="text" id="character-name" placeholder="Наприклад: Джек Річер..." class="custom-input text-xl w-full border border-gray-300 rounded p-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Концепт (Коротка фраза)</label>
-                    <input type="text" id="concept-phrase" placeholder="Наприклад: Колишній детектив, що шукає свого вбивцю..." class="custom-input text-xl w-full border border-gray-300 rounded p-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <label for="concept-phrase" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">Концепт (Коротка фраза)</label>
+                        <button type="button" id="btn-gen-concept" onclick="generateRandomConcept()" class="px-2.5 py-1 text-[11px] font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-[#8b0000] border border-gray-300 rounded transition-colors uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
+                            <span class="text-amber-600 font-black text-xs">💡</span>
+                            <span>Випадкова ідея для концепту</span>
+                        </button>
+                    </div>
+                    <textarea id="concept-phrase" rows="3" placeholder="Наприклад: Колишній детектив, що шукає свого вбивцю..." class="custom-input text-base sm:text-lg w-full border border-gray-300 rounded p-2.5 resize-y leading-relaxed"></textarea>
                 </div>
 <!-- ================= БЛОК КЛАНУ ================= -->
 <div class="mt-4">

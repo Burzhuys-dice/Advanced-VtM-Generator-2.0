@@ -33,14 +33,15 @@ async function init() {
 
 async function fetchAllData() {
     try {
-        const [advRes, predRes, coreRes, clansRes, discRes, archRes, namesRes] = await Promise.all([
+        const [advRes, predRes, coreRes, clansRes, discRes, archRes, namesRes, conceptsRes] = await Promise.all([
             fetch('data/vtm_merits_data.json'),
             fetch('data/vtm_predator-types_1'),
             fetch('data/vtm_char_and_skills.json'),
             fetch('data/vtm_clans'),
             fetch('data/vtm_disciplines'),
             fetch('data/vtm_archetypes.json'), // Завантажуємо файл архетипів
-            fetch('data/vtm_names.json') // Завантажуємо файл імен
+            fetch('data/vtm_names.json'), // Завантажуємо файл імен
+            fetch('data/vtm_consepts.json') // Завантажуємо файл концептів
         ]);
 
         if(advRes.ok) {
@@ -54,6 +55,10 @@ async function fetchAllData() {
 
         if(namesRes.ok) {
             state.namesData = await namesRes.json();
+        }
+
+        if(conceptsRes.ok) {
+            state.conceptsData = await conceptsRes.json();
         }
 
         if(coreRes.ok) {
@@ -213,6 +218,57 @@ document.getElementById('btn-gen-female-name')?.addEventListener('click', () => 
     generateCharacterName('female');
 });
 
+async function generateRandomConcept() {
+    try {
+        let conceptsData = state.conceptsData;
+        if (!conceptsData || conceptsData.length === 0) {
+            const res = await fetch('data/vtm_consepts.json');
+            if (res.ok) {
+                conceptsData = await res.json();
+                state.conceptsData = conceptsData;
+            }
+        }
+
+        if (!conceptsData || conceptsData.length === 0) {
+            console.error('Не вдалося завантажити список концептів');
+            return;
+        }
+
+        const randomItem = getRandomItem(conceptsData);
+        if (!randomItem) return;
+
+        let conceptText = '';
+        if (typeof randomItem === 'string') {
+            conceptText = randomItem;
+        } else if (randomItem.concept) {
+            conceptText = randomItem.concept;
+        } else if (randomItem.name && randomItem.description) {
+            conceptText = `${randomItem.name}: ${randomItem.description}`;
+        } else if (randomItem.name) {
+            conceptText = randomItem.name;
+        }
+
+        const conceptInput = document.getElementById('concept-phrase');
+        if (conceptInput) {
+            conceptInput.value = conceptText;
+            conceptInput.dispatchEvent(new Event('input', { bubbles: true }));
+            conceptInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            // Плавне підсвічування поля при генерації
+            conceptInput.classList.add('ring-2', 'ring-[#8b0000]', 'border-[#8b0000]');
+            setTimeout(() => {
+                conceptInput.classList.remove('ring-2', 'ring-[#8b0000]', 'border-[#8b0000]');
+            }, 350);
+        }
+    } catch (err) {
+        console.error('Помилка під час генерації концепту:', err);
+    }
+}
+
+document.getElementById('btn-gen-concept')?.addEventListener('click', () => {
+    generateRandomConcept();
+});
+
 function getRandomItem(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
@@ -327,6 +383,28 @@ function getDisciplineInfo(discKey) {
         return disciplinesData.find(d => d.id === discKey) || { name: discKey, desc: 'Опис відсутній' };
     }
     return disciplinesData[discKey] || { name: discKey, desc: 'Опис відсутній' };
+}
+
+const DISCIPLINE_ICONS = {
+    'animalism': 'data/Disciplines/Animalism_symbol.png',
+    'auspex': 'data/Disciplines/Auspex_symbol.png',
+    'blood_sorcery': 'data/Disciplines/Blood_Sorcery_symbol.png',
+    'blood_sorcery_rituals': 'data/Disciplines/Blood_Sorcery_symbol.png',
+    'celerity': 'data/Disciplines/Celerity_symbol.png',
+    'dominate': 'data/Disciplines/Dominate_symbol.png',
+    'fortitude': 'data/Disciplines/Fortitude_symbol.png',
+    'obfuscate': 'data/Disciplines/Obfuscate_symbol.png',
+    'oblivion': 'data/Disciplines/Oblivion_symbol.png',
+    'oblivion_ceremonies': 'data/Disciplines/Oblivion_symbol.png',
+    'potence': 'data/Disciplines/Potence_symbol.png',
+    'presence': 'data/Disciplines/Presence_symbol.png',
+    'protean': 'data/Disciplines/Protean_symbol.png',
+    'thin_blood_alchemy': 'data/Disciplines/Alchemy_symbol.png',
+    'alchemy': 'data/Disciplines/Alchemy_symbol.png'
+};
+
+function getDisciplineIcon(discKey) {
+    return DISCIPLINE_ICONS[discKey] || null;
 }
 
 const PREDATOR_CATEGORIES = [
@@ -701,6 +779,7 @@ function renderDisciplines() {
     availableDisc.forEach(discKey => {
         const discInfo = getDisciplineInfo(discKey);
         const ukrName = discInfo.name || discKey; 
+        const iconSrc = getDisciplineIcon(discKey);
         
         // Для ритуалів та церемоній бонус хижака не рахується повторно
         let bonus = (discKey !== 'blood_sorcery_rituals' && discKey !== 'oblivion_ceremonies' && state.predatorChoices.discipline === discKey) ? 1 : 0;
@@ -713,11 +792,22 @@ function renderDisciplines() {
         let dotsHtml = createDotsHTML('discipline', discKey, baseDots, 5, bonus);
         // --------------------------------------------------------------
 
+        const iconHtml = iconSrc ? `
+            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-stone-100 border border-stone-300 flex items-center justify-center p-1.5 shrink-0 shadow-2xs group-hover:border-[#8b0000] group-hover:bg-red-50/60 transition-all">
+                <img src="${iconSrc}" alt="${ukrName}" class="w-full h-full object-contain transition-transform group-hover:scale-105" loading="lazy">
+            </div>
+        ` : '';
+
         html += `
             <div class="group border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-serif text-xl font-bold text-gray-800 group-hover:text-[#8b0000] transition-colors">${ukrName}</span>
-                    ${dotsHtml}
+                <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        ${iconHtml}
+                        <span class="font-serif text-xl font-bold text-gray-800 group-hover:text-[#8b0000] transition-colors">${ukrName}</span>
+                    </div>
+                    <div class="shrink-0">
+                        ${dotsHtml}
+                    </div>
                 </div>
                 <p class="text-sm text-gray-500 text-justify leading-relaxed mb-4">${discInfo.desc || ''}</p>
         `;
@@ -1796,12 +1886,21 @@ function finishGen() {
             hasDisciplines = true;
             const discInfo = getDisciplineInfo(discKey);
             const discName = discInfo.name || discKey;
+            const iconSrc = getDisciplineIcon(discKey);
+            const iconHtml = iconSrc ? `
+                <div class="w-7 h-7 rounded-lg bg-stone-100 border border-stone-300 flex items-center justify-center p-1 shrink-0 print:border-gray-400">
+                    <img src="${iconSrc}" alt="${discName}" class="w-full h-full object-contain">
+                </div>
+            ` : '';
             
             summaryHTML += `
                 <div class="bg-white p-4 rounded-lg border border-gray-200 print:border-gray-300 print:bg-transparent shadow-sm">
                     <div class="flex justify-between items-center mb-3">
-                        <span class="font-serif font-bold text-lg text-[#8b0000] uppercase tracking-wider">${discName}</span> 
-                        <span>${createSummaryDots(totalDots)}</span>
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            ${iconHtml}
+                            <span class="font-serif font-bold text-base sm:text-lg text-[#8b0000] uppercase tracking-wider">${discName}</span> 
+                        </div>
+                        <span class="shrink-0">${createSummaryDots(totalDots)}</span>
                     </div>
                     <ul class="space-y-2">
             `;
