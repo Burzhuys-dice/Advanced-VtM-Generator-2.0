@@ -1449,6 +1449,11 @@ function updateSheetDiceTotal() {
     total += getDotsForSelection(document.getElementById('dice-sheet-2')?.value);
     total += getDotsForSelection(document.getElementById('dice-sheet-3')?.value);
     
+    const bonusStr = document.getElementById('dice-sheet-bonus')?.value || '0';
+    total += parseInt(bonusStr, 10) || 0;
+    
+    if (total < 0) total = 0;
+    
     const display = document.getElementById('dice-sheet-total-display');
     if (display) display.innerText = total;
 }
@@ -1489,8 +1494,12 @@ function rollDice() {
         if (res >= 6) successes++;
         if (res === 10) tens++;
         
-        let highlight = 'text-white';
-        diceHtml += `<div class="w-12 h-12 bg-black ${highlight} font-bold text-2xl flex items-center justify-center rounded-lg border border-gray-600 shadow-md">${res}</div>`;
+        let imgSrc = '';
+        if (res <= 5) imgSrc = 'assets/failure.png';
+        else if (res <= 9) imgSrc = 'assets/success.png';
+        else imgSrc = 'assets/critical.png';
+        
+        diceHtml += `<div class="w-12 h-12 bg-black flex items-center justify-center rounded-lg border-2 border-gray-600 shadow-md p-1" title="Випало: ${res}"><img src="${imgSrc}" class="w-full h-full object-contain" alt="${res}"></div>`;
     }
     
     // Hunger Dice (Red with Black Numbers)
@@ -1503,8 +1512,13 @@ function rollDice() {
         }
         if (res === 1) bestialFailure = true;
         
-        let highlight = 'text-black';
-        diceHtml += `<div class="w-12 h-12 bg-[#8b0000] ${highlight} font-bold text-2xl flex items-center justify-center rounded-lg border border-black shadow-md shadow-red-900">${res}</div>`;
+        let imgSrc = '';
+        if (res === 1) imgSrc = 'assets/bestial-failure.png';
+        else if (res <= 5) imgSrc = 'assets/failure.png'; // User explicitly said failure.png for 2-5
+        else if (res <= 9) imgSrc = 'assets/hunger-success.png';
+        else imgSrc = 'assets/hunger-critical.png';
+        
+        diceHtml += `<div class="w-12 h-12 bg-[#8b0000] flex items-center justify-center rounded-lg border-2 border-black shadow-md shadow-red-900 p-1" title="Випало: ${res}"><img src="${imgSrc}" class="w-full h-full object-contain" alt="${res}"></div>`;
     }
     
     // Pairs of 10s give +2 successes each
