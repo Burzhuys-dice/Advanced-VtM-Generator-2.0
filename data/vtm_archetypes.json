@@ -1,0 +1,343 @@
+{
+  "attributes": [
+      {
+    "id": "attr_scholar",
+    "name": "Учений (Scholar)",
+    "desc": "Архетип, зосереджений на академічних знаннях, пам'яті та глибоких дослідженнях.",
+    "values": {
+      "strength": 1,
+      "dexterity": 2,
+      "stamina": 2,
+      "charisma": 2,
+      "manipulation": 2,
+      "composure": 3,
+      "intelligence": 4,
+      "wits": 3,
+      "resolve": 3
+    }
+  },
+  {
+    "id": "attr_socialite",
+    "name": "Світська особа (Socialite)",
+    "desc": "Майстер переговорів та соціальної динаміки, чия головна зброя — особистий шарм.",
+    "values": {
+      "strength": 1,
+      "dexterity": 2,
+      "stamina": 2,
+      "charisma": 4,
+      "manipulation": 3,
+      "composure": 3,
+      "intelligence": 2,
+      "wits": 3,
+      "resolve": 2
+    }
+  },
+  {
+    "id": "attr_veteran",
+    "name": "Ветеран (Veteran)",
+    "desc": "Загартований боєць, що покладається на витривалість тіла та швидку реакцію в бою.",
+    "values": {
+      "strength": 3,
+      "dexterity": 3,
+      "stamina": 4,
+      "charisma": 2,
+      "manipulation": 2,
+      "composure": 2,
+      "intelligence": 1,
+      "wits": 2,
+      "resolve": 3
+    }
+  },
+  {
+    "id": "attr_investigator",
+    "name": "Розслідувач (Investigator)",
+    "desc": "Детектив або аналітик, що миттєво оцінює ситуацію та помічає деталі, які інші пропускають.",
+    "values": {
+      "strength": 1,
+      "dexterity": 2,
+      "stamina": 2,
+      "charisma": 2,
+      "manipulation": 3,
+      "composure": 2,
+      "intelligence": 3,
+      "wits": 4,
+      "resolve": 3
+    }
+  },
+  {
+    "id": "attr_hacker",
+    "name": "Хакер (Hacker/Coder)",
+    "desc": "Спеціаліст із цифрових систем зі спритними пальцями та високим рівнем логічного мислення.",
+    "values": {
+      "strength": 2,
+      "dexterity": 4,
+      "stamina": 2,
+      "charisma": 1,
+      "manipulation": 2,
+      "composure": 2,
+      "intelligence": 3,
+      "wits": 3,
+      "resolve": 3
+    }
+  },
+  {
+    "id": "attr_executive",
+    "name": "Керівник (Executive)",
+    "desc": "Людина влади, здатна переконувати або змушувати інших виконувати свою волю.",
+    "values": {
+      "strength": 1,
+      "dexterity": 2,
+      "stamina": 2,
+      "charisma": 3,
+      "manipulation": 4,
+      "composure": 3,
+      "intelligence": 3,
+      "wits": 2,
+      "resolve": 2
+    }
+  },
+  {
+    "id": "attr_mafioso",
+    "name": "Злочинець (Mafioso/Thug)",
+    "desc": "Вуличний силовик, що покладається на фізичну силу, живучість та залякування.",
+    "values": {
+      "strength": 4,
+      "dexterity": 2,
+      "stamina": 3,
+      "charisma": 2,
+      "manipulation": 3,
+      "composure": 2,
+      "intelligence": 1,
+      "wits": 3,
+      "resolve": 2
+    }
+  },
+  {
+    "id": "attr_mystic",
+    "name": "Містик (Mystic/Occultist)",
+    "desc": "Людина, занурена в потаємне, з непохитною концентрацією та залізною волею.",
+    "values": {
+      "strength": 1,
+      "dexterity": 2,
+      "stamina": 2,
+      "charisma": 2,
+      "manipulation": 2,
+      "composure": 3,
+      "intelligence": 3,
+      "wits": 3,
+      "resolve": 4
+    }
+  }
+  ],
+  "skills": [
+     {
+    "id": "skill_veteran",
+    "name": "Ветеран (Veteran)",
+    "desc": "Персонаж із військовим минулим, навчений діяти в екстремальних умовах.",
+    "values": {
+      "firearms": 3,
+      "athletics": 3,
+      "stealth": 2,
+      "survival": 2
+    }
+  },
+  {
+    "id": "skill_executive",
+    "name": "Керівник (Executive)",
+    "desc": "Професіонал у сфері бізнесу та управління персоналом.",
+    "values": {
+      "finance": 3,
+      "persuasion": 3,
+      "insight": 2,
+      "subterfuge": 2
+    }
+  },
+  {
+    "id": "skill_mafioso",
+    "name": "Мафіозі (Mafioso)",
+    "desc": "Представник організованої злочинності, що знає закони вулиць.",
+    "values": {
+      "streetwise": 3,
+      "brawl": 3,
+      "intimidation": 2,
+      "larceny": 2
+    }
+  },
+  {
+    "id": "skill_artist",
+    "name": "Митець (Artist)",
+    "desc": "Творча особистість, зосереджена на самовираженні та сприйнятті світу.",
+    "values": {
+      "performance": 3,
+      "insight": 3,
+      "academics": 2,
+      "awareness": 2
+    }
+  },
+  {
+    "id": "skill_junkie",
+    "name": "Наркоман (Junkie)",
+    "desc": "Людина, чий досвід обмежений виживанням у маргінальних шарах суспільства.",
+    "values": {
+      "streetwise": 3,
+      "subterfuge": 3,
+      "larceny": 2,
+      "brawl": 2
+    }
+  },
+  {
+    "id": "skill_coder",
+    "name": "Програміст (Coder)",
+    "desc": "Технічний спеціаліст, що працює з даними та цифровими системами.",
+    "values": {
+      "technology": 3,
+      "academics": 3,
+      "finance": 2,
+      "persuasion": 2
+    }
+  },
+  {
+    "id": "skill_investigator",
+    "name": "Розслідувач (Investigator)",
+    "desc": "Детектив або приватний нишпорка, навчений шукати приховану інформацію.",
+    "values": {
+      "investigation": 3,
+      "insight": 3,
+      "awareness": 2,
+      "firearms": 2
+    }
+  },
+  {
+    "id": "skill_socialite",
+    "name": "Світська особа (Socialite)",
+    "desc": "Людина, чиє життя проходить на публіці та в центрі уваги.",
+    "values": {
+      "performance": 3,
+      "finance": 3,
+      "insight": 2,
+      "etiquette": 2
+    }
+  },
+  {
+    "id": "skill_scholar",
+    "name": "Учений (Scholar)",
+    "desc": "Академік, присвячений глибоким дослідженням та накопиченню знань.",
+    "values": {
+      "academics": 3,
+      "science": 3,
+      "craft": 2,
+      "persuasion": 2
+    }
+  },
+      {
+    "id": "skill_police",
+    "name": "Правоохоронець (Police Officer)",
+    "desc": "Служитель закону, навчений реагувати на небезпеку та розуміти кримінальну психологію.",
+    "values": {
+      "firearms": 3,
+      "streetwise": 3,
+      "awareness": 2,
+      "insight": 2
+    }
+  },
+  {
+    "id": "skill_physician",
+    "name": "Лікар (Physician)",
+    "desc": "Експерт із людської анатомії, здатний рятувати життя або професійно приховувати причини смерті.",
+    "values": {
+      "medicine": 3,
+      "academics": 3,
+      "insight": 2,
+      "science": 2
+    }
+  },
+  {
+    "id": "skill_politician",
+    "name": "Політик (Politician)",
+    "desc": "Майстер маніпуляцій державними структурами та ораторського мистецтва.",
+    "values": {
+      "politics": 3,
+      "persuasion": 3,
+      "leadership": 2,
+      "etiquette": 2
+    }
+  },
+  {
+    "id": "skill_burglar",
+    "name": "Зломщик (Burglar)",
+    "desc": "Фахівець із проникнення в захищені приміщення та обходу механічних систем безпеки.",
+    "values": {
+      "larceny": 3,
+      "stealth": 3,
+      "technology": 2,
+      "streetwise": 2
+    }
+  },
+  {
+    "id": "skill_occultist",
+    "name": "Окультист (Occultist)",
+    "desc": "Дослідник потаємного, що присвятив життя пошуку заборонених знань та містичних знаків.",
+    "values": {
+      "occult": 3,
+      "investigation": 3,
+      "academics": 2,
+      "awareness": 2
+    }
+  },
+  {
+    "id": "skill_driver",
+    "name": "Водій (Professional Driver)",
+    "desc": "Професійний перевізник, здатний відірватися від будь-якої погоні в міських джунглях.",
+    "values": {
+      "drive": 3,
+      "streetwise": 3,
+      "technology": 2,
+      "firearms": 2
+    }
+  },
+  {
+    "id": "skill_laborer",
+    "name": "Робітник (Blue-collar Worker)",
+    "desc": "Людина фізичної праці, що звикла покладатися на власну міць та вміння працювати інструментами.",
+    "values": {
+      "craft": 3,
+      "athletics": 3,
+      "brawl": 2,
+      "survival": 2
+    }
+  },
+  {
+    "id": "skill_clergyman",
+    "name": "Священнослужитель (Clergy)",
+    "desc": "Духовний наставник, чия зброя — глибока емпатія та вміння вести за собою паству.",
+    "values": {
+      "academics": 3,
+      "insight": 3,
+      "leadership": 2,
+      "performance": 2
+    }
+  },
+  {
+    "id": "skill_athlete",
+    "name": "Професійний атлет (Athlete)",
+    "desc": "Людина з винятковою фізичною підготовкою, звикла працювати на межі людських можливостей.",
+    "values": {
+      "athletics": 3,
+      "brawl": 3,
+      "performance": 2,
+      "awareness": 2
+    }
+  },
+  {
+    "id": "skill_journalist",
+    "name": "Журналіст (Journalist)",
+    "desc": "Нишпорка, що спеціалізується на видобуванні правди з людей та закритих архівів.",
+    "values": {
+      "investigation": 3,
+      "subterfuge": 3,
+      "technology": 2,
+      "insight": 2
+    }
+  }
+  ]
+}

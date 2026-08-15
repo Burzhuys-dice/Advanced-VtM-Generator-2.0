@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTM 5e: Генератор Персонажа</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#fcfcf9] min-h-screen flex flex-col print:bg-white">
+
+    <!-- Header -->
+    <header class="bg-[#1a1a1a] text-white py-4 px-4 md:px-6 border-b-4 border-[#8b0000] shadow-lg sticky top-0 z-50 print:hidden">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 md:gap-4">
+                <button id="menu-btn" class="text-white hover:text-[#8b0000] focus:outline-none transition-colors" onclick="openMenu()">
+                    <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <div class="w-8 h-8 md:w-10 md:h-10 bg-[#8b0000] rounded-full flex items-center justify-center font-bold text-lg md:text-xl shadow-lg vtm-font">V5</div>
+                <div>
+                    <h1 class="text-sm md:text-xl font-bold uppercase tracking-widest leading-none vtm-font">Генератор</h1>
+                    <span class="text-[8px] md:text-[10px] text-gray-400 uppercase tracking-tighter text-red-500" id="loading-status">Крок за кроком (Завантаження даних...)</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 md:gap-4">
+                <div class="flex flex-col items-end justify-center text-right">
+                    <span id="header-char-name" class="text-[11px] md:text-sm font-bold text-gray-100 uppercase tracking-widest truncate max-w-[100px] md:max-w-[200px]">Безіменний</span>
+                    <span id="header-char-clan" class="text-[9px] md:text-[10px] text-red-400 font-serif italic truncate max-w-[100px] md:max-w-[200px]">Невідомо (Каїтиф)</span>
+                </div>
+                
+                                <button onclick="openDiceModal()" class="bg-gray-800 hover:bg-gray-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-gray-700 text-center shadow-inner transition-colors mr-1 md:mr-2 flex flex-col items-center justify-center">
+                    <svg class="w-4 h-4 md:w-5 md:h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    <span class="text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Кинути</span>
+                </button>
+                <div class="bg-gray-800 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-gray-700 text-center shadow-inner">
+                    <span class="block text-[8px] md:text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Людяність</span>
+                    <span id="humanity-display" class="text-lg md:text-xl font-serif font-bold text-white transition-all duration-300">7</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+        <!-- Dice Roller Modal -->
+    <div id="dice-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[100] hidden items-center justify-center p-4 print:hidden">
+        <div class="bg-[#1a1a1a] text-white w-full max-w-md rounded-xl shadow-2xl border border-gray-700 overflow-hidden relative">
+            <div class="bg-[#8b0000] p-4 flex justify-between items-center">
+                <h2 class="text-lg font-bold vtm-font uppercase tracking-widest text-white">Кидок кубиків</h2>
+                <button onclick="closeDiceModal()" class="text-white hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="p-4 md:p-6">
+                <div class="flex border-b border-gray-700 mb-4">
+                    <button id="dice-tab-free" onclick="switchDiceTab('free')" class="flex-1 py-2 text-center border-b-2 border-[#8b0000] text-white text-sm font-bold transition-colors">Вільний</button>
+                    <button id="dice-tab-sheet" onclick="switchDiceTab('sheet')" class="flex-1 py-2 text-center border-b-2 border-transparent text-gray-500 text-sm font-bold transition-colors hover:text-gray-300">З аркуша</button>
+                </div>
+                
+                <div id="dice-mode-free" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-400 mb-1">Кількість к10</label>
+                        <select id="dice-free-total" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white outline-none focus:border-[#8b0000]"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-red-400 mb-1">Кістки голоду (замінюють звичайні)</label>
+                        <select id="dice-free-hunger" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white outline-none focus:border-red-500">
+                            <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="dice-mode-sheet" class="space-y-4 hidden">
+                    <div class="flex flex-col gap-2">
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-1">Меню 1</label>
+                            <select id="dice-sheet-1" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-xs text-white outline-none focus:border-[#8b0000]" onchange="updateSheetDiceTotal()"><option value="">- Оберіть -</option></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-1">Меню 2</label>
+                            <select id="dice-sheet-2" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-xs text-white outline-none focus:border-[#8b0000]" onchange="updateSheetDiceTotal()"><option value="">- Оберіть -</option></select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] uppercase tracking-widest text-gray-400 mb-1">Меню 3</label>
+                            <select id="dice-sheet-3" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-xs text-white outline-none focus:border-[#8b0000]" onchange="updateSheetDiceTotal()"><option value="">- Оберіть -</option></select>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-800 p-2 rounded border border-gray-700">
+                        <span class="text-xs text-gray-300 uppercase tracking-widest">Разом крапок (пул):</span>
+                        <span id="dice-sheet-total-display" class="text-xl font-bold text-white">0</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-red-400 mb-1">Кістки голоду</label>
+                        <select id="dice-sheet-hunger" class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white outline-none focus:border-red-500">
+                            <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button onclick="rollDice()" class="w-full mt-6 bg-[#8b0000] hover:bg-red-800 text-white font-bold py-3 px-4 rounded transition-colors uppercase tracking-widest">Кинути</button>
+                
+                <div id="dice-results" class="mt-6 hidden">
+                    <h3 class="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-700 pb-1 mb-3">Результат</h3>
+                    <div id="dice-container" class="flex flex-wrap gap-2 justify-center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-[55] hidden transition-opacity print:hidden" onclick="closeMenu()"></div>
+
+    <!-- Sidebar Navigation -->
+    <div id="sidebar-nav" class="fixed inset-y-0 left-0 w-64 bg-[#1a1a1a] text-white transform -translate-x-full transition-transform duration-300 z-[60] print:hidden shadow-2xl flex flex-col">
+        <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+            <h2 class="text-xl font-bold vtm-font uppercase text-[#8b0000] tracking-widest">Навігація</h2>
+            <button id="close-menu-btn" class="text-gray-400 hover:text-white transition-colors" onclick="closeMenu()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4 flex flex-col gap-2 px-4">
+            <button onclick="goToStep(1); closeMenu()" id="side-nav-step-1" class="text-left px-4 py-3 rounded-lg text-sm font-bold transition-colors bg-[#8b0000] text-white">1. Концепт</button>
+            <button onclick="goToStep(2); closeMenu()" id="side-nav-step-2" class="text-left px-4 py-3 rounded-lg text-sm font-bold transition-colors text-gray-400 hover:bg-gray-800">2. Характеристики</button>
+            <button onclick="goToStep(3); closeMenu()" id="side-nav-step-3" class="text-left px-4 py-3 rounded-lg text-sm font-bold transition-colors text-gray-400 hover:bg-gray-800">3. Навички</button>
+            <button onclick="goToStep(4); closeMenu()" id="side-nav-step-4" class="text-left px-4 py-3 rounded-lg text-sm font-bold transition-colors text-gray-400 hover:bg-gray-800">4. Хижак</button>
+            <button onclick="goToStep(5); closeMenu()" id="side-nav-step-5" class="text-left px-4 py-3 rounded-lg text-sm font-bold transition-colors text-gray-400 hover:bg-gray-800">5. Дисципліни</button>
+            <button onclick="goToStep(6); closeMenu()" id="side-nav-step-6" class="text-left px-4 py-3 rounded-lg text-sm font-bold transition-colors text-gray-400 hover:bg-gray-800">6. Блага/Вади</button>
+            <button onclick="goToStep(7); closeMenu()" id="side-nav-step-7" class="text-left px-4 py-3 rounded-lg text-sm font-bold transition-colors text-gray-400 hover:bg-gray-800">7. Підсумок</button>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto w-full px-4 py-8 flex-grow print:py-0 print:px-0">
+        
+        <!-- Stepper Navigation -->
+        <nav class="flex mb-10 overflow-x-auto pb-2 print:hidden scroll-smooth">
+            <div class="flex-grow shrink-0"></div>
+            <div class="flex items-center gap-1 md:gap-2 bg-white p-2 rounded-full shadow-sm border border-gray-200 min-w-max shrink-0 mx-2">
+                <button onclick="goToStep(1)" id="nav-step-1" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-bold transition-colors bg-[#8b0000] text-white">1. Концепт</button>
+                <div class="w-2 h-px bg-gray-300 hidden md:block"></div>
+                <button onclick="goToStep(2)" id="nav-step-2" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-bold transition-colors text-gray-500 hover:bg-gray-100">2. Характеристики</button>
+                <div class="w-2 h-px bg-gray-300 hidden md:block"></div>
+                <button onclick="goToStep(3)" id="nav-step-3" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-bold transition-colors text-gray-500 hover:bg-gray-100">3. Навички</button>
+                <div class="w-2 h-px bg-gray-300 hidden md:block"></div>
+                <button onclick="goToStep(4)" id="nav-step-4" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-bold transition-colors text-gray-500 hover:bg-gray-100">4. Хижак</button>
+                <div class="w-2 h-px bg-gray-300 hidden md:block"></div>
+                <button onclick="goToStep(5)" id="nav-step-5" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-bold transition-colors text-gray-500 hover:bg-gray-100">5. Дисципліни</button>
+                <div class="w-2 h-px bg-gray-300 hidden md:block"></div>
+                <button onclick="goToStep(6)" id="nav-step-6" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-bold transition-colors text-gray-500 hover:bg-gray-100">6. Блага/Вади</button>
+                <div class="w-2 h-px bg-gray-300 hidden md:block"></div>
+                <button onclick="goToStep(7)" id="nav-step-7" class="px-3 py-1.5 rounded-full text-xs md:text-sm font-bold transition-colors text-gray-500 hover:bg-gray-100">7. Підсумок</button>
+            </div>
+            <div class="flex-grow shrink-0"></div>
+        </nav>
+
+        <!-- STEP 1: CONCEPT -->
+        <section id="step-1" class="step-container active bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200">
+            <h2 class="text-3xl font-bold text-[#8b0000] mb-6 vtm-font uppercase">Концепт Персонажа</h2>
+            <p class="text-gray-600 mb-8">Хто ви у цьому Світі Темряви? Опишіть вашу ідею та оберіть вашу кров.</p>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Ім'я персонажа</label>
+                    <input type="text" id="character-name" placeholder="Наприклад: Джек Річер..." class="custom-input text-xl w-full border border-gray-300 rounded p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Концепт (Коротка фраза)</label>
+                    <input type="text" id="concept-phrase" placeholder="Наприклад: Колишній детектив, що шукає свого вбивцю..." class="custom-input text-xl w-full border border-gray-300 rounded p-2">
+                </div>
+<!-- ================= БЛОК КЛАНУ ================= -->
+<div class="mt-4">
+    <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center gap-2">
+            <label for="clan-select-1" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Клан</label>
+            
+            <div class="relative flex items-center group">
+                <button type="button" class="text-gray-400 hover:text-[#8b0000] transition-colors cursor-help">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-gray-900 text-white text-xs leading-relaxed rounded-md shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50">
+                    Клан — це родовід вашого вампіра. Він визначає ваші стартові дисципліни (здібності) та унікальне прокляття (ваду).
+                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="setRandomClan()" class="px-3 py-1 text-[11px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-[#8b0000] border border-gray-300 rounded transition-colors uppercase tracking-widest">
+            Випадковий клан
+        </button>
+    </div>
+
+    <select id="clan-select-1" onchange="changeClan(this.value)" class="custom-input text-xl w-full border border-gray-300 rounded p-2"></select>
+    <p id="clan-desc-1" class="text-sm text-gray-600 mt-2 italic text-justify leading-relaxed"></p>
+    
+    <div id="clan-compulsion-container" class="hidden mt-3 bg-red-50 p-3 rounded-lg border border-red-100">
+        <h4 class="text-xs font-bold text-red-800 uppercase tracking-widest mb-1">Клановий примус</h4>
+        <p id="clan-compulsion-text" class="text-sm text-red-900"></p>
+    </div>
+    
+    <div id="clan-bane-container" class="hidden mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-widest mb-1">Кланове прокляття</h4>
+        <p id="clan-bane-text" class="text-sm text-gray-800"></p>
+    </div>
+</div>
+
+<!-- ================= БЛОК ІСТОРІЇ ================= -->
+<div class="mt-4">
+    <div class="flex items-center gap-2 mb-1">
+        <label for="concept-bg" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Історія (Фон)</label>
+        
+        <div class="relative flex items-center group">
+            <button type="button" class="text-gray-400 hover:text-[#8b0000] transition-colors cursor-help">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </button>
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2.5 bg-gray-900 text-white text-xs leading-relaxed rounded-md shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 z-50">
+                Коротко опишіть, ким був ваш персонаж за життя, чим він займався і за яких обставин перетворився на вампіра.
+                <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+            </div>
+        </div>
+    </div>
+    <textarea id="concept-bg" rows="4" class="custom-input w-full border border-gray-300 rounded p-2 text-sm leading-relaxed" placeholder="Ваша історія..."></textarea>
+</div>
+
+<!-- ================= БЛОК ПЕРЕКОНАНЬ ================= -->
+<div class="grid grid-cols-2 gap-4 mt-6">
+    <!-- Пара 1 -->
+    <div>
+        <div class="flex items-center gap-2 mb-1">
+            <label for="conviction1" class="block text-sm font-medium text-gray-700">Переконання 1</label>
+            <div class="relative flex items-center group z-40">
+                <button type="button" class="text-gray-400 hover:text-[#8b0000] transition-colors cursor-help">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+                <div class="absolute bottom-full left-0 mb-2 w-72 p-3 bg-gray-900 text-white text-xs leading-relaxed rounded-md shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200">
+                    <span class="font-bold text-red-400">Переконання</span> — це ключові моральні принципи, що стримують Звіра.<br><br>
+                    <span class="font-bold text-red-400">Опора</span> — жива людина, яка уособлює це переконання.
+                    <div class="absolute top-full left-4 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+            </div>
+        </div>
+        <textarea id="conviction1" name="conviction1" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Перше переконання..."></textarea>
+    </div>
+    <div>
+        <label for="touchstone1" class="block text-sm font-medium text-gray-700 mb-1">Опора 1</label>
+        <textarea id="touchstone1" name="touchstone1" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Опора для першого переконання..."></textarea>
+    </div>
+
+    <!-- Пара 2 -->
+    <div>
+        <div class="flex items-center gap-2 mb-1">
+            <label for="conviction2" class="block text-sm font-medium text-gray-700">Переконання 2</label>
+            <div class="relative flex items-center group z-30">
+                <button type="button" class="text-gray-400 hover:text-[#8b0000] transition-colors cursor-help">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+                <div class="absolute bottom-full left-0 mb-2 w-64 p-2.5 bg-gray-900 text-white text-xs leading-relaxed rounded-md shadow-xl opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200">
+                    Друге фундаментальне правило вашого персонажа, що допомагає чіплятися за залишки Людяності.
+                    <div class="absolute top-full left-4 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+            </div>
+        </div>
+        <textarea id="conviction2" name="conviction2" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Друге переконання..."></textarea>
+    </div>
+    <div>
+        <label for="touchstone2" class="block text-sm font-medium text-gray-700 mb-1">Опора 2</label>
+        <textarea id="touchstone2" name="touchstone2" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Опора для другого переконання..."></textarea>
+    </div>
+</div>
+
+<div class="flex gap-4 mt-3">
+    <button type="button" id="btn-random-conviction1" class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md border border-gray-300">
+        Випадкове Переконання 1
+    </button>
+    <button type="button" id="btn-random-conviction2" class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md border border-gray-300">
+        Випадкове Переконання 2
+    </button>
+</div>
+<div class="mt-10 flex justify-end">
+    <button onclick="goToStep(2)" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow">Далі ➔</button>
+</div>
+        </section>
+
+        <!-- STEP 2: ATTRIBUTES -->
+        <section id="step-2" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 class="text-3xl font-bold text-[#8b0000] vtm-font uppercase">Характеристики</h2>
+                <div class="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200 shadow-inner w-full md:w-auto">
+                    <div class="text-[10px] font-bold uppercase text-gray-500 mb-2 tracking-widest">Ліміт розподілу:</div>
+                    <div class="flex gap-2 text-sm font-bold" id="attr-tracker"></div>
+                </div>
+            </div>
+            <p class="text-gray-600 mb-4 text-sm">Розподіліть крапки між 9 характеристиками. <br><span class="font-bold">Правило:</span> Одна характеристика на 4, три на 3, чотири на 2, і одна залишається на 1 (мінімальне значення для всіх).</p>
+            
+            <!-- Блок вибору архетипу характеристик -->
+            <div class="mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-red-50 p-4 rounded-lg border border-red-100">
+                <label class="text-sm font-bold text-red-900 uppercase tracking-wider min-w-max">Шаблон характеристик:</label>
+                <select id="attr-archetype-select" onchange="applyAttributeArchetype(this.value)" class="w-full sm:w-auto flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
+                    <option value="">-- Вручну / Оберіть шаблон --</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12" id="attributes-grid"></div>
+            
+            <div class="mt-10 flex justify-between">
+                <button onclick="goToStep(1)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад</button>
+                <button onclick="goToStep(3)" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow">Далі ➔</button>
+            </div>
+        </section>
+
+        <!-- STEP 3: SKILLS -->
+        <section id="step-3" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 class="text-3xl font-bold text-[#8b0000] vtm-font uppercase">Навички</h2>
+                <div class="w-full md:w-auto flex flex-col gap-2">
+                    <label class="text-[10px] font-bold uppercase text-gray-500 tracking-widest">Метод розподілу:</label>
+                    <select id="skill-distribution" onchange="changeSkillDistribution()" class="bg-[#1a1a1a] text-white border border-gray-700 rounded px-4 py-2 text-sm outline-none cursor-pointer">
+                        <option value="balanced">Збалансований (3x3, 5x2, 7x1)</option>
+                        <option value="jack">Майстер на всі руки (1x3, 8x2, 10x1)</option>
+                        <option value="specialist">Спеціаліст (1x4, 3x3, 3x2, 3x1)</option>
+                    </select>
+                </div>
+            </div>
+            <p class="text-gray-600 mb-4 text-sm">Оберіть метод розподілу навичок відповідно до вашого бачення персонажа (Майстер на всі руки, збалансований, спеціаліст). <br><span class="font-bold">Правило:</span> Від методу буде залежати, скільки і якого рівня навички ви можете брати.<br><span class="font-bold">Спеціалізації:</span> Біля кожної навички є поле спеціалізації (вузького застосування навички, яке дає +1 кістку на відповідні кидки. Спеціалізація отримується за Хижацькі повадки, а також може бути придбана по ходу гри. На старті вам даються певні безкоштовні спеціалізації (див. нижче).</p>
+            <div class="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200 shadow-inner mb-6">
+                <div class="text-[10px] font-bold uppercase text-gray-500 mb-2 tracking-widest">Базовий розподіл (Бонуси хижака не враховуються тут):</div>
+                <div class="flex flex-wrap gap-2 text-sm font-bold" id="skill-tracker"></div>
+            </div>
+
+            <!-- Блок вибору архетипу навичок -->
+            <div class="mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-red-50 p-4 rounded-lg border border-red-100">
+                <label class="text-sm font-bold text-red-900 uppercase tracking-wider min-w-max">Шаблон навичок:</label>
+                <select id="skill-archetype-select" onchange="applySkillArchetype(this.value)" class="w-full sm:w-auto flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
+                    <option value="">-- Вручну / Оберіть шаблон --</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-10" id="skills-grid"></div>
+
+            <div class="border-t-2 border-gray-100 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-4 gap-2">
+                    <h3 class="text-2xl font-bold text-[#8b0000] vtm-font uppercase">Спеціалізації</h3>
+                    <span id="predator-spec-display" class="text-xs font-bold bg-[#4b0082] text-white px-3 py-1 rounded-full shadow-sm hidden transition-all duration-300">Спеціалізація хижака: Немає</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-6">До знань, ремесла, виступу й науки ви отримуєте безплатні спеціалізації (якщо маєте хоча б 1 крапку в них). Також виберіть ще одну будь-яку безплатну спеціалізацію.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Знання:</span><input type="text" id="spec-academics" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Ремесло:</span><input type="text" id="spec-craft" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Виступ:</span><input type="text" id="spec-performance" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Наука:</span><input type="text" id="spec-science" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <h4 class="font-bold text-gray-800 uppercase tracking-widest text-xs mb-4">Додаткова спеціалізація</h4>
+                        <select id="spec-custom-skill" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000] mb-4"></select>
+                        <input type="text" id="spec-custom-name" placeholder="Назва спеціалізації" class="custom-input text-base w-full border border-gray-300 rounded p-1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 flex justify-between">
+                <button onclick="goToStep(2)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад</button>
+                <button onclick="goToStep(4)" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow">Далі ➔</button>
+            </div>
+        </section>
+
+        <!-- STEP 4: PREDATOR TYPES -->
+        <section id="step-4" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200">
+            <h2 class="text-3xl font-bold text-[#8b0000] mb-2 vtm-font uppercase">Хижацькі звички</h2>
+            <p class="text-gray-600 mb-8 text-sm">Те, як ви полюєте, формує вашу сутність. Оберіть свій тип хижака. Це додасть вам нову спеціалізацію, крапку дисципліни (відображається <span class="text-[#4b0082] font-bold">пурпурним</span>), вплине на Людяність та може дати додаткові блага/вади.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="predator-grid">
+                <div class="col-span-full text-center text-gray-400 py-10">Завантаження бази даних...</div>
+            </div>
+
+            <div class="mt-10 flex justify-between">
+                <button onclick="goToStep(3)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад</button>
+                <button onclick="goToStep(5)" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow">Далі ➔</button>
+            </div>
+        </section>
+
+        <!-- STEP 5: DISCIPLINES -->
+        <section id="step-5" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 class="text-3xl font-bold text-[#8b0000] vtm-font uppercase">Дисципліни</h2>
+                <div class="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200 shadow-inner w-full md:w-auto">
+                    <div class="text-[10px] font-bold uppercase text-gray-500 mb-2 tracking-widest">Базовий ліміт (Бонуси хижака - <span class="text-[#4b0082]">фіолетові</span>):</div>
+                    <div class="flex gap-2 text-sm font-bold" id="disc-tracker"></div>
+                </div>
+            </div>
+            
+            <p class="text-gray-600 mb-6 text-sm">Ваші містичні здібності залежать від вашого клану. <br><span class="font-bold">Правило:</span> Оберіть одну дисципліну на 2 крапки, і одну на 1 крапку. Додаткові крапки від хижацьких звичок відображаються пурпурним кольором. <br><b>Увага:</b> Для кожної крапки в дисципліні ви можете обрати здібність відповідного рівня або нижче.</p>
+
+            <div class="mb-8 max-w-md mx-auto md:mx-0">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Змінити Клан:</label>
+                <select id="clan-select-4" onchange="changeClan(this.value)" class="w-full bg-white border border-gray-300 rounded px-3 py-1.5 text-lg font-serif outline-none focus:border-[#8b0000]"></select>
+            </div>
+
+            <div id="disciplines-grid" class="max-w-3xl mx-auto shadow-sm"></div>
+
+            <div class="max-w-3xl mx-auto mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Додати дисципліну вручну:</label>
+                <div class="flex gap-2">
+                    <select id="manual-disc-select" class="flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
+                        <option value="">-- Оберіть дисципліну --</option>
+                    </select>
+                    <button onclick="addManualDisciplineFromSelect()" class="px-6 py-2 bg-[#1a1a1a] text-white text-sm font-bold uppercase tracking-widest rounded hover:bg-[#8b0000] transition-colors shadow">Додати</button>
+                </div>
+            </div>
+
+            <div class="mt-10 flex justify-between">
+                <button onclick="goToStep(4)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад</button>
+                <button onclick="goToStep(6)" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow">Далі ➔</button>
+            </div>
+        </section>
+
+        <!-- STEP 6: MERITS & FLAWS -->
+        <section id="step-6" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 class="text-3xl font-bold text-[#8b0000] vtm-font uppercase">Блага та Вади</h2>
+                <div class="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200 shadow-inner w-full md:w-auto flex flex-wrap gap-4">
+                    <div>
+                        <div class="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">Блага (Merits/Backgrounds):</div>
+                        <div id="merits-tracker" class="px-3 py-1 text-sm font-bold rounded border tracker-badge invalid">0 / 7 ⬤</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">Вади (Flaws):</div>
+                        <div id="flaws-tracker" class="px-3 py-1 text-sm font-bold rounded border tracker-badge invalid">0 / 2 ⬤</div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="text-gray-600 mb-4 text-sm">Оберіть переваги та недоліки вашого персонажа. <br><span class="font-bold">Правило:</span> Виберіть Благ (Чесноти/Надбання) рівно на 7 крапок і Вад на 2 крапки. Для деяких пунктів вартість змінна — оберіть потрібний рівень.</p>
+
+            <div id="predator-adv-info" class="hidden w-full mb-6 transition-all duration-300"></div>
+
+            <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <input type="text" id="adv-search" onkeyup="renderAvailableAdvantages()" placeholder="Пошук за назвою або описом..." class="custom-input w-full text-base bg-gray-50 p-2 rounded border border-gray-300">
+                <select id="adv-type-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none">
+                    <option value="all">Всі типи</option>
+                    <option value="merit">Блага (Чесноти)</option>
+                    <option value="background">Надбання</option>
+                    <option value="flaw">Вади</option>
+                </select>
+                <select id="adv-category-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none">
+                    <option value="all">Всі категорії</option>
+                </select>
+                <select id="adv-dots-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none">
+                    <option value="all">Всі вартості</option>
+                    <option value="1">1 крапка</option>
+                    <option value="2">2 крапки</option>
+                    <option value="3">3 крапки</option>
+                    <option value="4">4 крапки</option>
+                    <option value="5">5 крапок</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="border border-gray-200 rounded-lg overflow-hidden flex flex-col h-[500px]">
+                    <div class="bg-gray-100 p-3 border-b border-gray-200 font-bold text-gray-700 uppercase tracking-widest text-sm">Доступні</div>
+                    <div id="available-advantages" class="overflow-y-auto custom-scrollbar p-4 flex-grow bg-white space-y-4">
+                        <div class="text-center text-gray-400 py-10">Завантаження бази даних...</div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-lg overflow-hidden flex flex-col h-[500px]">
+                    <div class="bg-[#1a1a1a] p-3 border-b border-gray-800 font-bold text-white uppercase tracking-widest text-sm flex justify-between">
+                        <span>Обрані (Базові)</span>
+                    </div>
+                    <div id="selected-advantages" class="overflow-y-auto custom-scrollbar p-4 flex-grow bg-gray-50 space-y-3">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 flex justify-between">
+                <button onclick="goToStep(5)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад</button>
+                <button onclick="goToStep(7)" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow">Завершити ✔</button>
+            </div>
+        </section>
+
+        <!-- STEP 7: SUMMARY & PRINT -->
+        <section id="step-7" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-none print:p-0 print:m-0">
+            <div class="flex justify-between items-end mb-8 border-b-2 border-[#8b0000] pb-4">
+                <div>
+                    <h2 id="summary-name" class="text-4xl font-bold text-[#8b0000] vtm-font uppercase mb-1">Ім'я Персонажа</h2>
+                    <p id="summary-concept" class="text-lg text-gray-600 font-serif italic">Концепт | Клан | Тип Хижака</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Людяність: <span id="summary-humanity" class="text-gray-900 text-xl font-serif">7</span></p>
+                    <button onclick="window.print()" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow print:hidden">🖨 Друк Аркуша</button>
+                </div>
+            </div>
+            <div id="summary-content" class="space-y-10"></div>
+            <div class="mt-12 pt-6 border-t border-gray-200 flex justify-start print:hidden">
+                <button onclick="goToStep(6)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад до редагування</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-[#1a1a1a] text-gray-400 py-8 mt-auto text-center border-t-4 border-gray-900 print:hidden">
+        <img src="darkpack_logo.webp" alt="Лого" class="h-36 mx-auto block mb-3">
+        <p class="text-sm">Вампіри: Маскарад (5та редакція) — Генератор персонажа</p>
+        <p class="text-sm text-gray-500 mt-2 px-4 max-w-4xl mx-auto">Частина матеріалів тут захищена авторськими правами та торговими марками Paradox Interactive AB і використовуються з дозволу. Усі права захищено. Додаткову інформацію можна знайти за адресою worldofdarkness.com</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
