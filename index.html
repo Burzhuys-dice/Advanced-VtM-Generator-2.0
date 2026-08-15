@@ -42,6 +42,129 @@
     </header>
 
         <!-- Dice Roller Modal -->
+    <!-- CLAN SELECTION MODAL -->
+    <div id="clan-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[100] hidden items-center justify-center p-4 print:hidden">
+        <div class="bg-[#1a1a1a] text-white w-full max-w-5xl max-h-[95vh] flex flex-col rounded-xl shadow-2xl border border-gray-700 overflow-hidden relative">
+            <div class="bg-[#8b0000] p-4 flex justify-between items-center shrink-0">
+                <h2 class="text-lg font-bold vtm-font uppercase tracking-widest text-white">Вибір Клану</h2>
+                <button onclick="closeClanModal()" class="text-white hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 md:p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <!-- Банер квізу у модальному вікні -->
+                <div class="bg-gradient-to-r from-red-950/80 to-zinc-900 border border-red-900/50 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-inner">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-900/40 border border-red-700/50 flex items-center justify-center shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-red-500">
+                                <path d="M12 2.25c-1.354 3.125-6 8.5-6 13.5a6 6 0 0012 0c0-5-4.646-10.375-6-13.5z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Не знаєте, який клан обрати?</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Пройдіть тест із 15 запитань, щоб знайти свій справжній клан.</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="closeClanModal(); openQuizModal();" class="shrink-0 px-4 py-2 bg-[#8b0000] hover:bg-red-700 text-white text-xs font-bold uppercase tracking-widest rounded-lg transition-colors shadow">
+                        Дізнатися свій клан
+                    </button>
+                </div>
+                <div id="clan-modal-content">
+                    <!-- Вміст генерується динамічно -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUIZ MODAL -->
+    <div id="quiz-modal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-3 sm:p-4 print:hidden backdrop-blur-sm">
+        <div class="bg-[#141416] text-white w-full max-w-3xl max-h-[95vh] flex flex-col rounded-2xl shadow-2xl border border-red-900/40 overflow-hidden relative">
+            <div class="bg-[#8b0000] p-4 flex justify-between items-center shrink-0 border-b border-red-950">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-red-200">
+                        <path d="M12 2.25c-1.354 3.125-6 8.5-6 13.5a6 6 0 0012 0c0-5-4.646-10.375-6-13.5z" />
+                    </svg>
+                    <h2 class="text-base sm:text-lg font-bold vtm-font uppercase tracking-widest text-white">Випробування Крові — Квіз Кланів</h2>
+                </div>
+                <button onclick="closeQuizModal()" class="text-white/80 hover:text-white p-1 rounded hover:bg-red-900/50 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-8 overflow-y-auto flex-1 custom-scrollbar" id="quiz-modal-body">
+                <!-- Екран привітання -->
+                <div id="quiz-intro-screen" class="text-center py-4">
+                    <div class="w-16 h-16 mx-auto mb-5 bg-black rounded-2xl p-3 border border-red-950 flex items-center justify-center shadow-[0_0_20px_rgba(139,0,0,0.3)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 text-red-600">
+                            <path d="M12 2.25c-1.354 3.125-6 8.5-6 13.5a6 6 0 0012 0c0-5-4.646-10.375-6-13.5z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl font-bold mb-3 text-white vtm-font">Кров Звіра</h1>
+                    <p class="text-zinc-400 mb-8 max-w-lg mx-auto leading-relaxed text-sm sm:text-base">
+                        Світ Темряви чекає на вас. Дайте відповідь на 15 запитань, щоб дізнатися, чия кров тече у ваших венах. Квіз враховує всі офіційні клани, Каїтіфів та Слабокровних.
+                    </p>
+                    <button onclick="startQuiz()" class="vtm-font bg-[#8b0000] hover:bg-red-700 text-white font-bold py-3 px-8 rounded-xl text-lg transition-all shadow-[0_0_20px_rgba(139,0,0,0.4)] transform hover:scale-105 active:scale-95">
+                        Почати випробування
+                    </button>
+                </div>
+
+                <!-- Екран квізу -->
+                <div id="quiz-question-screen" class="hidden">
+                    <div class="mb-6">
+                        <div class="flex justify-between text-xs text-red-400 mb-2 font-semibold tracking-widest">
+                            <span>ПИТАННЯ <span id="quiz-current-q-num">1</span>/15</span>
+                            <span id="quiz-progress-text">0%</span>
+                        </div>
+                        <div class="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+                            <div id="quiz-progress-bar" class="bg-red-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <h2 id="quiz-question-text" class="text-xl sm:text-2xl font-bold mb-6 text-white min-h-[3.5rem] font-serif leading-snug"></h2>
+                    
+                    <div id="quiz-options-container" class="space-y-3 flex flex-col"></div>
+                </div>
+
+                <!-- Екран результатів -->
+                <div id="quiz-result-screen" class="hidden text-center py-2">
+                    <div class="text-red-500 text-xs font-bold tracking-widest mb-1 uppercase">Ваш результат</div>
+                    <div class="flex flex-col items-center justify-center my-3">
+                        <div class="w-20 h-20 bg-black rounded-2xl p-3 border-2 border-red-900/60 shadow-xl flex items-center justify-center mb-3">
+                            <img id="quiz-result-icon" src="Clan_symbols/Caitiff_symbol.png" alt="Clan" class="w-full h-full object-contain filter invert">
+                        </div>
+                        <h1 id="quiz-result-clan" class="text-3xl sm:text-5xl font-bold text-white vtm-font"></h1>
+                        <h2 id="quiz-result-subtitle" class="text-base sm:text-lg text-red-400 font-serif italic mt-1"></h2>
+                    </div>
+                    
+                    <div class="bg-zinc-950/80 border border-zinc-800/80 p-5 rounded-xl my-6 text-left space-y-4 shadow-inner">
+                        <p id="quiz-result-desc" class="text-zinc-300 leading-relaxed text-sm sm:text-base"></p>
+                        <div class="border-t border-zinc-800 pt-3 text-xs sm:text-sm text-zinc-400 space-y-2">
+                            <p><strong class="text-red-400">Клановий примус:</strong> <span id="quiz-result-compulsion" class="text-zinc-300"></span></p>
+                            <p><strong class="text-red-400">Кланове прокляття:</strong> <span id="quiz-result-bane" class="text-zinc-300"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6 border-t border-zinc-800/80 pt-4">
+                        <div class="text-xs text-zinc-500 uppercase tracking-widest mb-1">Тіньовий резонанс (Альтернативний клан)</div>
+                        <div id="quiz-runner-up" class="text-base font-serif text-zinc-300"></div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center items-center mt-6">
+                        <button id="quiz-select-top-btn" onclick="applyQuizClan(false)" class="w-full sm:w-auto px-6 py-3 bg-[#8b0000] hover:bg-red-700 text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(139,0,0,0.4)] uppercase tracking-wider text-sm">
+                            🩸 Обрати цей клан
+                        </button>
+                        <button id="quiz-select-runner-btn" onclick="applyQuizClan(true)" class="w-full sm:w-auto px-5 py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 rounded-xl transition-all text-sm font-medium">
+                            Обрати альтернативу
+                        </button>
+                        <button onclick="restartQuiz()" class="w-full sm:w-auto px-4 py-3 text-zinc-400 hover:text-white hover:bg-zinc-800/60 rounded-xl transition-colors text-sm">
+                            🔄 Пройти знову
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="dice-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[100] hidden items-center justify-center p-4 print:hidden">
         <div class="bg-[#1a1a1a] text-white w-full max-w-md md:max-w-[500px] max-h-[95vh] flex flex-col rounded-xl shadow-2xl border border-gray-700 overflow-hidden relative">
             <div class="bg-[#8b0000] p-4 flex justify-between items-center shrink-0">
@@ -169,7 +292,19 @@
             
             <div class="space-y-6">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Ім'я персонажа</label>
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <label for="character-name" class="block text-sm font-bold text-gray-700 uppercase tracking-wider">Ім'я персонажа</label>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" id="btn-gen-male-name" onclick="generateCharacterName('male')" class="px-2.5 py-1 text-[11px] font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-[#8b0000] border border-gray-300 rounded transition-colors uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
+                                <span class="text-blue-600 font-black text-xs">♂</span>
+                                <span>Згенерувати чоловіче ім'я та прізвище</span>
+                            </button>
+                            <button type="button" id="btn-gen-female-name" onclick="generateCharacterName('female')" class="px-2.5 py-1 text-[11px] font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-[#8b0000] border border-gray-300 rounded transition-colors uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
+                                <span class="text-pink-600 font-black text-xs">♀</span>
+                                <span>Згенерувати жіноче ім'я та прізвище</span>
+                            </button>
+                        </div>
+                    </div>
                     <input type="text" id="character-name" placeholder="Наприклад: Джек Річер..." class="custom-input text-xl w-full border border-gray-300 rounded p-2">
                 </div>
                 <div>
@@ -192,12 +327,33 @@
                 </div>
             </div>
         </div>
-        <button type="button" onclick="setRandomClan()" class="px-3 py-1 text-[11px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-[#8b0000] border border-gray-300 rounded transition-colors uppercase tracking-widest">
-            Випадковий клан
-        </button>
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="openQuizModal()" class="px-3 py-1 text-[11px] font-bold text-white bg-[#8b0000] hover:bg-red-800 border border-red-900 rounded transition-colors uppercase tracking-widest flex items-center gap-1 shadow-sm">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25c-1.354 3.125-6 8.5-6 13.5a6 6 0 0012 0c0-5-4.646-10.375-6-13.5z"/></svg>
+                Дізнатися свій клан
+            </button>
+            <button type="button" onclick="setRandomClan()" class="px-3 py-1 text-[11px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 hover:text-[#8b0000] border border-gray-300 rounded transition-colors uppercase tracking-widest">
+                Випадковий клан
+            </button>
+        </div>
     </div>
 
-    <select id="clan-select-1" onchange="changeClan(this.value)" class="custom-input text-xl w-full border border-gray-300 rounded p-2"></select>
+    <!-- Замість select тепер кнопка відкриття модального вікна -->
+    <button type="button" onclick="openClanModal()" id="clan-select-btn" class="w-full flex items-center justify-between border border-gray-300 rounded p-4 bg-white hover:bg-gray-50 transition-colors shadow-sm text-left">
+        <div class="flex items-center gap-4">
+            <div id="clan-btn-icon-wrapper" class="w-14 h-14 bg-black rounded-lg p-2 flex items-center justify-center shrink-0 border border-gray-800 shadow-sm">
+                <img id="clan-btn-icon" src="Clan_symbols/Caitiff_symbol.png" alt="Icon" class="w-full h-full object-contain filter invert">
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Обраний Клан:</div>
+                <div id="clan-btn-name" class="text-2xl font-serif text-gray-900">Невідомо (Каїтиф)</div>
+            </div>
+        </div>
+        <div class="text-[#8b0000]">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </div>
+    </button>
+    <select id="clan-select-1" class="hidden"></select> <!-- Прихований селект для сумісності з існуючим кодом -->
     <p id="clan-desc-1" class="text-sm text-gray-600 mt-2 italic text-justify leading-relaxed"></p>
     
     <div id="clan-compulsion-container" class="hidden mt-3 bg-red-50 p-3 rounded-lg border border-red-100">
@@ -392,11 +548,34 @@
 
         <!-- STEP 4: PREDATOR TYPES -->
         <section id="step-4" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200">
-            <h2 class="text-3xl font-bold text-[#8b0000] mb-2 vtm-font uppercase">Хижацькі звички</h2>
-            <p class="text-gray-600 mb-8 text-sm">Те, як ви полюєте, формує вашу сутність. Оберіть свій тип хижака. Це додасть вам нову спеціалізацію, крапку дисципліни (відображається <span class="text-[#4b0082] font-bold">пурпурним</span>), вплине на Людяність та може дати додаткові блага/вади.</p>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-[#8b0000] vtm-font uppercase">Хижацькі звички</h2>
+                    <p class="text-gray-600 mt-1 text-sm">Те, як ви полюєте, формує вашу сутність. Оберіть свій тип хижака. Це додасть вам нову спеціалізацію, крапку дисципліни (відображається <span class="text-[#4b0082] font-bold">пурпурним</span>), вплине на Людяність та може дати додаткові блага/вади.</p>
+                </div>
+            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="predator-grid">
-                <div class="col-span-full text-center text-gray-400 py-10">Завантаження бази даних...</div>
+            <!-- Фільтр категорій -->
+            <div class="flex flex-wrap items-center gap-2 mb-8 p-1.5 bg-gray-100/80 rounded-xl border border-gray-200/80" id="predator-category-filters">
+                <button type="button" onclick="setPredatorCategoryFilter('all')" id="pred-filter-all" class="pred-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-[#8b0000] text-white shadow-sm">
+                    Усі категорії (17)
+                </button>
+                <button type="button" onclick="setPredatorCategoryFilter('violence')" id="pred-filter-violence" class="pred-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all text-gray-700 hover:bg-white hover:text-red-900">
+                    ⚔️ Насильство (4)
+                </button>
+                <button type="button" onclick="setPredatorCategoryFilter('social')" id="pred-filter-social" class="pred-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all text-gray-700 hover:bg-white hover:text-amber-900">
+                    🍷 Соціум (5)
+                </button>
+                <button type="button" onclick="setPredatorCategoryFilter('stealth')" id="pred-filter-stealth" class="pred-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all text-gray-700 hover:bg-white hover:text-zinc-900">
+                    👤 Непомітність (5)
+                </button>
+                <button type="button" onclick="setPredatorCategoryFilter('non_mortal')" id="pred-filter-non_mortal" class="pred-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all text-gray-700 hover:bg-white hover:text-purple-900">
+                    🩸 Виключення смертних (3)
+                </button>
+            </div>
+
+            <div id="predator-container" class="space-y-10">
+                <div class="text-center text-gray-400 py-10">Завантаження бази даних...</div>
             </div>
 
             <div class="mt-10 flex justify-between">
@@ -460,18 +639,20 @@
 
             <div id="predator-adv-info" class="hidden w-full mb-6 transition-all duration-300"></div>
 
+            <!-- Фільтри та пошук -->
             <div class="mb-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                <input type="text" id="adv-search" onkeyup="renderAvailableAdvantages()" placeholder="Пошук за назвою або описом..." class="custom-input w-full text-base bg-gray-50 p-2 rounded border border-gray-300">
-                <select id="adv-type-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none">
-                    <option value="all">Всі типи</option>
-                    <option value="merit">Блага (Чесноти)</option>
-                    <option value="background">Надбання</option>
-                    <option value="flaw">Вади</option>
+                <input type="text" id="adv-search" onkeyup="renderAvailableAdvantages()" placeholder="Пошук за назвою або описом..." class="custom-input w-full text-base bg-gray-50 p-2.5 rounded-lg border border-gray-300 outline-none focus:border-[#8b0000] transition-colors">
+                <select id="adv-type-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#8b0000]">
+                    <option value="all">Всі типи (Блага та Вади)</option>
+                    <option value="merit_background">✦ Блага (Чесноти + Надбання)</option>
+                    <option value="merit">✦ Тільки Чесноти</option>
+                    <option value="background">✦ Тільки Надбання</option>
+                    <option value="flaw">✕ Тільки Вади</option>
                 </select>
-                <select id="adv-category-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none">
+                <select id="adv-category-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#8b0000]">
                     <option value="all">Всі категорії</option>
                 </select>
-                <select id="adv-dots-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none">
+                <select id="adv-dots-filter" onchange="renderAvailableAdvantages()" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#8b0000]">
                     <option value="all">Всі вартості</option>
                     <option value="1">1 крапка</option>
                     <option value="2">2 крапки</option>
@@ -481,19 +662,33 @@
                 </select>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="border border-gray-200 rounded-lg overflow-hidden flex flex-col h-[500px]">
-                    <div class="bg-gray-100 p-3 border-b border-gray-200 font-bold text-gray-700 uppercase tracking-widest text-sm">Доступні</div>
-                    <div id="available-advantages" class="overflow-y-auto custom-scrollbar p-4 flex-grow bg-white space-y-4">
-                        <div class="text-center text-gray-400 py-10">Завантаження бази даних...</div>
+            <!-- ОБРАНІ (БАЗОВІ) - ПЕРЕНЕСЕНІ НА ПОЧАТОК -->
+            <div class="mb-8 border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-gray-50/50">
+                <div class="bg-[#1a1a1a] px-4 py-3 border-b border-gray-800 font-bold text-white uppercase tracking-widest text-xs sm:text-sm flex flex-wrap justify-between items-center gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-600 inline-block animate-pulse"></span>
+                        <span>Обрані (базові) блага та вади</span>
+                    </div>
+                    <div id="selected-advantages-summary-tracker" class="text-xs font-normal text-gray-300 flex items-center gap-2">
+                        <span>Обрано пунктів: <strong id="selected-count-num" class="text-white">0</strong></span>
                     </div>
                 </div>
-                <div class="border border-gray-200 rounded-lg overflow-hidden flex flex-col h-[500px]">
-                    <div class="bg-[#1a1a1a] p-3 border-b border-gray-800 font-bold text-white uppercase tracking-widest text-sm flex justify-between">
-                        <span>Обрані (Базові)</span>
-                    </div>
-                    <div id="selected-advantages" class="overflow-y-auto custom-scrollbar p-4 flex-grow bg-gray-50 space-y-3">
-                    </div>
+                <div id="selected-advantages" class="p-4 bg-gray-50 min-h-[70px]">
+                    <div class="text-center text-gray-400 py-6 text-sm">Ви ще не обрали жодного блага чи вади. Оберіть потрібні пункти нижче.</div>
+                </div>
+            </div>
+
+            <!-- ДОСТУПНІ БЛАГА ТА ВАДИ (РОЗБИТІ ЗА КАТЕГОРІЯМИ НА 2 СТОВПЧИКИ) -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                    <h3 class="font-bold text-lg text-gray-800 uppercase tracking-wider vtm-font flex items-center gap-2">
+                        <span>Доступні блага та вади</span>
+                    </h3>
+                    <span class="text-xs text-gray-500 font-medium">Блага / Надбання • Вади</span>
+                </div>
+
+                <div id="available-advantages" class="space-y-6">
+                    <div class="text-center text-gray-400 py-10">Завантаження бази даних...</div>
                 </div>
             </div>
 
@@ -530,6 +725,7 @@
     </footer>
 
     <script src="data.js"></script>
+    <script src="quiz.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

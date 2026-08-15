@@ -1,0 +1,6 @@
+{
+  "name": "VtM Character Creator",
+  "description": "Генератор персонажів для настільної рольової гри Vampire: The Masquerade 5th Edition українською мовою",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

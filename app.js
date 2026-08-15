@@ -33,13 +33,14 @@ async function init() {
 
 async function fetchAllData() {
     try {
-        const [advRes, predRes, coreRes, clansRes, discRes, archRes] = await Promise.all([
+        const [advRes, predRes, coreRes, clansRes, discRes, archRes, namesRes] = await Promise.all([
             fetch('data/vtm_merits_data.json'),
             fetch('data/vtm_predator-types_1'),
             fetch('data/vtm_char_and_skills.json'),
             fetch('data/vtm_clans'),
             fetch('data/vtm_disciplines'),
-            fetch('data/vtm_archetypes.json') // Завантажуємо файл архетипів
+            fetch('data/vtm_archetypes.json'), // Завантажуємо файл архетипів
+            fetch('data/vtm_names.json') // Завантажуємо файл імен
         ]);
 
         if(advRes.ok) {
@@ -50,6 +51,10 @@ async function fetchAllData() {
 
         if(predRes.ok) state.predatorData = await predRes.json();
         renderPredatorTypes();
+
+        if(namesRes.ok) {
+            state.namesData = await namesRes.json();
+        }
 
         if(coreRes.ok) {
             const coreData = await coreRes.json();
@@ -141,6 +146,71 @@ document.getElementById('btn-random-conviction1')?.addEventListener('click', () 
 
 document.getElementById('btn-random-conviction2')?.addEventListener('click', () => {
     generateRandomConviction('conviction2', 'touchstone2');
+});
+
+async function generateCharacterName(gender) {
+    try {
+        let namesData = state.namesData;
+        if (!namesData) {
+            const res = await fetch('data/vtm_names.json');
+            if (res.ok) {
+                namesData = await res.json();
+                state.namesData = namesData;
+            }
+        }
+
+        if (!namesData) {
+            console.error('Не вдалося завантажити список імен');
+            return;
+        }
+
+        let firstNames = [];
+        let surnames = [];
+
+        if (gender === 'male' || gender === 'man') {
+            firstNames = namesData.man_names || namesData.men_names || namesData.male_names || [];
+            surnames = namesData.man_surnames || namesData.men_surnames || namesData.surnames || [];
+        } else {
+            firstNames = namesData.women_names || namesData.woman_names || namesData.female_names || [];
+            surnames = namesData.women_surnames || namesData.woman_surnames || namesData.surnames || [];
+        }
+
+        if (!firstNames || firstNames.length === 0) {
+            console.warn('Список імен порожній');
+            return;
+        }
+
+        const randomFirstName = getRandomItem(firstNames);
+        let fullName = randomFirstName;
+
+        if (surnames && surnames.length > 0) {
+            const randomSurname = getRandomItem(surnames);
+            fullName = `${randomFirstName} ${randomSurname}`;
+        }
+
+        const nameInput = document.getElementById('character-name');
+        if (nameInput) {
+            nameInput.value = fullName;
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            updateHeaderInfo();
+
+            // Приємне плавне підсвічування оновлення поля
+            nameInput.classList.add('ring-2', 'ring-[#8b0000]', 'border-[#8b0000]');
+            setTimeout(() => {
+                nameInput.classList.remove('ring-2', 'ring-[#8b0000]', 'border-[#8b0000]');
+            }, 350);
+        }
+    } catch (err) {
+        console.error('Помилка під час генерації імені:', err);
+    }
+}
+
+document.getElementById('btn-gen-male-name')?.addEventListener('click', () => {
+    generateCharacterName('male');
+});
+
+document.getElementById('btn-gen-female-name')?.addEventListener('click', () => {
+    generateCharacterName('female');
 });
 
 function getRandomItem(arr) {
@@ -259,79 +329,182 @@ function getDisciplineInfo(discKey) {
     return disciplinesData[discKey] || { name: discKey, desc: 'Опис відсутній' };
 }
 
+const PREDATOR_CATEGORIES = [
+    {
+        id: 'violence',
+        name: 'Насильство',
+        icon: '⚔️',
+        desc: 'Пряма агресія, насильницьке підкорення, фізичне переслідування та примус здобичі.',
+        badgeStyle: 'bg-red-50 text-red-800 border-red-200',
+        headerBorder: 'border-red-800',
+        predatorIds: ['alleycat', 'extortionist', 'roadside_killer', 'montero']
+    },
+    {
+        id: 'social',
+        name: 'Соціум',
+        icon: '🍷',
+        desc: 'Полювання всередині людського суспільства: зв’язки, культи, нічні клуби, згода чи вдавання романтики.',
+        badgeStyle: 'bg-amber-50 text-amber-800 border-amber-200',
+        headerBorder: 'border-amber-700',
+        predatorIds: ['cleaner', 'cleaver', 'consensualist', 'osiris', 'scene_queen', 'siren']
+    },
+    {
+        id: 'stealth',
+        name: 'Непомітність',
+        icon: '👤',
+        desc: 'Таємне полювання: сплячі смертні, морги, хоспіси, терпляче вистежування чи смертоносні засідки.',
+        badgeStyle: 'bg-zinc-100 text-zinc-800 border-zinc-300',
+        headerBorder: 'border-zinc-700',
+        predatorIds: ['sandman', 'graverobber', 'grim_reaper', 'pursuer', 'trapdoor']
+    },
+    {
+        id: 'non_mortal',
+        name: 'Виключення смертних з раціону',
+        icon: '🩸',
+        desc: 'Особливі дієтичні обмеження: пакетована кров, кров тварин або полювання на інших вампірів.',
+        badgeStyle: 'bg-purple-50 text-purple-800 border-purple-200',
+        headerBorder: 'border-purple-800',
+        predatorIds: ['bagger', 'blood_leech', 'farmer']
+    }
+];
+
+let selectedPredatorCategoryFilter = 'all';
+
+function setPredatorCategoryFilter(categoryId) {
+    selectedPredatorCategoryFilter = categoryId;
+    
+    // Оновлення активного стилю кнопок фільтра
+    const filterButtons = document.querySelectorAll('.pred-filter-btn');
+    filterButtons.forEach(btn => {
+        btn.classList.remove('bg-[#8b0000]', 'text-white', 'shadow-sm');
+        btn.classList.add('text-gray-700');
+    });
+    
+    const activeBtn = document.getElementById(`pred-filter-${categoryId}`);
+    if (activeBtn) {
+        activeBtn.classList.add('bg-[#8b0000]', 'text-white', 'shadow-sm');
+        activeBtn.classList.remove('text-gray-700');
+    }
+    
+    renderPredatorTypes();
+}
+
 function renderPredatorTypes() {
-    const grid = document.getElementById('predator-grid');
-    if (state.predatorData.length === 0) return;
+    const container = document.getElementById('predator-container') || document.getElementById('predator-grid');
+    if (!container || state.predatorData.length === 0) return;
+
+    const categoriesToRender = selectedPredatorCategoryFilter === 'all' 
+        ? PREDATOR_CATEGORIES 
+        : PREDATOR_CATEGORIES.filter(c => c.id === selectedPredatorCategoryFilter);
 
     let html = '';
-    state.predatorData.forEach(predator => {
-        const isSelected = state.selectedPredator === predator.id;
-        
-        let optionsHtml = '';
-        if (isSelected) {
-            let discOpts = (predator.discipline_options || []).map(opt => `
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded border border-transparent hover:border-gray-200 transition-colors" onclick="event.stopPropagation()">
-                    <input type="radio" name="pred_disc" value="${opt.id}" 
-                        onchange="setPredatorChoice('discipline', '${opt.id}')"
-                        ${state.predatorChoices.discipline === opt.id ? 'checked' : ''} class="accent-[#4b0082]">
-                    ${opt.name}
-                </label>
-            `).join('');
 
-            let skillOpts = (predator.skill_options || []).map(opt => `
-                <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded border border-transparent hover:border-gray-200 transition-colors" onclick="event.stopPropagation()">
-                    <input type="radio" name="pred_skill" value="${opt.id}" 
-                        onchange="setPredatorChoice('skill', '${opt.id}', '${opt.spec}')"
-                        ${state.predatorChoices.skill === opt.id && state.predatorChoices.specName === opt.spec ? 'checked' : ''} class="accent-[#4b0082]">
-                    ${opt.name}
-                </label>
-            `).join('');
+    categoriesToRender.forEach(category => {
+        // Знаходимо хижаків для поточної категорії у вказаному порядку
+        const categoryPredators = [];
+        category.predatorIds.forEach(id => {
+            const item = state.predatorData.find(p => p.id === id || (id === 'cleaver' && p.id === 'cleaner') || (id === 'cleaner' && p.id === 'cleaver'));
+            if (item && !categoryPredators.some(cp => cp.id === item.id)) {
+                categoryPredators.push(item);
+            }
+        });
 
-            optionsHtml = `
-                <div class="mt-4 pt-4 border-t border-purple-100 animate-[fadeIn_0.3s_ease-in-out]">
-                    <div class="mb-3">
-                        <span class="block text-[11px] font-bold text-[#4b0082] uppercase tracking-widest mb-1">Оберіть дисципліну (+1 крапка)</span>
-                        <div class="flex flex-col gap-1">${discOpts}</div>
+        if (categoryPredators.length === 0) return;
+
+        let cardsHtml = '';
+        categoryPredators.forEach(predator => {
+            const isSelected = state.selectedPredator === predator.id;
+            
+            let optionsHtml = '';
+            if (isSelected) {
+                let discOpts = (predator.discipline_options || []).map(opt => `
+                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded border border-transparent hover:border-gray-200 transition-colors" onclick="event.stopPropagation()">
+                        <input type="radio" name="pred_disc" value="${opt.id}" 
+                            onchange="setPredatorChoice('discipline', '${opt.id}')"
+                            ${state.predatorChoices.discipline === opt.id ? 'checked' : ''} class="accent-[#4b0082]">
+                        ${opt.name}
+                    </label>
+                `).join('');
+
+                let skillOpts = (predator.skill_options || []).map(opt => `
+                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded border border-transparent hover:border-gray-200 transition-colors" onclick="event.stopPropagation()">
+                        <input type="radio" name="pred_skill" value="${opt.id}" 
+                            onchange="setPredatorChoice('skill', '${opt.id}', '${opt.spec}')"
+                            ${state.predatorChoices.skill === opt.id && state.predatorChoices.specName === opt.spec ? 'checked' : ''} class="accent-[#4b0082]">
+                        ${opt.name}
+                    </label>
+                `).join('');
+
+                optionsHtml = `
+                    <div class="mt-4 pt-4 border-t border-purple-100 animate-[fadeIn_0.3s_ease-in-out]">
+                        <div class="mb-3">
+                            <span class="block text-[11px] font-bold text-[#4b0082] uppercase tracking-widest mb-1">Оберіть дисципліну (+1 крапка)</span>
+                            <div class="flex flex-col gap-1">${discOpts}</div>
+                        </div>
+                        <div>
+                            <span class="block text-[11px] font-bold text-[#4b0082] uppercase tracking-widest mb-1">Оберіть спеціалізацію (+1 крапка)</span>
+                            <div class="flex flex-col gap-1">${skillOpts}</div>
+                        </div>
                     </div>
-                    <div>
-                        <span class="block text-[11px] font-bold text-[#4b0082] uppercase tracking-widest mb-1">Оберіть спеціалізацію (+1 крапка)</span>
-                        <div class="flex flex-col gap-1">${skillOpts}</div>
+                `;
+            }
+
+            const modifierSymbol = (predator.humanity_modifier > 0) ? '+' : '';
+            const modifierText = predator.humanity_modifier !== 0 ? `Людяність ${modifierSymbol}${predator.humanity_modifier}` : 'Людяність незмінна';
+            const modifierColor = predator.humanity_modifier > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : (predator.humanity_modifier < 0 ? 'bg-red-50 text-red-800 border-red-200' : 'bg-gray-100 text-gray-700 border-gray-200');
+
+            let advantagesDisplay = '';
+            if (predator.advantages_text || predator.advantages_text_full) {
+                advantagesDisplay = `<div class="bg-purple-50/70 p-2.5 rounded-lg text-indigo-900 border border-purple-100 flex flex-col gap-1 mt-auto">`;
+                if (predator.advantages_text) {
+                    advantagesDisplay += `<span class="text-[11px] font-bold">${predator.advantages_text}</span>`;
+                }
+                if (predator.advantages_text_full) {
+                    advantagesDisplay += `<span class="text-[10px] leading-snug opacity-90">${predator.advantages_text_full}</span>`;
+                }
+                advantagesDisplay += `</div>`;
+            } else {
+                advantagesDisplay = `<div class="bg-purple-50/70 p-2 rounded-lg text-[11px] font-bold text-indigo-900 border border-purple-100 mt-auto">Немає додаткових благ/вад</div>`;
+            }
+
+            cardsHtml += `
+                <div class="predator-card flex flex-col bg-white p-5 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-gray-300 hover:shadow transition-all ${isSelected ? 'selected' : ''}" 
+                     onclick="selectPredator('${predator.id}')">
+                    <div class="flex justify-between items-start mb-2 gap-2">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border w-fit mb-1.5 ${category.badgeStyle}">${category.icon} ${category.name}</span>
+                            <h3 class="font-serif font-bold text-lg text-[#1a1a1a] leading-tight">${predator.name}</h3>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-1 rounded border min-w-max text-right ${modifierColor}">${modifierText}</span>
                     </div>
+                    <p class="text-xs text-gray-600 mb-3 leading-relaxed text-justify">${predator.description}</p>
+                    ${advantagesDisplay}
+                    ${optionsHtml}
                 </div>
             `;
-        }
-
-        const modifierSymbol = (predator.humanity_modifier > 0) ? '+' : '';
-        const modifierText = predator.humanity_modifier !== 0 ? `Людяність ${modifierSymbol}${predator.humanity_modifier}` : 'Людяність незмінна';
-
-        let advantagesDisplay = '';
-        if (predator.advantages_text || predator.advantages_text_full) {
-            advantagesDisplay = `<div class="bg-purple-50 p-2 rounded text-indigo-800 border border-purple-100 flex flex-col gap-1">`;
-            if (predator.advantages_text) {
-                advantagesDisplay += `<span class="text-[11px] font-bold">${predator.advantages_text}</span>`;
-            }
-            if (predator.advantages_text_full) {
-                advantagesDisplay += `<span class="text-[10px] leading-snug opacity-90">${predator.advantages_text_full}</span>`;
-            }
-            advantagesDisplay += `</div>`;
-        } else {
-            advantagesDisplay = `<div class="bg-purple-50 p-2 rounded text-[11px] font-bold text-indigo-800 border border-purple-100">Немає додаткових благ/вад</div>`;
-        }
+        });
 
         html += `
-            <div class="predator-card flex flex-col bg-white p-5 rounded-xl shadow-sm cursor-pointer ${isSelected ? 'selected' : 'border-gray-200 hover:border-gray-300'}" 
-                 onclick="selectPredator('${predator.id}')">
-                <div class="flex justify-between items-start mb-3 gap-2">
-                    <h3 class="font-serif font-bold text-lg text-[#1a1a1a] leading-tight">${predator.name}</h3>
-                    <span class="text-[10px] font-bold px-2 py-1 rounded bg-gray-100 text-gray-700 min-w-max text-right">${modifierText}</span>
+            <div class="category-section">
+                <div class="flex items-center justify-between border-b-2 ${category.headerBorder} pb-2.5 mb-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-2xl">${category.icon}</span>
+                        <div>
+                            <h3 class="text-xl font-bold vtm-font text-gray-900 uppercase tracking-wider">${category.name}</h3>
+                            <p class="text-xs text-gray-500 hidden sm:block">${category.desc}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold px-2.5 py-1 rounded-full ${category.badgeStyle} border">${categoryPredators.length} ${categoryPredators.length === 1 ? 'тип' : (categoryPredators.length < 5 ? 'типи' : 'типів')}</span>
                 </div>
-                <p class="text-xs text-gray-600 mb-3 flex-grow text-justify">${predator.description}</p>
-                ${advantagesDisplay}
-                ${optionsHtml}
+                <p class="text-xs text-gray-500 sm:hidden mb-3">${category.desc}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    ${cardsHtml}
+                </div>
             </div>
         `;
     });
-    grid.innerHTML = html;
+
+    container.innerHTML = html;
 }
 
 function selectPredator(id) {
@@ -756,121 +929,490 @@ function parseDotOptions(costStr) {
     return [count > 0 ? count : 1];
 }
 
+// --- КАТЕГОРІЇ БЛАГ ТА ВАД (РОЗДІЛИ: ОСНОВНІ, СПЕЦИФІЧНІ, ПРОСУНУТІ) ---
+const CORE_ADV_CATEGORIES = [
+    'Зовнішність',
+    'Залежності',
+    'Інше',
+    'Надбання',
+    'Психологічні',
+    'Харчування',
+    'Мови'
+];
+
+function isClanCaitiff() {
+    if (!state.clan) return false;
+    if (state.clan === 'unknown' || state.clan === 'caitiff') return true;
+    const clanName = (clansData[state.clan]?.name || '').toLowerCase();
+    return clanName.includes('каїтиф') || clanName.includes('каітиф') || clanName.includes('caitiff');
+}
+
+function isClanThinBlood() {
+    if (!state.clan) return false;
+    if (state.clan === 'thin-blood' || state.clan === 'thin_blood' || state.clan === 'thinblood') return true;
+    const clanName = (clansData[state.clan]?.name || '').toLowerCase();
+    return clanName.includes('рідкокров') || clanName.includes('thin-blood') || clanName.includes('thin blood');
+}
+
+function getCategorySection(category) {
+    if (CORE_ADV_CATEGORIES.includes(category)) {
+        return 'core';
+    }
+    const lower = (category || '').toLowerCase();
+    if (lower.includes('каїтиф') || lower.includes('каітиф') || lower.includes('рідкокров') || lower.includes('thin-blood')) {
+        return 'specific';
+    }
+    return 'advanced';
+}
+
+function isCategoryAllowedByClan(category) {
+    const lower = (category || '').toLowerCase();
+    if (lower.includes('каїтиф') || lower.includes('каітиф')) {
+        return isClanCaitiff();
+    }
+    if (lower.includes('рідкокров') || lower.includes('thin-blood')) {
+        return isClanThinBlood();
+    }
+    return true;
+}
+
+function getCategoriesCountWord(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'категорія';
+    if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'категорії';
+    return 'категорій';
+}
+
 function populateAdvantageCategories() {
     const select = document.getElementById('adv-category-filter');
     if (!select || !state.advantagesData) return;
     
-    // Дістаємо всі унікальні категорії і сортуємо за алфавітом
-    const categories = [...new Set(state.advantagesData.map(item => item.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const allCategories = [...new Set(state.advantagesData.map(item => item.category).filter(Boolean))];
     
-    let html = '<option value="all">Всі категорії</option>';
-    categories.forEach(cat => {
-        html += `<option value="${cat}">${cat}</option>`;
-    });
+    const coreCats = allCategories.filter(c => getCategorySection(c) === 'core').sort((a, b) => a.localeCompare(b, 'uk'));
+    const specificCats = allCategories.filter(c => getCategorySection(c) === 'specific').sort((a, b) => a.localeCompare(b, 'uk'));
+    const advancedCats = allCategories.filter(c => getCategorySection(c) === 'advanced').sort((a, b) => a.localeCompare(b, 'uk'));
+    
+    const prevValue = select.value;
+    
+    let html = '<option value="all">Всі категорії (всі розділи)</option>';
+    
+    if (coreCats.length > 0) {
+        html += '<optgroup label="🌟 Основні категорії">';
+        coreCats.forEach(cat => {
+            html += `<option value="${cat}">${cat}</option>`;
+        });
+        html += '</optgroup>';
+    }
+    
+    if (specificCats.length > 0) {
+        html += '<optgroup label="🩸 Специфічні категорії">';
+        specificCats.forEach(cat => {
+            const isAllowed = isCategoryAllowedByClan(cat);
+            if (isAllowed) {
+                html += `<option value="${cat}">${cat} (доступно для вашого клану)</option>`;
+            } else {
+                const reqClan = (cat.toLowerCase().includes('каїтиф') || cat.toLowerCase().includes('каітиф')) ? 'клану Невідомо (Каїтиф)' : 'клану Рідкокровні';
+                html += `<option value="${cat}" disabled>${cat} [🔒 тільки для ${reqClan}]</option>`;
+            }
+        });
+        html += '</optgroup>';
+    }
+    
+    if (advancedCats.length > 0) {
+        html += '<optgroup label="📜 Просунуті категорії">';
+        advancedCats.forEach(cat => {
+            html += `<option value="${cat}">${cat}</option>`;
+        });
+        html += '</optgroup>';
+    }
+    
     select.innerHTML = html;
+    
+    if (prevValue && select.querySelector(`option[value="${prevValue}"]:not([disabled])`)) {
+        select.value = prevValue;
+    } else {
+        select.value = 'all';
+    }
+}
+
+function getMeritsCountWord(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'благо';
+    if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'блага';
+    return 'благ';
+}
+
+function getFlawsCountWord(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'вада';
+    if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100)) return 'вади';
+    return 'вад';
+}
+
+function renderAdvantageCard(item) {
+    let badgeClass = 'bg-gray-100 text-gray-700 border-gray-200';
+    let typeLabel = 'Благо';
+    let isFlaw = (item.type === 'flaw');
+
+    if (item.type === 'merit') { 
+        badgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200'; 
+        typeLabel = 'Чеснота'; 
+    } else if (item.type === 'background') { 
+        badgeClass = 'bg-blue-50 text-blue-800 border-blue-200'; 
+        typeLabel = 'Надбання'; 
+    } else if (item.type === 'flaw') { 
+        badgeClass = 'bg-red-950 text-red-100 border-red-900'; 
+        typeLabel = 'Вада'; 
+    }
+
+    const options = parseDotOptions(item.cost);
+    let actionButtons = '';
+    options.forEach(cost => {
+        const isAlreadySelected = state.selectedAdvantages.some(s => s.id === item.id && s.cost === cost);
+        if (isAlreadySelected) {
+            actionButtons += `
+                <button disabled 
+                    class="px-2.5 py-1 text-xs font-bold rounded-lg border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed flex items-center gap-1 shadow-none">
+                    <span>✓ ${cost} ⬤</span>
+                </button>
+            `;
+        } else {
+            const btnColor = isFlaw
+                ? 'border-red-300 hover:bg-red-900 hover:text-white hover:border-red-900 text-red-950 bg-white'
+                : 'border-emerald-300 hover:bg-emerald-800 hover:text-white hover:border-emerald-800 text-emerald-950 bg-white';
+            actionButtons += `
+                <button onclick="addAdvantage(${item.id}, ${cost})" 
+                    class="px-2.5 py-1 text-xs font-bold rounded-lg border transition-all shadow-sm active:scale-95 flex items-center gap-1 ${btnColor}">
+                    <span>+ ${cost} ⬤</span>
+                </button>
+            `;
+        }
+    });
+
+    const cardBorder = isFlaw ? 'border-gray-200 hover:border-red-300' : 'border-gray-200 hover:border-emerald-300';
+
+    return `
+        <div class="bg-white p-3.5 rounded-xl border ${cardBorder} shadow-sm hover:shadow transition-all flex flex-col justify-between group">
+            <div>
+                <div class="flex justify-between items-start mb-1.5 gap-2">
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${badgeClass}">${typeLabel}</span>
+                        ${item.cost ? `<span class="text-[10px] text-gray-500 font-mono">(${item.cost})</span>` : ''}
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 justify-end min-w-max">
+                        ${actionButtons}
+                    </div>
+                </div>
+                <h4 class="font-serif font-bold text-sm text-gray-900 leading-snug group-hover:text-[#8b0000] transition-colors">${item.name}</h4>
+                <p class="text-xs text-gray-600 leading-relaxed text-justify mt-2">${item.desc}</p>
+            </div>
+        </div>
+    `;
+}
+
+function renderCategoryBlock(category, categoryItems, filterType, searchQuery, filterDots) {
+    // Фільтруємо блага та надбання всередині категорії
+    const filteredMerits = categoryItems.filter(item => {
+        if (item.type !== 'merit' && item.type !== 'background') return false;
+        
+        if (filterType === 'flaw') return false;
+        if (filterType === 'merit' && item.type !== 'merit') return false;
+        if (filterType === 'background' && item.type !== 'background') return false;
+        
+        const matchesSearch = !searchQuery || 
+            item.name.toLowerCase().includes(searchQuery) || 
+            item.desc.toLowerCase().includes(searchQuery) || 
+            (item.category && item.category.toLowerCase().includes(searchQuery));
+        if (!matchesSearch) return false;
+
+        if (filterDots !== 'all') {
+            const options = parseDotOptions(item.cost);
+            if (!options.includes(parseInt(filterDots))) return false;
+        }
+
+        return true;
+    });
+
+    // Фільтруємо вади всередині категорії
+    const filteredFlaws = categoryItems.filter(item => {
+        if (item.type !== 'flaw') return false;
+        
+        if (filterType === 'merit_background' || filterType === 'merit' || filterType === 'background') return false;
+        
+        const matchesSearch = !searchQuery || 
+            item.name.toLowerCase().includes(searchQuery) || 
+            item.desc.toLowerCase().includes(searchQuery) || 
+            (item.category && item.category.toLowerCase().includes(searchQuery));
+        if (!matchesSearch) return false;
+
+        if (filterDots !== 'all') {
+            const options = parseDotOptions(item.cost);
+            if (!options.includes(parseInt(filterDots))) return false;
+        }
+
+        return true;
+    });
+
+    if (filteredMerits.length === 0 && filteredFlaws.length === 0) {
+        return null;
+    }
+
+    const meritsCardsHtml = filteredMerits.map(item => renderAdvantageCard(item)).join('');
+    const flawsCardsHtml = filteredFlaws.map(item => renderAdvantageCard(item)).join('');
+
+    return `
+        <div class="border border-gray-200 rounded-xl overflow-hidden shadow-xs bg-white">
+            <!-- Заголовок категорії -->
+            <div class="bg-gray-100/90 px-4 py-3 border-b border-gray-200 flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#8b0000] inline-block"></span>
+                    <h3 class="font-bold text-base text-gray-900 uppercase tracking-wider vtm-font">${category}</h3>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+                        ✦ ${filteredMerits.length} ${getMeritsCountWord(filteredMerits.length)}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-lg bg-red-50 text-red-900 border border-red-200 font-semibold">
+                        ✕ ${filteredFlaws.length} ${getFlawsCountWord(filteredFlaws.length)}
+                    </span>
+                </div>
+            </div>
+
+            <!-- ДВА СТОВПЧИКИ КАТЕГОРІЇ: 1-Й БЛАГА ТА НАДБАННЯ, 2-Й ВАДИ -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
+                <!-- Стовпчик 1: Блага (Чесноти) та Надбання -->
+                <div class="p-4 flex flex-col bg-white">
+                    <div class="flex items-center justify-between pb-2.5 mb-3.5 border-b border-emerald-200/80">
+                        <span class="text-xs font-bold uppercase tracking-widest text-emerald-900 flex items-center gap-1.5">
+                            <span class="text-emerald-700 font-black">✦</span> Блага (Чесноти) та Надбання
+                        </span>
+                        <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">${filteredMerits.length}</span>
+                    </div>
+                    <div class="space-y-3 flex-grow">
+                        ${filteredMerits.length > 0 ? meritsCardsHtml : '<div class="p-6 text-center text-xs text-gray-400 italic bg-gray-50/50 rounded-lg border border-dashed border-gray-200">Немає благ або надбань у цій категорії</div>'}
+                    </div>
+                </div>
+
+                <!-- Стовпчик 2: Вади -->
+                <div class="p-4 flex flex-col bg-gray-50/40">
+                    <div class="flex items-center justify-between pb-2.5 mb-3.5 border-b border-red-200/80">
+                        <span class="text-xs font-bold uppercase tracking-widest text-red-950 flex items-center gap-1.5">
+                            <span class="text-red-700 font-black">✕</span> Вади (Flaws)
+                        </span>
+                        <span class="text-[11px] font-bold text-red-900 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">${filteredFlaws.length}</span>
+                    </div>
+                    <div class="space-y-3 flex-grow">
+                        ${filteredFlaws.length > 0 ? flawsCardsHtml : '<div class="p-6 text-center text-xs text-gray-400 italic bg-gray-50/50 rounded-lg border border-dashed border-gray-200">Немає вад у цій категорії</div>'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function renderAvailableAdvantages() {
     const container = document.getElementById('available-advantages');
-    if (state.advantagesData.length === 0) return;
+    if (!container || !state.advantagesData || state.advantagesData.length === 0) return;
 
-    const searchQuery = document.getElementById('adv-search').value.toLowerCase();
-    const filterType = document.getElementById('adv-type-filter').value;
+    const searchInput = document.getElementById('adv-search');
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const filterType = document.getElementById('adv-type-filter')?.value || 'all';
     const filterCat = document.getElementById('adv-category-filter')?.value || 'all';
     const filterDots = document.getElementById('adv-dots-filter')?.value || 'all';
 
-    const filtered = state.advantagesData.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchQuery) || item.desc.toLowerCase().includes(searchQuery);
-        const matchesType = filterType === 'all' || item.type === filterType;
-        const matchesCat = filterCat === 'all' || item.category === filterCat;
-        
-        let matchesDots = true;
-        if (filterDots !== 'all') {
-            const options = parseDotOptions(item.cost);
-            matchesDots = options.includes(parseInt(filterDots));
-        }
+    // Отримуємо унікальні категорії
+    const allCategories = [...new Set(state.advantagesData.map(item => item.category).filter(Boolean))];
 
-        return matchesSearch && matchesType && matchesCat && matchesDots;
-    });
+    // Розділяємо на 3 списки категорій
+    let coreCategories = allCategories.filter(c => getCategorySection(c) === 'core').sort((a, b) => a.localeCompare(b, 'uk'));
+    let specificCategories = allCategories.filter(c => getCategorySection(c) === 'specific').sort((a, b) => a.localeCompare(b, 'uk'));
+    let advancedCategories = allCategories.filter(c => getCategorySection(c) === 'advanced').sort((a, b) => a.localeCompare(b, 'uk'));
 
-    if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-gray-400 text-center py-4">Нічого не знайдено...</div>`;
-        return;
+    if (filterCat !== 'all') {
+        coreCategories = coreCategories.filter(c => c === filterCat);
+        specificCategories = specificCategories.filter(c => c === filterCat);
+        advancedCategories = advancedCategories.filter(c => c === filterCat);
     }
 
-    let html = '';
-    filtered.forEach(item => {
-        let badgeClass = 'bg-gray-100 text-gray-700';
-        let titleColor = 'text-gray-800';
-        let typeLabel = 'Благо';
-        if (item.type === 'merit') { badgeClass = 'bg-red-100 text-red-800'; titleColor = 'text-red-800'; typeLabel = 'Чеснота'; } 
-        else if (item.type === 'flaw') { badgeClass = 'bg-gray-800 text-white'; titleColor = 'text-gray-900'; typeLabel = 'Вада'; } 
-        else if (item.type === 'background') { badgeClass = 'bg-blue-100 text-blue-800'; titleColor = 'text-blue-800'; typeLabel = 'Надбання'; }
-
-        const options = parseDotOptions(item.cost);
-        let actionButtons = '';
-        options.forEach(cost => {
-            const isAlreadySelected = state.selectedAdvantages.some(s => s.id === item.id && s.cost === cost);
-            actionButtons += `
-                <button onclick="addAdvantage(${item.id}, ${cost})" 
-                    class="px-2 py-1 text-xs font-bold rounded border transition-colors 
-                    ${isAlreadySelected ? 'bg-gray-200 border-gray-300 text-gray-500 cursor-not-allowed' : 'bg-white border-gray-300 hover:bg-gray-100'}">
-                    + ${cost} ⬤
-                </button>
-            `;
+    const renderGroupCategories = (catList) => {
+        let htmlCards = [];
+        catList.forEach(category => {
+            // Перевіряємо кланові обмеження для специфічних категорій
+            if (!isCategoryAllowedByClan(category)) {
+                return;
+            }
+            const categoryItems = state.advantagesData.filter(item => item.category === category);
+            const cardHtml = renderCategoryBlock(category, categoryItems, filterType, searchQuery, filterDots);
+            if (cardHtml) {
+                htmlCards.push(cardHtml);
+            }
         });
+        return htmlCards;
+    };
 
-        html += `
-            <div class="border-b border-gray-100 pb-4 last:border-0">
-                <div class="flex justify-between items-start mb-1 gap-2">
-                    <div>
-                        <span class="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${badgeClass}">${typeLabel} | ${item.category}</span>
-                        <h4 class="font-serif font-bold text-base ${titleColor} mt-1">${item.name}</h4>
+    const coreCards = renderGroupCategories(coreCategories);
+    const specificCards = renderGroupCategories(specificCategories);
+    const advancedCards = renderGroupCategories(advancedCategories);
+
+    let sectionsHtml = '';
+    let totalRenderedCategories = coreCards.length + specificCards.length + advancedCards.length;
+
+    // 1. ОСНОВНІ КАТЕГОРІЇ
+    if (coreCards.length > 0) {
+        sectionsHtml += `
+            <div class="border border-emerald-200/90 rounded-2xl p-5 bg-emerald-50/20 shadow-xs mb-8">
+                <div class="flex flex-wrap items-center justify-between border-b border-emerald-200 pb-3 mb-5 gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">🌟</span>
+                        <div>
+                            <h3 class="font-bold text-base sm:text-lg text-emerald-950 uppercase tracking-wider vtm-font">Розділ: Основні категорії</h3>
+                            <p class="text-xs text-emerald-800/80">Зовнішність, Залежності, Інше, Надбання, Психологічні, Харчування, Мови</p>
+                        </div>
                     </div>
-                    <div class="flex flex-wrap gap-1 justify-end min-w-max">
-                        ${actionButtons}
-                    </div>
+                    <span class="text-xs font-bold px-3 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-full shadow-2xs">
+                        ${coreCards.length} ${getCategoriesCountWord(coreCards.length)}
+                    </span>
                 </div>
-                <p class="text-xs text-gray-600 leading-snug">${item.desc}</p>
+                <div class="space-y-6">
+                    ${coreCards.join('')}
+                </div>
             </div>
         `;
-    });
+    }
 
-    container.innerHTML = html;
+    // 2. СПЕЦИФІЧНІ КАТЕГОРІЇ
+    const isSpecificFilterActive = filterCat === 'all' || getCategorySection(filterCat) === 'specific';
+    if (isSpecificFilterActive) {
+        let specificContent = '';
+        const currentClanName = (clansData && clansData[state.clan]) ? clansData[state.clan].name : 'Невідомо';
+        const isCaitiff = isClanCaitiff();
+        const isThinBlood = isClanThinBlood();
+
+        if (specificCards.length > 0) {
+            specificContent = `<div class="space-y-6">${specificCards.join('')}</div>`;
+        } else if (!isCaitiff && !isThinBlood && filterCat === 'all') {
+            specificContent = `
+                <div class="bg-white/80 border border-dashed border-purple-300 rounded-xl p-4 sm:p-5 text-purple-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl shrink-0">🔒</span>
+                        <div>
+                            <p class="font-bold text-sm text-purple-950">Специфічні блага та вади заблоковані</p>
+                            <p class="text-xs text-purple-800 leading-relaxed mt-1">Категорія <strong>«Каїтифи»</strong> відкривається виключно для клану <em>«Невідомо (Каїтиф)»</em>, а категорія <strong>«Рідкокровні»</strong> — виключно для клану <em>«Рідкокровка (Thin-blood)»</em>.</p>
+                        </div>
+                    </div>
+                    <div class="shrink-0 bg-purple-100 text-purple-900 border border-purple-300 px-3 py-1 rounded-lg text-xs font-semibold">
+                        Ваш клан: ${currentClanName}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (specificContent) {
+            sectionsHtml += `
+                <div class="border border-purple-200/90 rounded-2xl p-5 bg-purple-50/20 shadow-xs mb-8">
+                    <div class="flex flex-wrap items-center justify-between border-b border-purple-200 pb-3 mb-5 gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">🩸</span>
+                            <div>
+                                <h3 class="font-bold text-base sm:text-lg text-purple-950 uppercase tracking-wider vtm-font">Розділ: Специфічні категорії</h3>
+                                <p class="text-xs text-purple-800/80">Каїтифи (для клану Каїтіф) • Рідкокровні (для клану Рідкокровні)</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 bg-white text-purple-900 border border-purple-300 rounded-full shadow-2xs">
+                            ${specificCards.length > 0 ? `${specificCards.length} ${getCategoriesCountWord(specificCards.length)}` : (isCaitiff || isThinBlood ? '0 категорій' : 'Заблоковано')}
+                        </span>
+                    </div>
+                    ${specificContent}
+                </div>
+            `;
+        }
+    }
+
+    // 3. ПРОСУНУТІ КАТЕГОРІЇ
+    if (advancedCards.length > 0) {
+        sectionsHtml += `
+            <div class="border border-gray-300 rounded-2xl p-5 bg-gray-50/30 shadow-xs mb-8">
+                <div class="flex flex-wrap items-center justify-between border-b border-gray-200 pb-3 mb-5 gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">📜</span>
+                        <div>
+                            <h3 class="font-bold text-base sm:text-lg text-gray-900 uppercase tracking-wider vtm-font">Розділ: Просунуті категорії</h3>
+                            <p class="text-xs text-gray-600">Архаїчні, Узи, Надприродні, Вади Дисциплін, Зараження, Родовід, Діаблері, Гулі, Культи тощо</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold px-3 py-1 bg-white text-gray-800 border border-gray-300 rounded-full shadow-2xs">
+                        ${advancedCards.length} ${getCategoriesCountWord(advancedCards.length)}
+                    </span>
+                </div>
+                <div class="space-y-6">
+                    ${advancedCards.join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    if (totalRenderedCategories === 0 && !sectionsHtml) {
+        container.innerHTML = `<div class="text-gray-400 text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-sm">Нічого не знайдено за вашим запитом...</div>`;
+    } else {
+        container.innerHTML = sectionsHtml;
+    }
 }
 
 function renderSelectedAdvantages() {
     const container = document.getElementById('selected-advantages');
+    if (!container) return;
+
     if (state.selectedAdvantages.length === 0) {
-        container.innerHTML = `<div class="text-gray-400 text-center py-10">Ви ще не обрали жодного блага чи вади.</div>`;
+        container.innerHTML = `<div class="text-gray-400 text-center py-6 text-sm">Ви ще не обрали жодного блага чи вади. Натисніть кнопку <strong>+ [кількість] ⬤</strong> на потрібних картках у категоріях нижче.</div>`;
         return;
     }
 
-    let html = '';
+    let html = '<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">';
     state.selectedAdvantages.forEach((sel, index) => {
-        let badgeClass = sel.type === 'flaw' ? 'bg-gray-800 text-white' : 'bg-red-100 text-red-800';
+        let badgeClass = 'bg-gray-100 text-gray-700 border-gray-200';
+        let typeLabel = 'Благо';
+        let isFlaw = (sel.type === 'flaw');
+
+        if (sel.type === 'merit') {
+            badgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+            typeLabel = 'Чеснота';
+        } else if (sel.type === 'background') {
+            badgeClass = 'bg-blue-50 text-blue-800 border-blue-200';
+            typeLabel = 'Надбання';
+        } else if (sel.type === 'flaw') {
+            badgeClass = 'bg-red-950 text-red-100 border-red-900';
+            typeLabel = 'Вада';
+        }
+
         let isPredator = (sel.source === 'predator');
         
-        // Якщо від хижака — показуємо бейдж замість кнопки видалення
         let actionHTML = isPredator 
-            ? `<span class="text-[9px] font-bold text-[#4b0082] uppercase tracking-widest px-2 py-1 bg-purple-100 border border-purple-200 rounded">Від Хижака</span>`
-            : `<button onclick="removeAdvantage(${index})" class="text-red-500 hover:text-red-700 p-1 font-bold text-lg leading-none">&times;</button>`;
+            ? `<span class="text-[9px] font-bold text-[#4b0082] uppercase tracking-wider px-2 py-0.5 bg-purple-100 border border-purple-200 rounded">Від Хижака</span>`
+            : `<button onclick="removeAdvantage(${index})" title="Видалити" class="text-gray-400 hover:text-red-700 p-1 font-bold text-lg leading-none transition-colors rounded hover:bg-red-50">&times;</button>`;
         
+        const cardBorder = isFlaw ? 'border-red-200/80 bg-red-50/20' : 'border-emerald-200/80 bg-emerald-50/20';
+        const costBadge = isFlaw 
+            ? `<span class="font-bold text-xs text-red-950 bg-red-100/80 px-2 py-0.5 rounded border border-red-200">${sel.cost} ⬤</span>`
+            : `<span class="font-bold text-xs text-emerald-900 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-200">${sel.cost} ⬤</span>`;
+
         html += `
-            <div class="bg-white border border-gray-200 p-3 rounded-lg shadow-sm flex justify-between items-center animate-[fadeIn_0.3s_ease-in-out]">
-                <div>
-                    <span class="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${badgeClass}">
-                        ${sel.type === 'flaw' ? 'Вада' : 'Благо'}
-                    </span>
-                    <h4 class="font-serif font-bold text-sm text-gray-800 mt-1">${sel.name}</h4>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="font-bold text-sm text-gray-700">${sel.cost} ⬤</span>
+            <div class="bg-white border ${cardBorder} p-3 rounded-xl shadow-sm flex flex-col justify-between gap-2 animate-[fadeIn_0.25s_ease-in-out]">
+                <div class="flex justify-between items-start gap-1">
+                    <div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${badgeClass}">
+                            ${typeLabel}
+                        </span>
+                        <h4 class="font-serif font-bold text-sm text-gray-900 mt-1 leading-snug">${sel.name}</h4>
+                        ${sel.category ? `<span class="text-[10px] text-gray-500 italic block mt-0.5">${sel.category}</span>` : ''}
+                    </div>
                     ${actionHTML}
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-gray-100 text-xs mt-1">
+                    <span class="text-[10px] text-gray-400 font-mono">Вартість:</span>
+                    ${costBadge}
                 </div>
             </div>
         `;
     });
+    html += '</div>';
     container.innerHTML = html;
 }
 
@@ -879,7 +1421,15 @@ function addAdvantage(id, cost) {
     if (!item) return;
     if (state.selectedAdvantages.some(s => s.id === id && s.cost === cost)) return;
 
-    state.selectedAdvantages.push({ id: item.id, name: item.name, type: item.type, cost: cost });
+    state.selectedAdvantages.push({ 
+        id: item.id, 
+        name: item.name, 
+        type: item.type, 
+        cost: cost,
+        category: item.category,
+        desc: item.desc,
+        source: 'manual'
+    });
     renderAvailableAdvantages(); 
     renderSelectedAdvantages();
     updateTrackers();
@@ -917,6 +1467,24 @@ function changeClan(clanId) {
     
     const clanInfo = clansData[clanId] || {};
     
+    // Оновлення кнопки клану на першому кроці
+    const clanBtnName = document.getElementById('clan-btn-name');
+    const clanBtnIcon = document.getElementById('clan-btn-icon');
+    const clanBtnIconWrapper = document.getElementById('clan-btn-icon-wrapper');
+    if (clanBtnName && clanInfo) {
+        clanBtnName.innerText = clanInfo.name || 'Невідомо';
+    }
+    if (clanBtnIcon && typeof clanImages !== 'undefined') {
+        if (clanImages[clanId]) {
+            clanBtnIcon.src = `Clan_symbols/${clanImages[clanId]}`;
+            clanBtnIcon.style.display = 'block';
+            if (clanBtnIconWrapper) clanBtnIconWrapper.style.display = 'flex';
+        } else {
+            clanBtnIcon.style.display = 'none';
+            if (clanBtnIconWrapper) clanBtnIconWrapper.style.display = 'none';
+        }
+    }
+    
     const desc1 = document.getElementById('clan-desc-1');
     if (desc1) desc1.innerText = clanInfo.desc || '';
     
@@ -946,9 +1514,20 @@ function changeClan(clanId) {
     state.disciplinePowers = {}; 
     state.manualDisciplines = []; // Скидаємо вручну додані дисципліни при зміні клану
 
+    // Видаляємо специфічні блага/вади, якщо обраний клан більше не підходить
+    if (state.selectedAdvantages && state.selectedAdvantages.length > 0) {
+        state.selectedAdvantages = state.selectedAdvantages.filter(sel => {
+            if (!sel.category) return true;
+            return isCategoryAllowedByClan(sel.category);
+        });
+    }
+
     renderDisciplines();
     updateTrackers();
     updateHeaderInfo();
+    populateAdvantageCategories();
+    renderAvailableAdvantages();
+    renderSelectedAdvantages();
 }
 
 function updateHeaderInfo() {
@@ -1063,11 +1642,29 @@ const discCounts = { 2: 0, 1: 0 };
     const meritsEl = document.getElementById('merits-tracker');
     const flawsEl = document.getElementById('flaws-tracker');
 
-    meritsEl.innerText = `${totalMeritsDots} / 7 ⬤`;
-    flawsEl.innerText = `${totalFlawsDots} / 2 ⬤`;
-    
-    meritsEl.className = `px-3 py-1 text-sm font-bold rounded border tracker-badge ${totalMeritsDots === 7 ? 'valid' : (totalMeritsDots > 7 ? 'exceeded' : 'invalid')}`;
-    flawsEl.className = `px-3 py-1 text-sm font-bold rounded border tracker-badge ${totalFlawsDots === 2 ? 'valid' : (totalFlawsDots > 2 ? 'exceeded' : 'invalid')}`;
+    if (meritsEl) {
+        meritsEl.innerText = `${totalMeritsDots} / 7 ⬤`;
+        meritsEl.className = `px-3 py-1 text-sm font-bold rounded border tracker-badge ${totalMeritsDots === 7 ? 'valid' : (totalMeritsDots > 7 ? 'exceeded' : 'invalid')}`;
+    }
+    if (flawsEl) {
+        flawsEl.innerText = `${totalFlawsDots} / 2 ⬤`;
+        flawsEl.className = `px-3 py-1 text-sm font-bold rounded border tracker-badge ${totalFlawsDots === 2 ? 'valid' : (totalFlawsDots > 2 ? 'exceeded' : 'invalid')}`;
+    }
+
+    const selectedCountNum = document.getElementById('selected-count-num');
+    if (selectedCountNum) {
+        selectedCountNum.innerText = state.selectedAdvantages.length;
+    }
+    const summaryTracker = document.getElementById('selected-advantages-summary-tracker');
+    if (summaryTracker) {
+        summaryTracker.innerHTML = `
+            <span>Обрано: <strong class="text-white">${state.selectedAdvantages.length}</strong> пунктів</span>
+            <span class="text-gray-500">•</span>
+            <span class="${totalMeritsDots === 7 ? 'text-emerald-400 font-bold' : (totalMeritsDots > 7 ? 'text-amber-400 font-bold' : 'text-gray-300')}">Блага: ${totalMeritsDots}/7 ⬤</span>
+            <span class="text-gray-500">•</span>
+            <span class="${totalFlawsDots === 2 ? 'text-emerald-400 font-bold' : (totalFlawsDots > 2 ? 'text-amber-400 font-bold' : 'text-gray-300')}">Вади: ${totalFlawsDots}/2 ⬤</span>
+        `;
+    }
 }
 
 function changeSkillDistribution() {
@@ -1687,4 +2284,115 @@ function renderHealthWillpower() {
         const el = document.getElementById(id);
         if (el) el.innerHTML = wHtml;
     });
+}
+
+// --- Clan Selection Modal ---
+
+const clanCategories = [
+    {
+        title: "Правителі та командири",
+        clans: ["ventrue", "tzimisce", "lasombra"]
+    },
+    {
+        title: "Бійці та захисники",
+        clans: ["brujah", "gangrel", "banu_haqim"]
+    },
+    {
+        title: "Спокусники та обманщики",
+        clans: ["toreador", "ravnos", "ministry"]
+    },
+    {
+        title: "Розслідувачі та дослідники",
+        clans: ["malkavian", "tremere", "hecata"]
+    },
+    {
+        title: "Тіні та спостерігачі",
+        clans: ["nosferatu", "salubri"]
+    },
+    {
+        title: "Відлюдники та вигнанці",
+        clans: ["unknown", "thin-blood"]
+    }
+];
+
+const clanImages = {
+    "ventrue": "Ventrue_symbol.png",
+    "tzimisce": "Tzimisce_symbol.png",
+    "lasombra": "Lasombra_symbol.png",
+    "brujah": "Brujah_symbol.png",
+    "gangrel": "Gangrel_symbol.png",
+    "banu_haqim": "Banu_Haqim_Symbol.png",
+    "toreador": "Toreador_symbol.png",
+    "ravnos": "Ravnos_symbol.png",
+    "ministry": "Ministry_symbol.png",
+    "malkavian": "Malkavian_symbol.png",
+    "tremere": "Tremere_symbol.png",
+    "hecata": "Hecata_symbol.png",
+    "nosferatu": "Nosferatu_symbol.png",
+    "salubri": "Salubri_symbol.png",
+    "unknown": "Caitiff_symbol.png",
+    "thin-blood": "Thinblood_symbol.png"
+};
+
+function openClanModal() {
+    renderClanModal();
+    document.getElementById('clan-modal').classList.remove('hidden');
+    document.getElementById('clan-modal').classList.add('flex');
+}
+
+function closeClanModal() {
+    document.getElementById('clan-modal').classList.add('hidden');
+    document.getElementById('clan-modal').classList.remove('flex');
+}
+
+function selectClanFromModal(clanId) {
+    changeClan(clanId);
+    
+    // Оновлюємо прихований селект для сумісності
+    const sel = document.getElementById('clan-select-1');
+    if (sel) sel.value = clanId;
+    
+    closeClanModal();
+}
+
+function renderClanModal() {
+    const container = document.getElementById('clan-modal-content');
+    if (!container) return;
+    
+    let html = '<div class="space-y-8">';
+    
+    clanCategories.forEach(cat => {
+        html += `
+            <div>
+                <h3 class="text-xl font-bold text-gray-400 uppercase tracking-widest border-b border-gray-700 pb-2 mb-4">${cat.title}</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        `;
+        
+        cat.clans.forEach(clanId => {
+            const clanData = clansData[clanId];
+            if (!clanData) return;
+            
+            const imgSrc = clanImages[clanId] ? `Clan_symbols/${clanImages[clanId]}` : '';
+            
+            html += `
+                <button onclick="selectClanFromModal('${clanId}')" class="flex items-start p-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-red-500 rounded-lg transition-all group text-left h-full">
+                    <div class="shrink-0 mr-4 bg-gray-900 rounded p-2 border border-gray-700 group-hover:border-red-500 transition-colors w-16 h-16 flex items-center justify-center">
+                        <img src="${imgSrc}" class="w-full h-full object-contain filter invert opacity-70 group-hover:opacity-100 transition-opacity" alt="${clanData.name}">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-lg font-serif font-bold text-white group-hover:text-red-400 truncate">${clanData.name}</h4>
+                        <p class="text-xs text-gray-400 mt-1 line-clamp-3 leading-tight">${clanData.desc || ''}</p>
+                    </div>
+                </button>
+            `;
+        });
+        
+        html += `
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
 }
