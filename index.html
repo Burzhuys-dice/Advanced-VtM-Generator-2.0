@@ -311,7 +311,7 @@
                             </button>
                         </div>
                     </div>
-                    <input type="text" id="character-name" placeholder="Наприклад: Джек Річер..." class="custom-input text-xl w-full border border-gray-300 rounded p-2">
+                    <input type="text" id="character-name" placeholder="Наприклад: Іван Пупченко..." class="custom-input text-xl w-full border border-gray-300 rounded p-2">
                 </div>
                 <div>
                     <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -321,7 +321,7 @@
                             <span>Випадкова ідея для концепту</span>
                         </button>
                     </div>
-                    <textarea id="concept-phrase" rows="3" placeholder="Наприклад: Колишній детектив, що шукає свого вбивцю..." class="custom-input text-base sm:text-lg w-full border border-gray-300 rounded p-2.5 resize-y leading-relaxed"></textarea>
+                    <textarea id="concept-phrase" rows="2" placeholder="Наприклад: Колишній детектив, що шукає свого вбивцю..." class="custom-input text-base sm:text-lg w-full border border-gray-300 rounded p-2.5 resize-y leading-relaxed"></textarea>
                 </div>
 <!-- ================= БЛОК КЛАНУ ================= -->
 <div class="mt-4">
@@ -414,11 +414,11 @@
                 </div>
             </div>
         </div>
-        <textarea id="conviction1" name="conviction1" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Перше переконання..."></textarea>
+        <textarea id="conviction1" name="conviction1" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border resize-y" placeholder="Перше переконання..."></textarea>
     </div>
     <div>
         <label for="touchstone1" class="block text-sm font-medium text-gray-700 mb-1">Опора 1</label>
-        <textarea id="touchstone1" name="touchstone1" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Опора для першого переконання..."></textarea>
+        <textarea id="touchstone1" name="touchstone1" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border resize-y" placeholder="Опора для першого переконання..."></textarea>
     </div>
 
     <!-- Пара 2 -->
@@ -435,11 +435,11 @@
                 </div>
             </div>
         </div>
-        <textarea id="conviction2" name="conviction2" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Друге переконання..."></textarea>
+        <textarea id="conviction2" name="conviction2" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border resize-y" placeholder="Друге переконання..."></textarea>
     </div>
     <div>
         <label for="touchstone2" class="block text-sm font-medium text-gray-700 mb-1">Опора 2</label>
-        <textarea id="touchstone2" name="touchstone2" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border" placeholder="Опора для другого переконання..."></textarea>
+        <textarea id="touchstone2" name="touchstone2" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border resize-y" placeholder="Опора для другого переконання..."></textarea>
     </div>
 </div>
 
@@ -451,6 +451,85 @@
         Випадкове Переконання 2
     </button>
 </div>
+
+<!-- ================= ДОДАТКОВІ ВІДОМОСТІ (ХРОНІКА, СІР, АМБІЦІЇ, БІОГРАФІЯ) ================= -->
+<details class="mt-6 border border-gray-200 rounded-lg p-4 bg-gray-50 group">
+    <summary class="font-bold text-sm text-gray-800 uppercase tracking-wider cursor-pointer select-none flex justify-between items-center">
+        <span>Додаткові відомості бланка (Хроніка, Сір, Амбіції, Біографія)</span>
+        <span class="text-xs text-gray-500 font-normal group-open:hidden">+ Розгорнути</span>
+        <span class="text-xs text-gray-500 font-normal hidden group-open:inline">- Згорнути</span>
+    </summary>
+    <div class="mt-4 space-y-4 pt-3 border-t border-gray-200 text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="chronicle-name" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Хроніка</label>
+                <input type="text" id="chronicle-name" placeholder="Назва хроніки..." class="w-full rounded border-gray-300 p-2 text-sm border bg-white">
+            </div>
+            <div>
+                <label for="sire-name" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Сір</label>
+                <input type="text" id="sire-name" placeholder="Ім'я творця..." class="w-full rounded border-gray-300 p-2 text-sm border bg-white">
+            </div>
+            <div>
+                <label for="generation-val" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Покоління</label>
+                <select id="generation-val" class="w-full rounded border-gray-300 p-2 text-sm border bg-white">
+                    <option value="13-те">13-те покоління (Неонат)</option>
+                    <option value="12-те">12-те покоління</option>
+                    <option value="11-те">11-те покоління</option>
+                    <option value="10-те">10-те покоління (Анцила)</option>
+                    <option value="14-те">14-те покоління (Рідкокровець)</option>
+                    <option value="15-те">15-те покоління (Рідкокровець)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="ambition-phrase" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Амбіція (Довгострокова мета)</label>
+                <input type="text" id="ambition-phrase" placeholder="Наприклад: Стати князем міста..." class="w-full rounded border-gray-300 p-2 text-sm border bg-white">
+            </div>
+            <div>
+                <label for="desire-phrase" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Бажання (Короткострокова мета)</label>
+                <input type="text" id="desire-phrase" placeholder="Наприклад: Знайти союзника в поліції..." class="w-full rounded border-gray-300 p-2 text-sm border bg-white">
+            </div>
+        </div>
+
+        <div>
+            <label for="chronicle-tenets" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Принципи хроніки</label>
+            <textarea id="chronicle-tenets" rows="2" placeholder="Правила та моральні орієнтири вашої гри (хроніки)..." class="w-full rounded border-gray-300 p-2 text-sm border bg-white"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+                <label for="bio-true-age" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Справжній вік</label>
+                <input type="text" id="bio-true-age" placeholder="рр." class="w-full rounded border-gray-300 p-1.5 text-xs border bg-white">
+            </div>
+            <div>
+                <label for="bio-apparent-age" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Візуальний вік</label>
+                <input type="text" id="bio-apparent-age" placeholder="рр." class="w-full rounded border-gray-300 p-1.5 text-xs border bg-white">
+            </div>
+            <div>
+                <label for="bio-dob" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Дата народження</label>
+                <input type="text" id="bio-dob" placeholder="ДД.ММ.РРРР" class="w-full rounded border-gray-300 p-1.5 text-xs border bg-white">
+            </div>
+            <div>
+                <label for="bio-dod" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Дата смерті</label>
+                <input type="text" id="bio-dod" placeholder="ДД.ММ.РРРР" class="w-full rounded border-gray-300 p-1.5 text-xs border bg-white">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+                <label for="bio-appearance" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Зовнішність</label>
+                <input type="text" id="bio-appearance" placeholder="Одяг, зріст, статура..." class="w-full rounded border-gray-300 p-1.5 text-xs border bg-white">
+            </div>
+            <div>
+                <label for="bio-distinguishing" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Виразні риси</label>
+                <input type="text" id="bio-distinguishing" placeholder="Шрами, татуювання, погляд..." class="w-full rounded border-gray-300 p-1.5 text-xs border bg-white">
+            </div>
+        </div>
+    </div>
+</details>
+
 <div class="mt-10 flex justify-end">
     <button onclick="goToStep(2)" class="px-6 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] transition-colors rounded shadow">Далі ➔</button>
 </div>
@@ -711,30 +790,56 @@
         </section>
 
         <!-- STEP 7: SUMMARY & PRINT -->
-        <section id="step-7" class="step-container bg-white p-6 md:p-10 rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-none print:p-0 print:m-0">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8 border-b-2 border-[#8b0000] pb-4">
+        <section id="step-7" class="step-container bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-sm border border-gray-200 print:shadow-none print:border-none print:p-0 print:m-0">
+            <!-- Screen Header & Actions (Hidden on Print) -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6 border-b-2 border-[#8b0000] pb-4 print:hidden">
                 <div>
                     <h2 id="summary-name" class="text-3xl md:text-4xl font-bold text-[#8b0000] vtm-font uppercase mb-1">Ім'я Персонажа</h2>
                     <p id="summary-concept" class="text-base md:text-lg text-gray-600 font-serif italic">Концепт | Клан | Тип Хижака</p>
                 </div>
                 <div class="w-full md:w-auto flex flex-col sm:flex-row md:flex-col items-start sm:items-center md:items-end gap-2 justify-between">
                     <p class="text-sm font-bold text-gray-500 uppercase tracking-widest">Людяність: <span id="summary-humanity" class="text-gray-900 text-xl font-serif">7</span></p>
-                    <div class="flex flex-wrap items-center gap-2 print:hidden">
-                        <button onclick="window.print()" class="px-4 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-xs hover:bg-stone-700 transition-colors rounded shadow flex items-center gap-1.5">
-                            <span>🖨 Друк Аркуша</span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button id="btn-print-sheet-top" onclick="printCharacterSheet()" class="px-4 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-xs hover:bg-[#8b0000] active:scale-95 transition-all rounded shadow flex items-center gap-1.5 cursor-pointer">
+                            <span>🖨 Друк Аркуша (VtM 5e)</span>
                         </button>
-                        <button id="btn-export-foundry-top" onclick="exportToFoundryVTT()" class="px-4 py-2 bg-[#8b0000] text-white font-bold uppercase tracking-widest text-xs hover:bg-red-800 transition-colors rounded shadow flex items-center gap-1.5">
-                            <span>🎲 Експорт у Foundry VTT</span>
+                        <button id="btn-print-newtab-top" onclick="openPrintSheetInNewWindow()" title="Відкрити 2-сторінковий бланк для друку/збереження PDF у новій вкладці" class="px-3 py-2 bg-stone-700 text-white font-bold uppercase tracking-widest text-xs hover:bg-stone-900 active:scale-95 transition-all rounded shadow flex items-center gap-1 cursor-pointer">
+                            <span>↗ У новій вкладці</span>
+                        </button>
+                        <button id="btn-export-foundry-top" onclick="exportToFoundryVTT()" class="px-4 py-2 bg-[#8b0000] text-white font-bold uppercase tracking-widest text-xs hover:bg-red-800 transition-colors rounded shadow flex items-center gap-1.5 cursor-pointer">
+                            <span>🎲 Foundry VTT</span>
                         </button>
                     </div>
                 </div>
             </div>
-            <div id="summary-content" class="space-y-10"></div>
+
+            <!-- View Switcher (Screen Only) -->
+            <div id="summary-view-toggle" class="flex items-center gap-2 mb-6 bg-stone-100 p-1.5 rounded-lg border border-stone-200 print:hidden max-w-md">
+                <button type="button" id="tab-btn-official" onclick="switchSummaryView('official')" class="flex-1 py-2 px-3 rounded text-xs font-bold uppercase tracking-wider transition-all bg-[#8b0000] text-white shadow-xs">
+                    📄 Офіційний бланк VtM 5e
+                </button>
+                <button type="button" id="tab-btn-cards" onclick="switchSummaryView('cards')" class="flex-1 py-2 px-3 rounded text-xs font-bold uppercase tracking-wider transition-all text-gray-600 hover:text-gray-900">
+                    🗂️ Інтерактивні картки
+                </button>
+            </div>
+
+            <!-- 1. Official VtM 5e 2-Page Printable Sheet (Visible in print and by default in step 7) -->
+            <div id="vtm-official-sheet" class="vtm-official-sheet-wrapper"></div>
+
+            <!-- 2. Interactive Card Summary (Screen alternative) -->
+            <div id="summary-cards-container" class="hidden space-y-10">
+                <div id="summary-content" class="space-y-10"></div>
+            </div>
+
+            <!-- Bottom Navigation Actions (Hidden on Print) -->
             <div class="mt-12 pt-6 border-t border-gray-200 flex flex-wrap justify-between items-center gap-4 print:hidden">
-                <button onclick="goToStep(6)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded">⬅ Назад до редагування</button>
+                <button onclick="goToStep(6)" class="px-6 py-2 bg-gray-200 text-gray-700 font-bold uppercase tracking-widest text-sm hover:bg-gray-300 transition-colors rounded cursor-pointer">⬅ Назад до редагування</button>
                 <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="window.print()" class="px-5 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-stone-700 transition-colors rounded shadow">🖨 Друк Аркуша</button>
-                    <button id="btn-export-foundry-bottom" onclick="exportToFoundryVTT()" class="px-6 py-2 bg-[#8b0000] text-white font-bold uppercase tracking-widest text-sm hover:bg-red-800 transition-colors rounded shadow flex items-center gap-2">
+                    <button id="btn-print-sheet-bottom" onclick="printCharacterSheet()" class="px-5 py-2 bg-[#1a1a1a] text-white font-bold uppercase tracking-widest text-sm hover:bg-[#8b0000] active:scale-95 transition-all rounded shadow cursor-pointer">🖨 Друк Аркуша (VtM 5e)</button>
+                    <button id="btn-print-newtab-bottom" onclick="openPrintSheetInNewWindow()" title="Відкрити 2-сторінковий бланк для друку/збереження PDF у новій вкладці" class="px-4 py-2 bg-stone-700 text-white font-bold uppercase tracking-widest text-sm hover:bg-stone-900 active:scale-95 transition-all rounded shadow flex items-center gap-1.5 cursor-pointer">
+                        <span>↗ У новій вкладці</span>
+                    </button>
+                    <button id="btn-export-foundry-bottom" onclick="exportToFoundryVTT()" class="px-6 py-2 bg-[#8b0000] text-white font-bold uppercase tracking-widest text-sm hover:bg-red-800 transition-colors rounded shadow flex items-center gap-2 cursor-pointer">
                         <span>🎲 Експорт у Foundry VTT (.json)</span>
                     </button>
                 </div>
@@ -749,7 +854,7 @@
         <p class="text-sm text-gray-500 mt-2 px-4 max-w-4xl mx-auto">Частина матеріалів тут захищена авторськими правами та торговими марками Paradox Interactive AB і використовуються з дозволу. Усі права захищено. Додаткову інформацію можна знайти за адресою worldofdarkness.com</p>
     </footer>
 
-    <script src="data.js"></script>
+    <script src="config.js"></script>
     <script src="foundryExport.js"></script>
     <script src="quiz.js"></script>
     <script src="app.js"></script>

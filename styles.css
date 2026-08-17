@@ -1,11 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;600;700&display=swap');
 
 :root {
     --vtm-red: #8b0000;
+    --vtm-crimson: #6b0000;
     --vtm-bone: #f5f5f0;
     --vtm-dark: #1a1a1a;
     --vtm-accent: #c8102e;
     --vtm-predator: #4b0082;
+    --vtm-sheet-bg: #fcfbfa;
+    --vtm-sheet-border: #222222;
 }
 
 body {
@@ -23,6 +26,11 @@ h1, h2, h3, .vtm-font {
     font-family: 'Cinzel', serif;
 }
 
+.garamond {
+    font-family: 'EB Garamond', Georgia, serif;
+}
+
+/* Interactive Wizard Dot Controls */
 .dot {
     width: 16px;
     height: 16px;
@@ -87,16 +95,17 @@ h1, h2, h3, .vtm-font {
     color: #4b5563;
 }
 .tracker-badge.exceeded {
-    background-color: #991b1b; /* Насичений червоний колір */
+    background-color: #991b1b;
     color: white;
     border-color: #7f1d1d;
 }
+
 .custom-input {
     background: transparent;
     border: none;
     border-bottom: 2px solid #ccc;
     outline: none;
-    font-family: 'EB+Garamond', serif;
+    font-family: 'EB Garamond', serif;
     font-size: 1.125rem;
     width: 100%;
     padding: 4px 0;
@@ -136,4 +145,869 @@ h1, h2, h3, .vtm-font {
     margin-top: 2px;
     font-style: italic;
     line-height: 1.2;
+}
+
+/* ==========================================================================
+   OFFICIAL VTM 5E CHARACTER SHEET STYLES (SCREEN & PRINT)
+   ========================================================================== */
+
+.vtm-official-sheet-wrapper {
+    width: 100%;
+    margin: 0 auto;
+    font-family: 'EB Garamond', Georgia, serif;
+    color: #111111;
+}
+
+.vtm-sheet-page {
+    background-color: #ffffff;
+    color: #111111;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto 2rem auto;
+    padding: 6mm 7mm;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Outer and Inner Classic Borders */
+.vtm-sheet-border {
+    border: 2.5px solid #1a1a1a;
+    padding: 3.5mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
+.vtm-sheet-inner-border {
+    border: 1px solid #1a1a1a;
+    padding: 3mm;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+/* Title Banner */
+.vtm-title-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 6px;
+    padding: 2px 0 3px 0;
+    width: 100%;
+}
+
+.vtm-title-lines-left,
+.vtm-title-lines-right {
+    flex: 1;
+    height: 4px;
+    border-top: 1.5px solid #1a1a1a;
+    border-bottom: 1px solid #8b0000;
+}
+
+.vtm-main-title {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+.vtm-title-primary {
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+    font-size: 21pt;
+    font-weight: 900;
+    letter-spacing: 0.26em;
+    line-height: 1;
+    margin: 0;
+    color: #1a1a1a;
+    text-transform: uppercase;
+}
+
+.vtm-title-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+    font-size: 9pt;
+    font-weight: 800;
+    letter-spacing: 0.45em;
+    line-height: 1.2;
+    margin: 2px 0 0 0;
+    color: #8b0000;
+    text-transform: uppercase;
+}
+
+.vtm-title-secondary::before,
+.vtm-title-secondary::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: #8b0000;
+    min-width: 18px;
+}
+
+/* 3x3 Profile Info Box */
+.vtm-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1.5px solid #1a1a1a;
+    margin-bottom: 6px;
+    background-color: #fff;
+}
+
+.vtm-profile-cell {
+    border-right: 1px solid #888;
+    border-bottom: 1px solid #888;
+    padding: 3px 5px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    min-height: 22px;
+    overflow: hidden;
+}
+
+.vtm-profile-cell:nth-child(3n) {
+    border-right: none;
+}
+
+.vtm-profile-cell:nth-child(n+7) {
+    border-bottom: none;
+}
+
+.vtm-cell-label {
+    font-family: 'Cinzel', serif;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #333333;
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+}
+
+.vtm-cell-val {
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #111111;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-grow: 1;
+}
+
+/* Section Headers */
+.vtm-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0 3px 0;
+    position: relative;
+}
+
+.vtm-section-header::before,
+.vtm-section-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #8b0000, #1a1a1a);
+}
+
+.vtm-section-header::after {
+    background: linear-gradient(to left, transparent, #8b0000, #1a1a1a);
+}
+
+.vtm-section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 9.5pt;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #8b0000;
+    padding: 0 4px;
+}
+
+.vtm-col-title {
+    font-family: 'Cinzel', serif;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    color: #1a1a1a;
+    border-bottom: 1.5px solid #1a1a1a;
+    padding-bottom: 2px;
+    margin-bottom: 3px;
+    letter-spacing: 0.1em;
+}
+
+/* Attributes Grid */
+.vtm-attributes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.vtm-attr-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.vtm-dots-leader {
+    flex: 1;
+    border-bottom: 1px dotted #888;
+    height: 1px;
+    margin: 0 4px 2px 4px;
+    min-width: 6px;
+}
+
+.vtm-stat-row {
+    display: flex;
+    align-items: center;
+    font-size: 8.5pt;
+    font-family: 'EB Garamond', Georgia, serif;
+    padding: 1.5px 0;
+    min-height: 17px;
+}
+
+.vtm-stat-name {
+    font-weight: 600;
+    color: #222;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Circles & Dots for Official Sheet */
+.vtm-dots {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.vtm-sheet-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 1.2px solid #1a1a1a;
+    display: inline-block;
+    box-sizing: border-box;
+}
+
+.vtm-sheet-dot.filled {
+    background-color: #1a1a1a;
+    border-color: #1a1a1a;
+}
+
+.vtm-sheet-dot.predator-dot {
+    background-color: #4b0082;
+    border-color: #4b0082;
+}
+
+.vtm-sheet-dot.spec-dot {
+    background-color: #065f46;
+    border-color: #065f46;
+}
+
+/* Trackers Row (Health & Willpower) */
+.vtm-trackers-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    border: 1px solid #1a1a1a;
+    padding: 3px 6px;
+    margin-bottom: 6px;
+    background-color: #fbfbfb;
+}
+
+.vtm-tracker-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.vtm-tracker-name {
+    font-family: 'Cinzel', serif;
+    font-size: 8pt;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #1a1a1a;
+}
+
+.vtm-tracker-boxes {
+    display: flex;
+    gap: 2.5px;
+    align-items: center;
+}
+
+.vtm-track-box {
+    width: 12px;
+    height: 12px;
+    border: 1.2px solid #1a1a1a;
+    display: inline-block;
+    box-sizing: border-box;
+    background-color: #ffffff;
+}
+
+.vtm-track-box.inactive {
+    border: 1px dashed #aaa;
+    background-color: #f0f0f0;
+}
+
+/* Skills Grid */
+.vtm-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.vtm-skill-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.vtm-skill-row {
+    display: flex;
+    align-items: center;
+    font-size: 8pt;
+    padding: 1px 0;
+    min-height: 17px;
+}
+
+.vtm-skill-title {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 2px;
+    white-space: nowrap;
+    font-weight: 500;
+    color: #222;
+    flex-shrink: 0;
+}
+
+.vtm-skill-spec {
+    font-size: 7pt;
+    font-style: italic;
+    color: #555555;
+    white-space: nowrap;
+}
+
+/* Disciplines Grid */
+.vtm-disciplines-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 5px;
+}
+
+.vtm-disc-box {
+    border: 1px solid #1a1a1a;
+    padding: 3px 4px;
+    min-height: 62px;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+
+.vtm-disc-header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #1a1a1a;
+    padding-bottom: 1px;
+    margin-bottom: 2px;
+}
+
+.vtm-disc-name {
+    font-family: 'Cinzel', serif;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #8b0000;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.vtm-disc-powers {
+    font-size: 7pt;
+    color: #222;
+    line-height: 1.25;
+    flex-grow: 1;
+}
+
+.vtm-disc-power-item {
+    margin-bottom: 1.5px;
+    border-bottom: 1px dotted #e5e7eb;
+    padding-bottom: 1px;
+}
+
+.vtm-power-title {
+    font-weight: 700;
+    color: #111;
+}
+
+/* Bottom Bar: Resonance, Hunger, Humanity */
+.vtm-bottom-bar {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1.4fr;
+    gap: 8px;
+    border: 1.5px solid #1a1a1a;
+    padding: 4px 6px;
+    margin-top: 2px;
+    align-items: center;
+    background-color: #fbfbfb;
+}
+
+.vtm-bottom-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vtm-bottom-label {
+    font-family: 'Cinzel', serif;
+    font-size: 7.5pt;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #1a1a1a;
+    white-space: nowrap;
+}
+
+.vtm-resonance-line {
+    flex-grow: 1;
+    border-bottom: 1px solid #888;
+    height: 12px;
+    font-size: 8pt;
+    padding-left: 2px;
+}
+
+.vtm-hunger-box {
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid #8b0000;
+    display: inline-block;
+    box-sizing: border-box;
+    background-color: #ffffff;
+}
+
+.vtm-humanity-box {
+    width: 12px;
+    height: 12px;
+    border: 1.2px solid #1a1a1a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    font-size: 9px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.vtm-humanity-box.filled {
+    background-color: #1a1a1a;
+    color: #ffffff;
+}
+
+.vtm-sheet-footer-note {
+    font-size: 6.5pt;
+    text-align: right;
+    color: #666666;
+    font-style: italic;
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   PAGE 2 STYLES
+   ========================================================================== */
+
+.vtm-page2-top-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.vtm-boxed-card {
+    border: 1.5px solid #1a1a1a;
+    padding: 3px 5px;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+}
+
+.vtm-card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 7.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+    color: #8b0000;
+    border-bottom: 1px solid #1a1a1a;
+    padding-bottom: 1px;
+    margin-bottom: 2px;
+    letter-spacing: 0.08em;
+}
+
+.vtm-card-content {
+    font-size: 7.5pt;
+    line-height: 1.2;
+    flex-grow: 1;
+}
+
+.vtm-page2-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.vtm-page2-left-col,
+.vtm-page2-right-col {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Merits & Flaws List */
+.vtm-merits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.vtm-merit-row {
+    display: flex;
+    align-items: center;
+    font-size: 7.5pt;
+    padding: 1px 0;
+    min-height: 15px;
+}
+
+.vtm-merit-name {
+    display: inline-flex;
+    align-items: baseline;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Notes Box */
+.vtm-notes-box {
+    border: 1px solid #1a1a1a;
+    padding: 4px;
+    flex-grow: 1;
+    min-height: 90px;
+    font-size: 7.5pt;
+    line-height: 1.3;
+    background-color: #ffffff;
+    text-align: justify;
+}
+
+/* Blood Potency Header */
+.vtm-bp-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1.5px solid #1a1a1a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+
+.vtm-section-title-inline {
+    font-family: 'Cinzel', serif;
+    font-size: 8.5pt;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    color: #8b0000;
+    text-transform: uppercase;
+}
+
+.vtm-dots-10 {
+    display: flex;
+    gap: 2.5px;
+}
+
+/* Blood Potency Reference Table */
+.vtm-bp-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+    font-size: 7pt;
+}
+
+.vtm-bp-table td {
+    border: 1px solid #1a1a1a;
+    padding: 2.5px 3px;
+    vertical-align: top;
+    width: 50%;
+}
+
+.vtm-bp-cell-label {
+    font-family: 'Cinzel', serif;
+    font-size: 6.5pt;
+    font-weight: 700;
+    color: #333333;
+    display: block;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+
+.vtm-bp-cell-val {
+    font-size: 7pt;
+    font-weight: 600;
+    color: #111111;
+    display: block;
+    line-height: 1.15;
+    margin-top: 1px;
+}
+
+/* XP Row */
+.vtm-xp-row {
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid #1a1a1a;
+    padding: 2.5px 5px;
+    margin-bottom: 5px;
+    font-size: 7.5pt;
+    background-color: #fbfbfb;
+}
+
+.vtm-xp-label {
+    font-family: 'Cinzel', serif;
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Biography Rows */
+.vtm-bio-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-grow: 1;
+}
+
+.vtm-bio-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 7.5pt;
+    min-height: 16px;
+}
+
+.vtm-bio-label {
+    font-family: 'Cinzel', serif;
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #333;
+    white-space: nowrap;
+}
+
+.vtm-bio-line {
+    flex-grow: 1;
+    border-bottom: 1px solid #999;
+    height: 12px;
+    font-size: 7.5pt;
+    padding-left: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vtm-line-row {
+    border-bottom: 1px dotted #aaa;
+    height: 14px;
+}
+
+/* ==========================================================================
+   PRINT MEDIA QUERY (@media print)
+   Strictly removes all interface chrome and prints pure official 2-page sheet
+   ========================================================================== */
+
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 4mm 5mm 4mm 5mm;
+    }
+
+    *, *::before, *::after {
+        box-sizing: border-box !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: 'EB Garamond', Georgia, serif !important;
+        font-size: 8.5pt !important;
+        line-height: 1.15 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+    }
+
+    /* Hide web UI chrome, buttons, modals, non-active steps */
+    header,
+    footer,
+    nav,
+    aside,
+    #sidebar-nav,
+    #sidebar-overlay,
+    #clan-modal,
+    #quiz-modal,
+    #dice-modal,
+    button,
+    .print\:hidden,
+    .no-print,
+    #step-1,
+    #step-2,
+    #step-3,
+    #step-4,
+    #step-5,
+    #step-6,
+    #summary-view-toggle,
+    #summary-cards-container,
+    .step-actions,
+    .custom-scrollbar::-webkit-scrollbar {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+
+    main {
+        display: block !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+    #step-7 {
+        display: block !important;
+        width: 100% !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #step-7 > div:first-child,
+    #step-7 > .border-b-2,
+    #step-7 > .mt-12 {
+        display: none !important;
+    }
+
+    .vtm-official-sheet-wrapper {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Page Breaks and Sizing for Exact 2 A4 Pages */
+    .vtm-sheet-page {
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 282mm !important;
+        max-height: 282mm !important;
+        min-height: 282mm !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        overflow: hidden !important;
+    }
+
+    .vtm-sheet-page.page-1 {
+        page-break-before: auto !important;
+        break-before: auto !important;
+        page-break-after: always !important;
+        break-after: page !important;
+    }
+
+    .vtm-sheet-page.page-2 {
+        page-break-before: always !important;
+        break-before: page !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+    }
+
+    .vtm-sheet-border {
+        border: 2px solid #000000 !important;
+        padding: 2.5mm !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .vtm-sheet-inner-border {
+        border: 1px solid #000000 !important;
+        padding: 2mm !important;
+        box-sizing: border-box !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        flex-grow: 1 !important;
+    }
+
+    .vtm-sheet-dot.filled {
+        background-color: #000000 !important;
+        border-color: #000000 !important;
+    }
+
+    .vtm-sheet-dot.predator-dot {
+        background-color: #4b0082 !important;
+        border-color: #4b0082 !important;
+    }
+
+    .vtm-sheet-dot.spec-dot {
+        background-color: #065f46 !important;
+        border-color: #065f46 !important;
+    }
+
+    .vtm-title-primary {
+        color: #000000 !important;
+    }
+
+    .vtm-title-secondary,
+    .vtm-section-title,
+    .vtm-card-title,
+    .vtm-section-title-inline,
+    .vtm-disc-name {
+        color: #8b0000 !important;
+    }
 }

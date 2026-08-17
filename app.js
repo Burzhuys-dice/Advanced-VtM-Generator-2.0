@@ -35,10 +35,10 @@ async function fetchAllData() {
     try {
         const [advRes, predRes, coreRes, clansRes, discRes, archRes, namesRes, conceptsRes] = await Promise.all([
             fetch('data/vtm_merits_data.json'),
-            fetch('data/vtm_predator-types_1'),
+            fetch('data/vtm_predator-types_1.json'),
             fetch('data/vtm_char_and_skills.json'),
-            fetch('data/vtm_clans'),
-            fetch('data/vtm_disciplines'),
+            fetch('data/vtm_clans.json'),
+            fetch('data/vtm_disciplines.json'),
             fetch('data/vtm_archetypes.json'), // Завантажуємо файл архетипів
             fetch('data/vtm_names.json'), // Завантажуємо файл імен
             fetch('data/vtm_consepts.json') // Завантажуємо файл концептів
@@ -62,12 +62,16 @@ async function fetchAllData() {
         }
 
         if(coreRes.ok) {
-            const coreData = await coreRes.json();
-            if(coreData.attributes) attributesData = coreData.attributes;
+            const coreDataRaw = await coreRes.json(); const coreData = Array.isArray(coreDataRaw) ? coreDataRaw[0] : coreDataRaw;
+            if(coreData.attributes) {
+                attributesData = coreData.attributes;
+                window.attributesData = attributesData;
+            }
             if(coreData.skills) {
                 if(coreData.skills.physical) skillsData.physical = coreData.skills.physical;
                 if(coreData.skills.social) skillsData.social = coreData.skills.social;
                 if(coreData.skills.mental) skillsData.mental = coreData.skills.mental;
+                window.skillsData = skillsData;
             }
         }
 
@@ -81,19 +85,23 @@ async function fetchAllData() {
             } else if(cData && Object.keys(cData).length > 0) {
                 clansData = cData;
             }
+            window.clansData = clansData;
         }
 
         if(discRes.ok) {
             const dJson = await discRes.json();
             
             let discKeys = Array.isArray(disciplinesData) ? disciplinesData.map(d => d.id) : Object.keys(disciplinesData);
-            discKeys.forEach(k => disciplinesPowersMap[k] = []);
+            discKeys.forEach(k => {
+                disciplinesPowersMap[k] = [];
+            });
 
             let rawPowers = dJson.powers || (Array.isArray(dJson) ? dJson : []);
             if (Array.isArray(rawPowers)) {
                 rawPowers.forEach(power => {
                     let dKey = power.disc;
-                    if (dKey && disciplinesPowersMap[dKey]) {
+                    if (dKey) {
+                        if (!disciplinesPowersMap[dKey]) disciplinesPowersMap[dKey] = [];
                         disciplinesPowersMap[dKey].push({
                             id: power.ability_name || power.name,
                             name: power.ability_name || power.name,
@@ -107,6 +115,7 @@ async function fetchAllData() {
                     }
                 });
             }
+            window.disciplinesPowersMap = disciplinesPowersMap;
         }
 
         // Обробка архетипів
@@ -546,15 +555,13 @@ function renderPredatorTypes() {
             }
 
             cardsHtml += `
-                <div class="predator-card flex flex-col bg-white p-5 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-gray-300 hover:shadow transition-all ${isSelected ? 'selected' : ''}" 
+                <div class="predator-card flex flex-col bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-gray-300 hover:shadow transition-all overflow-hidden ${isSelected ? 'selected' : ''}" 
                      onclick="selectPredator('${predator.id}')">
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                        <div class="flex flex-col">
-                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border w-fit mb-1.5 ${category.badgeStyle}">${category.icon} ${category.name}</span>
-                            <h3 class="font-serif font-bold text-lg text-[#1a1a1a] leading-tight">${predator.name}</h3>
-                        </div>
-                        <span class="text-[10px] font-bold px-2 py-1 rounded border min-w-max text-right ${modifierColor}">${modifierText}</span>
+                    <div class="flex items-center justify-between gap-2 mb-2 w-full">
+                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border max-w-[60%] truncate ${category.badgeStyle}">${category.icon} ${category.name}</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 whitespace-nowrap ${modifierColor}">${modifierText}</span>
                     </div>
+                    <h3 class="font-serif font-bold text-base sm:text-lg text-[#1a1a1a] leading-snug w-full mb-2">${predator.name}</h3>
                     <p class="text-xs text-gray-600 mb-3 leading-relaxed text-justify">${predator.description}</p>
                     ${advantagesDisplay}
                     ${optionsHtml}
@@ -1564,15 +1571,12 @@ function changeClan(clanId) {
     if (clanBtnName && clanInfo) {
         clanBtnName.innerText = clanInfo.name || 'Невідомо';
     }
-    if (clanBtnIcon && typeof clanImages !== 'undefined') {
-        if (clanImages[clanId]) {
-            clanBtnIcon.src = `Clan_symbols/${clanImages[clanId]}`;
-            clanBtnIcon.style.display = 'block';
-            if (clanBtnIconWrapper) clanBtnIconWrapper.style.display = 'flex';
-        } else {
-            clanBtnIcon.style.display = 'none';
-            if (clanBtnIconWrapper) clanBtnIconWrapper.style.display = 'none';
-        }
+    if (clanBtnIcon) {
+        const iconPath = (typeof getClanIconPath === 'function') ? getClanIconPath(clanId) : 'Clan_symbols/Caitiff_symbol.png';
+        clanBtnIcon.src = iconPath;
+        clanBtnIcon.alt = clanInfo.name || clanId;
+        clanBtnIcon.style.display = 'block';
+        if (clanBtnIconWrapper) clanBtnIconWrapper.style.display = 'flex';
     }
     
     const desc1 = document.getElementById('clan-desc-1');
@@ -1762,10 +1766,251 @@ function changeSkillDistribution() {
     updateTrackers();
 }
 
+function switchSummaryView(view) {
+    const officialContainer = document.getElementById('vtm-official-sheet');
+    const cardsContainer = document.getElementById('summary-cards-container');
+    const tabOfficial = document.getElementById('tab-btn-official');
+    const tabCards = document.getElementById('tab-btn-cards');
+
+    if (view === 'cards') {
+        if (officialContainer) officialContainer.classList.add('hidden');
+        if (cardsContainer) cardsContainer.classList.remove('hidden');
+        if (tabCards) {
+            tabCards.classList.add('bg-[#8b0000]', 'text-white', 'shadow-xs');
+            tabCards.classList.remove('text-gray-600');
+        }
+        if (tabOfficial) {
+            tabOfficial.classList.remove('bg-[#8b0000]', 'text-white', 'shadow-xs');
+            tabOfficial.classList.add('text-gray-600');
+        }
+    } else {
+        if (officialContainer) officialContainer.classList.remove('hidden');
+        if (cardsContainer) cardsContainer.classList.add('hidden');
+        if (tabOfficial) {
+            tabOfficial.classList.add('bg-[#8b0000]', 'text-white', 'shadow-xs');
+            tabOfficial.classList.remove('text-gray-600');
+        }
+        if (tabCards) {
+            tabCards.classList.remove('bg-[#8b0000]', 'text-white', 'shadow-xs');
+            tabCards.classList.add('text-gray-600');
+        }
+    }
+}
+
+function renderSheetDots(count, max = 5, extraClass = '') {
+    let html = '<div class="vtm-dots">';
+    for (let i = 1; i <= max; i++) {
+        let isFilled = i <= count;
+        html += `<span class="vtm-sheet-dot ${isFilled ? 'filled ' + extraClass : ''}"></span>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+function renderTrackBoxes(activeCount, total = 10) {
+    let html = '<div class="vtm-tracker-boxes">';
+    for (let i = 1; i <= total; i++) {
+        let isActive = i <= activeCount;
+        html += `<span class="vtm-track-box ${isActive ? 'active' : 'inactive'}"></span>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+function renderHungerBoxes(total = 5) {
+    let html = '<div class="vtm-tracker-boxes">';
+    for (let i = 1; i <= total; i++) {
+        html += `<span class="vtm-hunger-box"></span>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+function renderHumanityBoxes(currentHumanity, total = 10) {
+    let html = '<div class="vtm-tracker-boxes">';
+    for (let i = 1; i <= total; i++) {
+        let isFilled = i <= currentHumanity;
+        html += `<span class="vtm-humanity-box ${isFilled ? 'filled' : ''}">${isFilled ? '■' : ''}</span>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+function getBloodPotencyTable(potency) {
+    let p = Number(potency) || 0;
+    if (p <= 0) {
+        return {
+            bloodSurge: "Додайте 1 кістку",
+            damageMended: "1 легке",
+            powerBonus: "Немає",
+            rouseReroll: "Немає",
+            feedingPenalty: "Немає",
+            baneSeverity: "0"
+        };
+    } else if (p === 1) {
+        return {
+            bloodSurge: "Додайте 2 кістки",
+            damageMended: "1 легке",
+            powerBonus: "Немає",
+            rouseReroll: "1-й рівень",
+            feedingPenalty: "Немає",
+            baneSeverity: "2"
+        };
+    } else if (p === 2) {
+        return {
+            bloodSurge: "Додайте 2 кістки",
+            damageMended: "2 легких",
+            powerBonus: "Додайте 1 кістку",
+            rouseReroll: "1-й рівень",
+            feedingPenalty: "Тварини/пакети вдвічі менше",
+            baneSeverity: "2"
+        };
+    } else if (p === 3) {
+        return {
+            bloodSurge: "Додайте 2 кістки",
+            damageMended: "2 легких",
+            powerBonus: "Додайте 1 кістку",
+            rouseReroll: "2-й рівень і нижче",
+            feedingPenalty: "Тварини/пакети не втамовують",
+            baneSeverity: "3"
+        };
+    } else {
+        return {
+            bloodSurge: "Додайте 3 кістки",
+            damageMended: "3 легких",
+            powerBonus: "Додайте 2 кістки",
+            rouseReroll: "2-й рівень і нижче",
+            feedingPenalty: "Тварини/пакети не втамовують",
+            baneSeverity: "3"
+        };
+    }
+}
+
+function renderSkillSheetRow(skill) {
+    const data = getDynamicSkillData(skill.id);
+    let totalDots = data.baseDots + data.bonus + data.freeSpecDot;
+    let specHtml = data.displaySpec ? ` <span class="vtm-skill-spec">(${data.displaySpec})</span>` : '';
+    let dotClass = data.freeSpecDot > 0 ? 'spec-dot' : (data.bonus > 0 ? 'predator-dot' : '');
+    return `
+        <div class="vtm-skill-row">
+            <div class="vtm-skill-title">
+                <span>${skill.name}</span>${specHtml}
+            </div>
+            <div class="vtm-dots-leader"></div>
+            ${renderSheetDots(totalDots, 5, dotClass)}
+        </div>
+    `;
+}
+
+function renderDisciplinesSheetBoxes(availableDisc) {
+    let html = '';
+    let activeDiscs = [];
+
+    availableDisc.forEach(discKey => {
+        let totalDots = (state.disciplines[discKey] || 0) + (state.predatorChoices.discipline === discKey ? 1 : 0);
+        if (totalDots > 0) {
+            const discInfo = getDisciplineInfo(discKey);
+            const discName = discInfo.name || discKey;
+            let powers = [];
+            for (let i = 1; i <= totalDots; i++) {
+                let powerId = state.disciplinePowers[discKey]?.[i];
+                if (powerId) {
+                    let powerInfo = disciplinesPowersMap[discKey]?.find(p => p.id === powerId);
+                    if (powerInfo) {
+                        powers.push({ level: i, name: powerInfo.name });
+                    }
+                }
+            }
+            activeDiscs.push({ key: discKey, name: discName, dots: totalDots, powers });
+        }
+    });
+
+    for (let slot = 0; slot < 6; slot++) {
+        if (slot < activeDiscs.length) {
+            const d = activeDiscs[slot];
+            html += `
+                <div class="vtm-disc-box">
+                    <div class="vtm-disc-header">
+                        <span class="vtm-disc-name">${d.name}</span>
+                        <div class="vtm-dots-leader"></div>
+                        ${renderSheetDots(d.dots, 5)}
+                    </div>
+                    <div class="vtm-disc-powers">
+                        ${d.powers.map(p => `<div class="vtm-disc-power-item">• <strong>${p.level}:</strong> ${p.name}</div>`).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="vtm-disc-box opacity-70">
+                    <div class="vtm-disc-header">
+                        <span class="vtm-disc-name text-gray-400">________________</span>
+                        <div class="vtm-dots-leader"></div>
+                        ${renderSheetDots(0, 5)}
+                    </div>
+                    <div class="vtm-disc-powers">
+                        <div class="vtm-line-row"></div>
+                        <div class="vtm-line-row"></div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    return html;
+}
+
+function renderMeritsFlawsSheetRows() {
+    let html = '';
+    const totalRows = 11;
+    for (let i = 0; i < totalRows; i++) {
+        if (i < state.selectedAdvantages.length) {
+            const adv = state.selectedAdvantages[i];
+            const typePrefix = adv.type === 'flaw' ? '[Вада]' : '[Благо]';
+            html += `
+                <div class="vtm-merit-row">
+                    <div class="vtm-merit-name">
+                        <span class="font-bold ${adv.type === 'flaw' ? 'text-gray-900' : 'text-[#8b0000]'}">${typePrefix}</span>
+                        <span class="ml-1">${adv.name}</span>
+                    </div>
+                    <div class="vtm-dots-leader"></div>
+                    ${renderSheetDots(adv.cost, 5)}
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="vtm-merit-row">
+                    <div class="vtm-merit-name text-gray-400">________________________________</div>
+                    <div class="vtm-dots-leader"></div>
+                    ${renderSheetDots(0, 5)}
+                </div>
+            `;
+        }
+    }
+    return html;
+}
+
 function finishGen() {
-    const name = document.getElementById('character-name').value || 'Безіменний Кревний';
-    const concept = document.getElementById('concept-phrase').value || 'Невідомий концепт';
-    const backgroundText = document.getElementById('concept-bg').value || 'Історія персонажа відсутня.';
+    const name = document.getElementById('character-name')?.value || 'Безіменний Кревний';
+    const concept = document.getElementById('concept-phrase')?.value || '';
+    const backgroundText = document.getElementById('concept-bg')?.value || '';
+    const chronicle = document.getElementById('chronicle-name')?.value || '';
+    const sire = document.getElementById('sire-name')?.value || '';
+    const ambition = document.getElementById('ambition-phrase')?.value || '';
+    const desire = document.getElementById('desire-phrase')?.value || '';
+    const chronicleTenets = document.getElementById('chronicle-tenets')?.value || '';
+
+    const bioTrueAge = document.getElementById('bio-true-age')?.value || '';
+    const bioApparentAge = document.getElementById('bio-apparent-age')?.value || '';
+    const bioDob = document.getElementById('bio-dob')?.value || '';
+    const bioDod = document.getElementById('bio-dod')?.value || '';
+    const bioAppearance = document.getElementById('bio-appearance')?.value || '';
+    const bioDistinguishing = document.getElementById('bio-distinguishing')?.value || '';
+
+    const conv1 = document.getElementById('conviction1')?.value || '';
+    const touch1 = document.getElementById('touchstone1')?.value || '';
+    const conv2 = document.getElementById('conviction2')?.value || '';
+    const touch2 = document.getElementById('touchstone2')?.value || '';
+
     const clanInfo = clansData[state.clan] || {};
     const clanName = clanInfo.name || 'Невідомо';
     const clanCompulsion = clanInfo.clan_compultion && clanInfo.clan_compultion.trim().toLowerCase() !== "відсутнє" ? clanInfo.clan_compultion : 'Немає';
@@ -1778,24 +2023,316 @@ function finishGen() {
     let currentHumanity = 7;
     if (predator && predator.humanity_modifier) currentHumanity += predator.humanity_modifier;
 
-    document.getElementById('summary-name').innerText = name;
-    document.getElementById('summary-concept').innerText = `${concept} | ${clanName} | ${predatorName}`;
-    document.getElementById('summary-humanity').innerText = currentHumanity;
+    let defaultGen = state.clan === 'thin_blood' ? '14-те' : '13-те';
+    const generation = document.getElementById('generation-val')?.value || defaultGen;
 
+    let bloodPotency = 1;
+    if (state.clan === 'thin_blood') {
+        bloodPotency = 0;
+    } else if (predator && (predator.id === 'blood_leech' || predator.name?.toLowerCase().includes('п\'явка') || predator.name?.toLowerCase().includes('п’явка'))) {
+        bloodPotency = 2;
+    }
+    const bpTable = getBloodPotencyTable(bloodPotency);
+
+    const stamina = state.attributes['stamina'] || 1;
+    const healthMax = stamina + 3;
+    const resolve = state.attributes['resolve'] || 1;
+    const composure = state.attributes['composure'] || 1;
+    const willpowerMax = resolve + composure;
+
+    const summaryNameEl = document.getElementById('summary-name');
+    const summaryConceptEl = document.getElementById('summary-concept');
+    const summaryHumanityEl = document.getElementById('summary-humanity');
+    if (summaryNameEl) summaryNameEl.innerText = name;
+    if (summaryConceptEl) summaryConceptEl.innerText = `${concept || 'Без концепту'} | ${clanName} | ${predatorName}`;
+    if (summaryHumanityEl) summaryHumanityEl.innerText = currentHumanity;
+
+    let availableDisc = [...(clansData[state.clan]?.disciplines || [])];
+    if (state.predatorChoices.discipline && !availableDisc.includes(state.predatorChoices.discipline)) {
+        availableDisc.push(state.predatorChoices.discipline);
+    }
+    if (state.manualDisciplines) {
+        state.manualDisciplines.forEach(d => {
+            if (!availableDisc.includes(d)) availableDisc.push(d);
+        });
+    }
+
+    let bsTotalDots = (state.disciplines['blood_sorcery'] || 0) + (state.predatorChoices.discipline === 'blood_sorcery' ? 1 : 0);
+    if (bsTotalDots > 0 && !availableDisc.includes('blood_sorcery_rituals')) {
+        availableDisc.push('blood_sorcery_rituals');
+    }
+
+    let obTotalDots = (state.disciplines['oblivion'] || 0) + (state.predatorChoices.discipline === 'oblivion' ? 1 : 0);
+    if (obTotalDots > 0 && !availableDisc.includes('oblivion_ceremonies')) {
+        availableDisc.push('oblivion_ceremonies');
+    }
+
+    // =========================================================================
+    // 1. RENDER OFFICIAL VTM 5E PRINTABLE SHEET (PAGES 1 & 2)
+    // =========================================================================
+    let officialHTML = `
+        <!-- PAGE 1 OF OFFICIAL VTM 5E SHEET -->
+        <div class="vtm-sheet-page page-1">
+            <div class="vtm-sheet-border">
+                <div class="vtm-sheet-inner-border">
+                    <!-- Title Banner -->
+                    <div class="vtm-title-banner">
+                        <div class="vtm-title-lines-left"></div>
+                        <div class="vtm-main-title">
+                            <h1 class="vtm-title-primary">ВАМПІРИ</h1>
+                            <h2 class="vtm-title-secondary">МАСКАРАД</h2>
+                        </div>
+                        <div class="vtm-title-lines-right"></div>
+                    </div>
+
+                    <!-- 3x3 Profile Info Box -->
+                    <div class="vtm-profile-grid">
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Ім'я:</span> <span class="vtm-cell-val">${name}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Хижак:</span> <span class="vtm-cell-val">${predatorName}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Хроніка:</span> <span class="vtm-cell-val">${chronicle}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Концепт:</span> <span class="vtm-cell-val">${concept}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Клан:</span> <span class="vtm-cell-val">${clanName}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Амбіція:</span> <span class="vtm-cell-val">${ambition}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Сір:</span> <span class="vtm-cell-val">${sire}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Покоління:</span> <span class="vtm-cell-val">${generation}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Бажання:</span> <span class="vtm-cell-val">${desire}</span></div>
+                    </div>
+
+                    <!-- ATTRIBUTES SECTION -->
+                    <div class="vtm-section-header">
+                        <span class="vtm-section-title">ХАРАКТЕРИСТИКИ</span>
+                    </div>
+                    <div class="vtm-attributes-grid">
+                        <!-- Physical -->
+                        <div class="vtm-attr-col">
+                            <div class="vtm-col-title">ФІЗИЧНІ</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Сила</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['strength'] || 1, 5)}</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Спритність</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['dexterity'] || 1, 5)}</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Витривалість</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['stamina'] || 1, 5)}</div>
+                        </div>
+                        <!-- Social -->
+                        <div class="vtm-attr-col">
+                            <div class="vtm-col-title">СОЦІАЛЬНІ</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Харизма</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['charisma'] || 1, 5)}</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Маніпулювання</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['manipulation'] || 1, 5)}</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Витримка</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['composure'] || 1, 5)}</div>
+                        </div>
+                        <!-- Mental -->
+                        <div class="vtm-attr-col">
+                            <div class="vtm-col-title">МЕНТАЛЬНІ</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Кмітливість</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['intelligence'] || 1, 5)}</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Інтуїція</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['wits'] || 1, 5)}</div>
+                            <div class="vtm-stat-row"><span class="vtm-stat-name">Рішучість</span><div class="vtm-dots-leader"></div> ${renderSheetDots(state.attributes['resolve'] || 1, 5)}</div>
+                        </div>
+                    </div>
+
+                    <!-- Health & Willpower Trackers -->
+                    <div class="vtm-trackers-row">
+                        <div class="vtm-tracker-block">
+                            <span class="vtm-tracker-name">ЗДОРОВ'Я</span>
+                            ${renderTrackBoxes(healthMax, 10)}
+                        </div>
+                        <div class="vtm-tracker-block">
+                            <span class="vtm-tracker-name">СИЛА ВОЛІ</span>
+                            ${renderTrackBoxes(willpowerMax, 10)}
+                        </div>
+                    </div>
+
+                    <!-- SKILLS SECTION -->
+                    <div class="vtm-section-header">
+                        <span class="vtm-section-title">НАВИЧКИ</span>
+                    </div>
+                    <div class="vtm-skills-grid">
+                        <!-- Physical Skills Col -->
+                        <div class="vtm-skill-col">
+                            <div class="vtm-col-title">ФІЗИЧНІ</div>
+                            ${(skillsData.physical || []).map(s => renderSkillSheetRow(s)).join('')}
+                        </div>
+                        <!-- Social Skills Col -->
+                        <div class="vtm-skill-col">
+                            <div class="vtm-col-title">СОЦІАЛЬНІ</div>
+                            ${(skillsData.social || []).map(s => renderSkillSheetRow(s)).join('')}
+                        </div>
+                        <!-- Mental Skills Col -->
+                        <div class="vtm-skill-col">
+                            <div class="vtm-col-title">МЕНТАЛЬНІ</div>
+                            ${(skillsData.mental || []).map(s => renderSkillSheetRow(s)).join('')}
+                        </div>
+                    </div>
+
+                    <!-- DISCIPLINES SECTION -->
+                    <div class="vtm-section-header">
+                        <span class="vtm-section-title">ДИСЦИПЛІНИ</span>
+                    </div>
+                    <div class="vtm-disciplines-grid">
+                        ${renderDisciplinesSheetBoxes(availableDisc)}
+                    </div>
+
+                    <!-- BOTTOM BAR: RESONANCE, HUNGER, HUMANITY -->
+                    <div class="vtm-bottom-bar">
+                        <div class="vtm-bottom-item">
+                            <span class="vtm-bottom-label">РЕЗОНАНС:</span>
+                            <div class="vtm-resonance-line">${predator && predator.resonance ? predator.resonance : ''}</div>
+                        </div>
+                        <div class="vtm-bottom-item">
+                            <span class="vtm-bottom-label">ГОЛОД:</span>
+                            ${renderHungerBoxes(5)}
+                        </div>
+                        <div class="vtm-bottom-item">
+                            <span class="vtm-bottom-label">ЛЮДЯНІСТЬ:</span>
+                            ${renderHumanityBoxes(currentHumanity, 10)}
+                        </div>
+                    </div>
+                    <div class="vtm-sheet-footer-note">Сторінка 1 з 2 • Офіційний бланк Vampire: The Masquerade 5th Edition</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2 OF OFFICIAL VTM 5E SHEET -->
+        <div class="vtm-sheet-page page-2">
+            <div class="vtm-sheet-border">
+                <div class="vtm-sheet-inner-border">
+                    <!-- Title Banner -->
+                    <div class="vtm-title-banner">
+                        <div class="vtm-title-lines-left"></div>
+                        <div class="vtm-main-title">
+                            <h1 class="vtm-title-primary">ВАМПІРИ</h1>
+                            <h2 class="vtm-title-secondary">МАСКАРАД</h2>
+                        </div>
+                        <div class="vtm-title-lines-right"></div>
+                    </div>
+
+                    <!-- TOP 3 BOXED CARDS -->
+                    <div class="vtm-page2-top-grid">
+                        <!-- Tenets -->
+                        <div class="vtm-boxed-card">
+                            <div class="vtm-card-title">ПРИНЦИПИ ХРОНІКИ</div>
+                            <div class="vtm-card-content">
+                                ${chronicleTenets ? `<p class="italic text-gray-800 leading-snug">${chronicleTenets}</p>` : `
+                                    <div class="vtm-line-row"></div>
+                                    <div class="vtm-line-row"></div>
+                                    <div class="vtm-line-row"></div>
+                                `}
+                            </div>
+                        </div>
+
+                        <!-- Convictions & Touchstones -->
+                        <div class="vtm-boxed-card">
+                            <div class="vtm-card-title">ОПОРИ Й ПЕРЕКОНАННЯ</div>
+                            <div class="vtm-card-content">
+                                <div class="mb-1">
+                                    <span class="font-bold text-[#8b0000]">1.</span> ${conv1 ? `<span class="italic">«${conv1}»</span>` : '<span class="text-gray-400">________________________</span>'}
+                                    ${touch1 ? `<div class="text-[7pt] text-gray-700 font-sans uppercase font-bold pl-2">Опора: ${touch1}</div>` : ''}
+                                </div>
+                                <div>
+                                    <span class="font-bold text-[#8b0000]">2.</span> ${conv2 ? `<span class="italic">«${conv2}»</span>` : '<span class="text-gray-400">________________________</span>'}
+                                    ${touch2 ? `<div class="text-[7pt] text-gray-700 font-sans uppercase font-bold pl-2">Опора: ${touch2}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clan Bane & Compulsion -->
+                        <div class="vtm-boxed-card">
+                            <div class="vtm-card-title">КЛАНОВЕ ПРОКЛЯТТЯ</div>
+                            <div class="vtm-card-content space-y-1">
+                                <div><span class="font-bold uppercase text-[7pt] text-[#8b0000] block">Примус (${clanName}):</span> <span class="text-[7pt] text-gray-800 leading-tight">${clanCompulsion}</span></div>
+                                <div><span class="font-bold uppercase text-[7pt] text-[#8b0000] block">Прокляття:</span> <span class="text-[7pt] text-gray-800 leading-tight">${clanBane}</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MAIN 2-COLUMN GRID -->
+                    <div class="vtm-page2-main-grid">
+                        <!-- LEFT COLUMN: MERITS & FLAWS (11 ROWS) + NOTES -->
+                        <div class="vtm-page2-left-col">
+                            <div class="vtm-col-title">ПЕРЕВАГИ Й ВАДИ</div>
+                            <div class="vtm-merits-list">
+                                ${renderMeritsFlawsSheetRows()}
+                            </div>
+
+                            <div class="vtm-col-title mt-3">ПРИМІТКИ ТА ІСТОРІЯ</div>
+                            <div class="vtm-notes-box">
+                                ${backgroundText ? `<p class="leading-snug">${backgroundText}</p>` : `
+                                    <div class="vtm-line-row"></div>
+                                    <div class="vtm-line-row"></div>
+                                    <div class="vtm-line-row"></div>
+                                    <div class="vtm-line-row"></div>
+                                `}
+                            </div>
+                        </div>
+
+                        <!-- RIGHT COLUMN: BLOOD POTENCY + TABLE + XP + BIOGRAPHY -->
+                        <div class="vtm-page2-right-col">
+                            <!-- Blood Potency Header with 10 dots -->
+                            <div class="vtm-bp-header-row">
+                                <span class="vtm-section-title-inline">СИЛА КРОВІ</span>
+                                <div class="vtm-dots-10">
+                                    ${renderSheetDots(bloodPotency, 10)}
+                                </div>
+                            </div>
+
+                            <!-- Blood Potency Reference Table -->
+                            <table class="vtm-bp-table">
+                                <tr>
+                                    <td><span class="vtm-bp-cell-label">Збурення Крові:</span><span class="vtm-bp-cell-val">${bpTable.bloodSurge}</span></td>
+                                    <td><span class="vtm-bp-cell-label">Лікування ушкоджень:</span><span class="vtm-bp-cell-val">${bpTable.damageMended}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="vtm-bp-cell-label">Бонус до Сил:</span><span class="vtm-bp-cell-val">${bpTable.powerBonus}</span></td>
+                                    <td><span class="vtm-bp-cell-label">Перекидання Збурення:</span><span class="vtm-bp-cell-val">${bpTable.rouseReroll}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="vtm-bp-cell-label">Штраф годування:</span><span class="vtm-bp-cell-val">${bpTable.feedingPenalty}</span></td>
+                                    <td><span class="vtm-bp-cell-label">Суворість Прокляття:</span><span class="vtm-bp-cell-val">${bpTable.baneSeverity}</span></td>
+                                </tr>
+                            </table>
+
+                            <!-- XP Row -->
+                            <div class="vtm-xp-row">
+                                <div class="flex items-center gap-1.5"><span class="vtm-xp-label">ДОСВІД (XP) УСЬОГО:</span> <span class="font-bold">0</span></div>
+                                <div class="flex items-center gap-1.5"><span class="vtm-xp-label">ВИТРАЧЕНО:</span> <span class="font-bold">0</span></div>
+                            </div>
+
+                            <!-- Biography Section -->
+                            <div class="vtm-col-title">БІОГРАФІЯ ТА ЗОВНІШНІСТЬ</div>
+                            <div class="vtm-bio-grid">
+                                <div class="vtm-bio-row"><span class="vtm-bio-label">Справжній вік:</span><div class="vtm-bio-line">${bioTrueAge}</div></div>
+                                <div class="vtm-bio-row"><span class="vtm-bio-label">Візуальний вік:</span><div class="vtm-bio-line">${bioApparentAge}</div></div>
+                                <div class="vtm-bio-row"><span class="vtm-bio-label">Дата народження:</span><div class="vtm-bio-line">${bioDob}</div></div>
+                                <div class="vtm-bio-row"><span class="vtm-bio-label">Дата смерті:</span><div class="vtm-bio-line">${bioDod}</div></div>
+                                <div class="vtm-bio-row"><span class="vtm-bio-label">Зовнішність:</span><div class="vtm-bio-line">${bioAppearance}</div></div>
+                                <div class="vtm-bio-row"><span class="vtm-bio-label">Виразні риси:</span><div class="vtm-bio-line">${bioDistinguishing}</div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vtm-sheet-footer-note">Сторінка 2 з 2 • Офіційний бланк Vampire: The Masquerade 5th Edition</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const officialContainer = document.getElementById('vtm-official-sheet');
+    if (officialContainer) {
+        officialContainer.innerHTML = officialHTML;
+    }
+
+    // =========================================================================
+    // 2. RENDER INTERACTIVE SUMMARY CARDS (ALTERNATIVE SCREEN VIEW)
+    // =========================================================================
     let summaryHTML = '';
     const cats = [{ key: 'physical', label: 'Фізичні' }, { key: 'social', label: 'Соціальні' }, { key: 'mental', label: 'Ментальні' }];
 
-    // СЕКЦІЯ 1: КОНЦЕПТ ТА КЛАН (Вкладка 1)
+    // СЕКЦІЯ 1: КОНЦЕПТ ТА КЛАН
     summaryHTML += `
-        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-300">
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h3 class="text-xl font-bold text-[#8b0000] border-b-2 border-gray-200 pb-2 mb-4 uppercase tracking-widest vtm-font">1. Концепт та Кров</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div>
-                    <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Концепт:</strong> <span class="text-gray-900 font-serif text-base">${concept}</span></p>
+                    <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Концепт:</strong> <span class="text-gray-900 font-serif text-base">${concept || 'Не вказано'}</span></p>
                     <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Клан:</strong> <span class="text-gray-900 font-serif text-base">${clanName}</span></p>
-                    <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Історія / Фон:</strong> <span class="text-gray-700 font-serif italic block mt-1">${backgroundText}</span></p>
+                    <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Історія / Фон:</strong> <span class="text-gray-700 font-serif italic block mt-1">${backgroundText || 'Не вказано'}</span></p>
                 </div>
-                <div class="space-y-3 bg-white p-4 rounded border border-gray-100 print:border-gray-200">
+                <div class="space-y-3 bg-white p-4 rounded border border-gray-100">
                     <div><strong class="text-[#8b0000] uppercase text-[10px] tracking-widest block">Клановий примус:</strong> <p class="text-xs text-gray-800 leading-snug">${clanCompulsion}</p></div>
                     <div><strong class="text-red-700 uppercase text-[10px] tracking-widest block">Кланове прокляття:</strong> <p class="text-xs text-gray-800 leading-snug">${clanBane}</p></div>
                 </div>
@@ -1803,9 +2340,9 @@ function finishGen() {
         </div>
     `;
 
-    // СЕКЦІЯ 2: ХАРАКТЕРИСТИКИ (Вкладка 2)
+    // СЕКЦІЯ 2: ХАРАКТЕРИСТИКИ
     summaryHTML += `
-        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-300">
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h3 class="text-xl font-bold text-[#8b0000] border-b-2 border-gray-200 pb-2 mb-4 uppercase tracking-widest vtm-font">2. Характеристики</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     `;
@@ -1818,11 +2355,11 @@ function finishGen() {
     });
     summaryHTML += `</div></div>`;
 
-    // СЕКЦІЯ 3: НАВИЧКИ ТА СПЕЦІАЛІЗАЦІЇ (Вкладка 3)
+    // СЕКЦІЯ 3: НАВИЧКИ ТА СПЕЦІАЛІЗАЦІЇ
     if (!state.skillSpecs) state.skillSpecs = {};
 
     summaryHTML += `
-        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-300">
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h3 class="text-xl font-bold text-[#8b0000] border-b-2 border-gray-200 pb-2 mb-4 uppercase tracking-widest vtm-font">3. Навички та Спеціалізації</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     `;
@@ -1841,9 +2378,9 @@ function finishGen() {
     });
     summaryHTML += `</div></div>`;
 
-    // СЕКЦІЯ 4: ХИЖАЦЬКІ ЗВИЧКИ (Вкладка 4)
+    // СЕКЦІЯ 4: ХИЖАЦЬКІ ЗВИЧКИ
     summaryHTML += `
-        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-300">
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h3 class="text-xl font-bold text-[#8b0000] border-b-2 border-gray-200 pb-2 mb-4 uppercase tracking-widest vtm-font">4. Хижацькі звички</h3>
             <div class="text-sm space-y-2">
                 <p><strong>Обраний тип хижака:</strong> <span class="font-serif font-bold text-lg text-[#8b0000]">${predatorName}</span></p>
@@ -1852,33 +2389,13 @@ function finishGen() {
             </div>
         </div>`;
 
-    // СЕКЦІЯ 5: ДИСЦИПЛІНИ ТА ЗДІБНОСТІ (Вкладка 5)
+    // СЕКЦІЯ 5: ДИСЦИПЛІНИ ТА ЗДІБНОСТІ
     summaryHTML += `
-        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-300">
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h3 class="text-xl font-bold text-[#8b0000] border-b-2 border-gray-200 pb-2 mb-4 uppercase tracking-widest vtm-font">5. Дисципліни та Здібності</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     `;
     
-    let availableDisc = [...(clansData[state.clan]?.disciplines || [])];
-    if (state.predatorChoices.discipline && !availableDisc.includes(state.predatorChoices.discipline)) {
-        availableDisc.push(state.predatorChoices.discipline);
-    }
-  if (state.manualDisciplines) {
-        state.manualDisciplines.forEach(d => {
-            if (!availableDisc.includes(d)) availableDisc.push(d);
-        });
-    }
-
-    // --- ДОДАННЯ У ПІДСУМОК (Ритуали та Церемонії) ---
-    let bsTotalDots = (state.disciplines['blood_sorcery'] || 0) + (state.predatorChoices.discipline === 'blood_sorcery' ? 1 : 0);
-    if (bsTotalDots > 0 && !availableDisc.includes('blood_sorcery_rituals')) {
-        availableDisc.push('blood_sorcery_rituals');
-    }
-
-    let obTotalDots = (state.disciplines['oblivion'] || 0) + (state.predatorChoices.discipline === 'oblivion' ? 1 : 0);
-    if (obTotalDots > 0 && !availableDisc.includes('oblivion_ceremonies')) {
-        availableDisc.push('oblivion_ceremonies');
-    }
     let hasDisciplines = false;
     availableDisc.forEach(discKey => {
         let totalDots = (state.disciplines[discKey] || 0) + (state.predatorChoices.discipline === discKey ? 1 : 0);
@@ -1888,13 +2405,13 @@ function finishGen() {
             const discName = discInfo.name || discKey;
             const iconSrc = getDisciplineIcon(discKey);
             const iconHtml = iconSrc ? `
-                <div class="w-7 h-7 rounded-lg bg-stone-100 border border-stone-300 flex items-center justify-center p-1 shrink-0 print:border-gray-400">
+                <div class="w-7 h-7 rounded-lg bg-stone-100 border border-stone-300 flex items-center justify-center p-1 shrink-0">
                     <img src="${iconSrc}" alt="${discName}" class="w-full h-full object-contain">
                 </div>
             ` : '';
             
             summaryHTML += `
-                <div class="bg-white p-4 rounded-lg border border-gray-200 print:border-gray-300 print:bg-transparent shadow-sm">
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2.5 min-w-0">
                             ${iconHtml}
@@ -1911,7 +2428,7 @@ function finishGen() {
                     let powerInfo = disciplinesPowersMap[discKey]?.find(p => p.id === powerId);
                     if (powerInfo) {
                         summaryHTML += `
-                            <li class="text-sm border-t border-gray-100 pt-2 print:border-gray-200">
+                            <li class="text-sm border-t border-gray-100 pt-2">
                                 <div class="font-bold text-gray-800 mb-1">Рівень ${i}: ${powerInfo.name}</div>
                                 <p class="text-xs text-gray-600 leading-snug text-justify mb-2">${powerInfo.desc}</p>
                                 <div class="text-[11px] text-gray-500 space-y-0.5">
@@ -1933,9 +2450,9 @@ function finishGen() {
     }
     summaryHTML += `</div></div>`;
 
-     // СЕКЦІЯ 6: БЛАГА ТА ВАДИ (Вкладка 6)
+    // СЕКЦІЯ 6: БЛАГА ТА ВАДИ
     summaryHTML += `
-        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 print:bg-transparent print:border-gray-300">
+        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
             <h3 class="text-xl font-bold text-[#8b0000] border-b-2 border-gray-200 pb-2 mb-4 uppercase tracking-widest vtm-font">6. Блага та Вади</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     `;
@@ -1946,12 +2463,12 @@ function finishGen() {
         state.selectedAdvantages.forEach(adv => {
             let badgeClass = adv.type === 'flaw' ? 'bg-gray-800 text-white' : 'bg-red-100 text-red-800';
             let label = adv.type === 'flaw' ? 'Вада' : 'Благо';
-            let predatorBadge = adv.source === 'predator' ? `<span class="ml-2 text-[9px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-1 rounded uppercase tracking-wider print:hidden">Від хижака</span>` : '';
+            let predatorBadge = adv.source === 'predator' ? `<span class="ml-2 text-[9px] text-indigo-700 bg-indigo-50 border border-indigo-200 px-1 rounded uppercase tracking-wider">Від хижака</span>` : '';
             
             summaryHTML += `
-                <div class="flex justify-between items-center bg-white p-3 rounded border border-gray-200 print:border-gray-300 print:bg-transparent">
+                <div class="flex justify-between items-center bg-white p-3 rounded border border-gray-200">
                     <div>
-                        <span class="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${badgeClass} print:border print:border-gray-300 print:bg-transparent print:text-black">${label}</span>
+                        <span class="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${badgeClass}">${label}</span>
                         <span class="font-serif font-bold text-gray-800 ml-2">${adv.name}</span>
                         ${predatorBadge}
                     </div>
@@ -1962,7 +2479,7 @@ function finishGen() {
     }
     summaryHTML += `</div></div>`;
     
-    // Add Health and Willpower Trackers Placeholder to Summary
+    // Add Health and Willpower Trackers Placeholder to Summary Cards
     summaryHTML += `
         <div class="mt-8 pt-8 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
@@ -1982,9 +2499,1023 @@ function finishGen() {
         </div>
     `;
 
-    document.getElementById('summary-content').innerHTML = summaryHTML;
+    const summaryContentEl = document.getElementById('summary-content');
+    if (summaryContentEl) {
+        summaryContentEl.innerHTML = summaryHTML;
+    }
     renderHealthWillpower();
 }
+
+// Dedicated print trigger functions ensuring clean 2-page print in all browser & iframe contexts
+function generatePrintableHTML() {
+    finishGen();
+    switchSummaryView('official');
+    const sheetEl = document.getElementById('vtm-official-sheet');
+    const content = sheetEl ? sheetEl.innerHTML : '';
+    
+    return `<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бланк персонажа - Vampire: The Masquerade 5e</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --vtm-red: #8b0000;
+            --vtm-crimson: #6b0000;
+            --vtm-bone: #f5f5f0;
+            --vtm-dark: #1a1a1a;
+            --vtm-accent: #c8102e;
+            --vtm-predator: #4b0082;
+            --vtm-sheet-bg: #fcfbfa;
+            --vtm-sheet-border: #222222;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: 'EB Garamond', Georgia, serif;
+            background-color: #141414;
+            color: #111111;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, .vtm-font {
+            font-family: 'Cinzel', 'EB Garamond', serif;
+        }
+
+        .cinzel {
+            font-family: 'Cinzel', serif;
+        }
+
+        .garamond {
+            font-family: 'EB Garamond', Georgia, serif;
+        }
+
+        /* Screen Preview Top Sticky Control Bar */
+        .print-bar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            background: #0f0f0f;
+            border-bottom: 2px solid #8b0000;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.8);
+            z-index: 9999;
+        }
+
+        .print-btn {
+            background: #8b0000;
+            color: #ffffff;
+            font-family: 'Cinzel', serif;
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            padding: 9px 22px;
+            border-radius: 6px;
+            border: 1px solid #b30000;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 10px rgba(139, 0, 0, 0.5);
+        }
+
+        .print-btn:hover {
+            background: #b30000;
+            transform: translateY(-1px);
+        }
+
+        .print-btn:active {
+            transform: translateY(0);
+        }
+
+        .vtm-official-sheet-wrapper {
+            width: 100%;
+            margin: 0 auto;
+            font-family: 'EB Garamond', Georgia, serif;
+            color: #111111;
+            padding: 24px 0 60px 0;
+        }
+
+        .vtm-sheet-page {
+            background-color: #ffffff;
+            color: #111111;
+            box-sizing: border-box;
+            width: 210mm;
+            height: 282mm;
+            max-height: 282mm;
+            min-height: 282mm;
+            margin: 0 auto 30px auto;
+            padding: 6mm 7mm;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid #222222;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            overflow: hidden;
+        }
+
+        .vtm-sheet-page.page-1 {
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .vtm-sheet-page.page-2 {
+            page-break-before: always;
+            break-before: page;
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+
+        /* Outer and Inner Classic Borders */
+        .vtm-sheet-border {
+            border: 2.5px solid #1a1a1a;
+            padding: 3.5mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .vtm-sheet-inner-border {
+            border: 1px solid #1a1a1a;
+            padding: 3mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        /* Title Banner */
+        .vtm-title-banner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 6px;
+            padding: 2px 0 3px 0;
+            width: 100%;
+        }
+
+        .vtm-title-lines-left,
+        .vtm-title-lines-right {
+            flex: 1;
+            height: 4px;
+            border-top: 1.5px solid #1a1a1a;
+            border-bottom: 1px solid #8b0000;
+        }
+
+        .vtm-main-title {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .vtm-title-primary {
+            font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+            font-size: 21pt;
+            font-weight: 900;
+            letter-spacing: 0.26em;
+            line-height: 1;
+            margin: 0;
+            color: #1a1a1a;
+            text-transform: uppercase;
+        }
+
+        .vtm-title-secondary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            font-family: 'Cinzel', 'EB Garamond', Georgia, serif;
+            font-size: 9pt;
+            font-weight: 800;
+            letter-spacing: 0.45em;
+            line-height: 1.2;
+            margin: 2px 0 0 0;
+            color: #8b0000;
+            text-transform: uppercase;
+        }
+
+        .vtm-title-secondary::before,
+        .vtm-title-secondary::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: #8b0000;
+            min-width: 18px;
+        }
+
+        /* 3x3 Profile Info Box */
+        .vtm-profile-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            border: 1.5px solid #1a1a1a;
+            margin-bottom: 6px;
+            background-color: #fff;
+        }
+
+        .vtm-profile-cell {
+            border-right: 1px solid #888;
+            border-bottom: 1px solid #888;
+            padding: 3px 5px;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            min-height: 22px;
+            overflow: hidden;
+        }
+
+        .vtm-profile-cell:nth-child(3n) {
+            border-right: none;
+        }
+
+        .vtm-profile-cell:nth-child(n+7) {
+            border-bottom: none;
+        }
+
+        .vtm-cell-label {
+            font-family: 'Cinzel', serif;
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #333333;
+            white-space: nowrap;
+            letter-spacing: 0.05em;
+        }
+
+        .vtm-cell-val {
+            font-family: 'EB Garamond', Georgia, serif;
+            font-size: 9.5pt;
+            font-weight: 600;
+            color: #111111;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex-grow: 1;
+        }
+
+        /* Section Headers */
+        .vtm-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 4px 0 3px 0;
+            position: relative;
+        }
+
+        .vtm-section-header::before,
+        .vtm-section-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #8b0000, #1a1a1a);
+        }
+
+        .vtm-section-header::after {
+            background: linear-gradient(to left, transparent, #8b0000, #1a1a1a);
+        }
+
+        .vtm-section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 9.5pt;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: #8b0000;
+            padding: 0 4px;
+        }
+
+        .vtm-col-title {
+            font-family: 'Cinzel', serif;
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-align: center;
+            color: #1a1a1a;
+            border-bottom: 1.5px solid #1a1a1a;
+            padding-bottom: 2px;
+            margin-bottom: 3px;
+            letter-spacing: 0.1em;
+        }
+
+        /* Attributes Grid */
+        .vtm-attributes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .vtm-attr-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vtm-dots-leader {
+            flex: 1;
+            border-bottom: 1px dotted #888;
+            height: 1px;
+            margin: 0 4px 2px 4px;
+            min-width: 6px;
+        }
+
+        .vtm-stat-row {
+            display: flex;
+            align-items: center;
+            font-size: 8.5pt;
+            font-family: 'EB Garamond', Georgia, serif;
+            padding: 1.5px 0;
+            min-height: 17px;
+        }
+
+        .vtm-stat-name {
+            font-weight: 600;
+            color: #222;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Circles & Dots for Official Sheet */
+        .vtm-dots {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .vtm-sheet-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            border: 1.2px solid #1a1a1a;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+
+        .vtm-sheet-dot.filled {
+            background-color: #1a1a1a;
+            border-color: #1a1a1a;
+        }
+
+        .vtm-sheet-dot.predator-dot {
+            background-color: #4b0082;
+            border-color: #4b0082;
+        }
+
+        .vtm-sheet-dot.spec-dot {
+            background-color: #065f46;
+            border-color: #065f46;
+        }
+
+        /* Trackers Row (Health & Willpower) */
+        .vtm-trackers-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            border: 1px solid #1a1a1a;
+            padding: 3px 6px;
+            margin-bottom: 6px;
+            background-color: #fbfbfb;
+        }
+
+        .vtm-tracker-block {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .vtm-tracker-name {
+            font-family: 'Cinzel', serif;
+            font-size: 8pt;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            color: #1a1a1a;
+        }
+
+        .vtm-tracker-boxes {
+            display: flex;
+            gap: 2.5px;
+            align-items: center;
+        }
+
+        .vtm-track-box {
+            width: 12px;
+            height: 12px;
+            border: 1.2px solid #1a1a1a;
+            display: inline-block;
+            box-sizing: border-box;
+            background-color: #ffffff;
+        }
+
+        .vtm-track-box.inactive {
+            border: 1px dashed #aaa;
+            background-color: #f0f0f0;
+        }
+
+        /* Skills Grid */
+        .vtm-skills-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .vtm-skill-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vtm-skill-row {
+            display: flex;
+            align-items: center;
+            font-size: 8pt;
+            padding: 1px 0;
+            min-height: 17px;
+        }
+
+        .vtm-skill-title {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 2px;
+            white-space: nowrap;
+            font-weight: 500;
+            color: #222;
+            flex-shrink: 0;
+        }
+
+        .vtm-skill-spec {
+            font-size: 7pt;
+            font-style: italic;
+            color: #555555;
+            white-space: nowrap;
+        }
+
+        /* Disciplines Grid */
+        .vtm-disciplines-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 5px;
+        }
+
+        .vtm-disc-box {
+            border: 1px solid #1a1a1a;
+            padding: 3px 4px;
+            min-height: 62px;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+        }
+
+        .vtm-disc-header {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 1px;
+            margin-bottom: 2px;
+        }
+
+        .vtm-disc-name {
+            font-family: 'Cinzel', serif;
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #8b0000;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .vtm-disc-powers {
+            font-size: 7pt;
+            color: #222;
+            line-height: 1.25;
+            flex-grow: 1;
+        }
+
+        .vtm-disc-power-item {
+            margin-bottom: 1.5px;
+            border-bottom: 1px dotted #e5e7eb;
+            padding-bottom: 1px;
+        }
+
+        .vtm-power-title {
+            font-weight: 700;
+            color: #111;
+        }
+
+        /* Bottom Bar: Resonance, Hunger, Humanity */
+        .vtm-bottom-bar {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1.4fr;
+            gap: 8px;
+            border: 1.5px solid #1a1a1a;
+            padding: 4px 6px;
+            margin-top: 2px;
+            align-items: center;
+            background-color: #fbfbfb;
+        }
+
+        .vtm-bottom-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .vtm-bottom-label {
+            font-family: 'Cinzel', serif;
+            font-size: 7.5pt;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #1a1a1a;
+            white-space: nowrap;
+        }
+
+        .vtm-resonance-line {
+            flex-grow: 1;
+            border-bottom: 1px solid #888;
+            height: 12px;
+            font-size: 8pt;
+            padding-left: 2px;
+        }
+
+        .vtm-hunger-box {
+            width: 12px;
+            height: 12px;
+            border: 1.5px solid #8b0000;
+            display: inline-block;
+            box-sizing: border-box;
+            background-color: #ffffff;
+        }
+
+        .vtm-humanity-box {
+            width: 12px;
+            height: 12px;
+            border: 1.2px solid #1a1a1a;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            font-size: 9px;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .vtm-humanity-box.filled {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .vtm-sheet-footer-note {
+            font-size: 6.5pt;
+            text-align: right;
+            color: #666666;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
+        /* PAGE 2 STYLES */
+        .vtm-page2-top-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .vtm-boxed-card {
+            border: 1.5px solid #1a1a1a;
+            padding: 3px 5px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+        }
+
+        .vtm-card-title {
+            font-family: 'Cinzel', serif;
+            font-size: 7.5pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: center;
+            color: #8b0000;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 1px;
+            margin-bottom: 2px;
+            letter-spacing: 0.08em;
+        }
+
+        .vtm-card-content {
+            font-size: 7.5pt;
+            line-height: 1.2;
+            flex-grow: 1;
+        }
+
+        .vtm-page2-main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .vtm-page2-left-col,
+        .vtm-page2-right-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vtm-merits-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .vtm-merit-row {
+            display: flex;
+            align-items: center;
+            font-size: 7.5pt;
+            padding: 1px 0;
+            min-height: 15px;
+        }
+
+        .vtm-merit-name {
+            display: inline-flex;
+            align-items: baseline;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .vtm-notes-box {
+            border: 1px solid #1a1a1a;
+            padding: 4px;
+            flex-grow: 1;
+            min-height: 90px;
+            font-size: 7.5pt;
+            line-height: 1.3;
+            background-color: #ffffff;
+            text-align: justify;
+        }
+
+        .vtm-bp-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1.5px solid #1a1a1a;
+            padding-bottom: 2px;
+            margin-bottom: 4px;
+        }
+
+        .vtm-section-title-inline {
+            font-family: 'Cinzel', serif;
+            font-size: 8.5pt;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            color: #8b0000;
+            text-transform: uppercase;
+        }
+
+        .vtm-dots-10 {
+            display: flex;
+            gap: 2.5px;
+        }
+
+        .vtm-bp-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+            font-size: 7pt;
+        }
+
+        .vtm-bp-table td {
+            border: 1px solid #1a1a1a;
+            padding: 2.5px 3px;
+            vertical-align: top;
+            width: 50%;
+        }
+
+        .vtm-bp-cell-label {
+            font-family: 'Cinzel', serif;
+            font-size: 6.5pt;
+            font-weight: 700;
+            color: #333333;
+            display: block;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        .vtm-bp-cell-val {
+            font-size: 7pt;
+            font-weight: 600;
+            color: #111111;
+            display: block;
+            line-height: 1.15;
+            margin-top: 1px;
+        }
+
+        .vtm-xp-row {
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid #1a1a1a;
+            padding: 2.5px 5px;
+            margin-bottom: 5px;
+            font-size: 7.5pt;
+            background-color: #fbfbfb;
+        }
+
+        .vtm-xp-label {
+            font-family: 'Cinzel', serif;
+            font-size: 7pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .vtm-bio-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex-grow: 1;
+        }
+
+        .vtm-bio-row {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            font-size: 7.5pt;
+            min-height: 16px;
+        }
+
+        .vtm-bio-label {
+            font-family: 'Cinzel', serif;
+            font-size: 7pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .vtm-bio-line {
+            flex-grow: 1;
+            border-bottom: 1px solid #999;
+            height: 12px;
+            font-size: 7.5pt;
+            padding-left: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .vtm-line-row {
+            border-bottom: 1px dotted #aaa;
+            height: 14px;
+        }
+
+        /* PRINT MEDIA QUERY RULES */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 4mm 5mm 4mm 5mm;
+            }
+
+            *, *::before, *::after {
+                box-sizing: border-box !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-family: 'EB Garamond', Georgia, serif !important;
+                font-size: 8.5pt !important;
+                width: 100% !important;
+                height: auto !important;
+            }
+
+            .print-bar {
+                display: none !important;
+            }
+
+            .vtm-official-sheet-wrapper {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: transparent !important;
+            }
+
+            .vtm-sheet-page {
+                box-sizing: border-box !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 282mm !important;
+                max-height: 282mm !important;
+                min-height: 282mm !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+                position: relative !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                overflow: hidden !important;
+            }
+
+            .vtm-sheet-page.page-1 {
+                page-break-before: auto !important;
+                break-before: auto !important;
+                page-break-after: always !important;
+                break-after: page !important;
+            }
+
+            .vtm-sheet-page.page-2 {
+                page-break-before: always !important;
+                break-before: page !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+
+            .vtm-sheet-border {
+                border: 2px solid #000000 !important;
+                padding: 2.5mm !important;
+                height: 100% !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .vtm-sheet-inner-border {
+                border: 1px solid #000000 !important;
+                padding: 2mm !important;
+                box-sizing: border-box !important;
+                height: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                flex-grow: 1 !important;
+            }
+
+            .vtm-sheet-dot.filled {
+                background-color: #000000 !important;
+                border-color: #000000 !important;
+            }
+
+            .vtm-sheet-dot.predator-dot {
+                background-color: #4b0082 !important;
+                border-color: #4b0082 !important;
+            }
+
+            .vtm-sheet-dot.spec-dot {
+                background-color: #065f46 !important;
+                border-color: #065f46 !important;
+            }
+
+            .vtm-title-primary {
+                color: #000000 !important;
+            }
+
+            .vtm-title-secondary,
+            .vtm-section-title,
+            .vtm-card-title,
+            .vtm-section-title-inline,
+            .vtm-disc-name {
+                color: #8b0000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="color: #8b0000; font-size: 22px;">🦇</span>
+            <div>
+                <div style="color: #ffffff; font-family: 'Cinzel', serif; font-size: 14px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;">
+                    Vampire: The Masquerade 5e — Офіційний Бланк Персонажа
+                </div>
+                <div style="color: #aaaaaa; font-size: 12px; font-family: 'EB Garamond', serif;">
+                    Формат: 2 сторінки A4 • Усі характеристики, навички, дисципліни та біографія
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="print-btn" onclick="window.print()">
+                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>Роздрукувати / Зберегти як PDF (Ctrl+P)</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="vtm-official-sheet-wrapper">
+        ${content}
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                try {
+                    window.focus();
+                    window.print();
+                } catch(err) {
+                    console.log('Direct print dialog notice:', err);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>`;
+}
+
+function openPrintSheetInNewWindow() {
+    finishGen();
+    switchSummaryView('official');
+    const htmlDoc = generatePrintableHTML();
+
+    let opened = false;
+    try {
+        const printWin = window.open('', '_blank');
+        if (printWin && printWin.document) {
+            printWin.document.open();
+            printWin.document.write(htmlDoc);
+            printWin.document.close();
+            opened = true;
+        }
+    } catch (e) {
+        console.warn('Direct document.write into new window failed:', e);
+    }
+
+    if (!opened) {
+        try {
+            const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                a.remove();
+                URL.revokeObjectURL(blobUrl);
+            }, 30000);
+        } catch (err) {
+            console.error('Blob URL opening failed:', err);
+        }
+    }
+}
+
+function printCharacterSheet() {
+    finishGen();
+    switchSummaryView('official');
+
+    // In sandboxed iframes (like AI Studio preview), direct window.print() is blocked by browser security.
+    // Opening the standalone styled sheet in a clean tab bypasses sandbox restrictions and launches the print dialog.
+    openPrintSheetInNewWindow();
+
+    // In case the app is opened directly in a browser tab outside iframe, also trigger window.print
+    try {
+        window.focus();
+        window.print();
+    } catch (e) {
+        // Ignored if blocked by sandbox
+    }
+}
+
+// Automatically re-render sheet on print trigger
+window.addEventListener('beforeprint', () => {
+    finishGen();
+    switchSummaryView('official');
+});
 
 function createSummaryDots(count, max = 5) {
     let html = '<div class="flex gap-1">';
@@ -2414,25 +3945,6 @@ const clanCategories = [
     }
 ];
 
-const clanImages = {
-    "ventrue": "Ventrue_symbol.png",
-    "tzimisce": "Tzimisce_symbol.png",
-    "lasombra": "Lasombra_symbol.png",
-    "brujah": "Brujah_symbol.png",
-    "gangrel": "Gangrel_symbol.png",
-    "banu_haqim": "Banu_Haqim_Symbol.png",
-    "toreador": "Toreador_symbol.png",
-    "ravnos": "Ravnos_symbol.png",
-    "ministry": "Ministry_symbol.png",
-    "malkavian": "Malkavian_symbol.png",
-    "tremere": "Tremere_symbol.png",
-    "hecata": "Hecata_symbol.png",
-    "nosferatu": "Nosferatu_symbol.png",
-    "salubri": "Salubri_symbol.png",
-    "unknown": "Caitiff_symbol.png",
-    "thin-blood": "Thinblood_symbol.png"
-};
-
 function openClanModal() {
     renderClanModal();
     document.getElementById('clan-modal').classList.remove('hidden');
@@ -2471,7 +3983,7 @@ function renderClanModal() {
             const clanData = clansData[clanId];
             if (!clanData) return;
             
-            const imgSrc = clanImages[clanId] ? `Clan_symbols/${clanImages[clanId]}` : '';
+            const imgSrc = (typeof getClanIconPath === 'function') ? getClanIconPath(clanId) : (clanData.image ? `Clan_symbols/${clanData.image}` : 'Clan_symbols/Caitiff_symbol.png');
             
             html += `
                 <button onclick="selectClanFromModal('${clanId}')" class="flex items-start p-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-red-500 rounded-lg transition-all group text-left h-full">
