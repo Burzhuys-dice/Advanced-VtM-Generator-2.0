@@ -325,9 +325,9 @@
                 </div>
 <!-- ================= БЛОК КЛАНУ ================= -->
 <div class="mt-4">
-    <div class="flex items-center justify-between mb-1">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
         <div class="flex items-center gap-2">
-            <label for="clan-select-1" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-2">Клан</label>
+            <label for="clan-select-1" class="block text-sm font-bold text-gray-700 uppercase tracking-wider mb-0">Клан</label>
             
             <div class="relative flex items-center group">
                 <button type="button" class="text-gray-400 hover:text-[#8b0000] transition-colors cursor-help">
@@ -339,7 +339,7 @@
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <button type="button" onclick="openQuizModal()" class="px-3 py-1 text-[11px] font-bold text-white bg-[#8b0000] hover:bg-red-800 border border-red-900 rounded transition-colors uppercase tracking-widest flex items-center gap-1 shadow-sm">
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25c-1.354 3.125-6 8.5-6 13.5a6 6 0 0012 0c0-5-4.646-10.375-6-13.5z"/></svg>
                 Дізнатися свій клан
@@ -702,11 +702,11 @@
 
             <div class="max-w-3xl mx-auto mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Додати дисципліну вручну:</label>
-                <div class="flex gap-2">
-                    <select id="manual-disc-select" class="flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <select id="manual-disc-select" class="min-w-0 w-full sm:flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
                         <option value="">-- Оберіть дисципліну --</option>
                     </select>
-                    <button onclick="addManualDisciplineFromSelect()" class="px-6 py-2 bg-[#1a1a1a] text-white text-sm font-bold uppercase tracking-widest rounded hover:bg-[#8b0000] transition-colors shadow">Додати</button>
+                    <button onclick="addManualDisciplineFromSelect()" class="w-full sm:w-auto px-6 py-2 bg-[#1a1a1a] text-white text-sm font-bold uppercase tracking-widest rounded hover:bg-[#8b0000] transition-colors shadow">Додати</button>
                 </div>
             </div>
 
