@@ -23,8 +23,8 @@ app.post('/api/generate-backstory', async (req, res) => {
     try {
         const { name, clan, predator, attributes, skills, merits, flaws } = req.body;
         
-        if (!process.env.GEMINI_API_KEY) {
-            return res.status(500).json({ error: 'GEMINI_API_KEY is not configured.' });
+        if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_API_KEY.startsWith('AIza')) {
+            return res.status(500).json({ error: 'Будь ласка, додайте свій GEMINI_API_KEY у налаштуваннях (Settings > Secrets).' });
         }
 
         const prompt = `Ти — майстер гри у Vampire: The Masquerade 5e. Напиши коротку, атмосферну та унікальну історію (бексторі/флейвор текст) для персонажа (від другої особи, "Ти..."). 

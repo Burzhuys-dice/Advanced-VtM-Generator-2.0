@@ -4245,8 +4245,8 @@ async function generateAIFlavorText() {
     }
 
     // Merits & Flaws
-    let meritsList = state.advantages.merits.map(m => m.name).join(', ') || 'Немає';
-    let flawsList = state.advantages.flaws.map(f => f.name).join(', ') || 'Немає';
+    let meritsList = state.selectedAdvantages.filter(a => a.type === 'merit').map(m => m.name).join(', ') || 'Немає';
+    let flawsList = state.selectedAdvantages.filter(a => a.type === 'flaw').map(f => f.name).join(', ') || 'Немає';
 
     const payload = {
         name,
