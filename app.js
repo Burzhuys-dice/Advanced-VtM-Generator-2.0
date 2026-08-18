@@ -2127,9 +2127,12 @@ function finishGen() {
     const summaryNameEl = document.getElementById('summary-name');
     const summaryConceptEl = document.getElementById('summary-concept');
     const summaryHumanityEl = document.getElementById('summary-humanity');
+    const summaryFlavorEl = document.getElementById('summary-flavor-text');
+    
     if (summaryNameEl) summaryNameEl.innerText = name;
     if (summaryConceptEl) summaryConceptEl.innerText = `${concept || 'Без концепту'} | ${clanName} | ${predatorName}`;
     if (summaryHumanityEl) summaryHumanityEl.innerText = currentHumanity;
+    if (summaryFlavorEl) summaryFlavorEl.innerText = generateFlavorText(state.clan, state.selectedPredator);
 
     let availableDisc = [...(clansData[state.clan]?.disciplines || [])];
     if (state.predatorChoices.discipline && !availableDisc.includes(state.predatorChoices.discipline)) {
@@ -4090,4 +4093,198 @@ function renderClanModal() {
     
     html += '</div>';
     container.innerHTML = html;
+}
+
+// --- Save / Load Draft ---
+function saveDraftToFile() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", (state.name || "vampire") + "_draft.json");
+    document.body.appendChild(downloadAnchorNode); 
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function loadDraftFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const loadedState = JSON.parse(e.target.result);
+            Object.assign(state, loadedState);
+            restoreUIFromState();
+            alert("Персонаж успішно завантажений!");
+        } catch (error) {
+            alert("Помилка при завантаженні файлу: " + error.message);
+        }
+    };
+    reader.readAsText(file);
+    
+    // Reset input so it can be triggered again with the same file if needed
+    event.target.value = '';
+}
+
+function restoreUIFromState() {
+    // 1. Concept Step Inputs
+    document.getElementById('char-name').value = state.name || '';
+    document.getElementById('char-concept').value = state.concept || '';
+    document.getElementById('char-chronicle').value = state.chronicle || '';
+    document.getElementById('char-sire').value = state.sire || '';
+    document.getElementById('char-ambition').value = state.ambition || '';
+    document.getElementById('char-desire').value = state.desire || '';
+    
+    if (state.generation) {
+        document.getElementById('generation-select').value = state.generation;
+    }
+    
+    // 2. Clan UI
+    if (state.clan) {
+        const clanData = state.clansData?.find(c => c.id === state.clan);
+        if (clanData) {
+            document.getElementById('clan-btn-icon').src = `Clan_symbols/${clanData.icon}`;
+            document.getElementById('clan-btn-name').textContent = clanData.name;
+        }
+    }
+    
+    // 3. Updates all views
+    renderAttributes();
+    
+    const distSelect = document.getElementById('skill-distribution');
+    if (distSelect && state.distribution) {
+        distSelect.value = state.distribution;
+    }
+    renderSkills();
+    
+    if (state.predatorType) {
+        renderPredatorTypes();
+    }
+    
+    renderDisciplines();
+    renderMerits();
+    renderAdvantagesSummary();
+    updateSummary();
+    
+    // Go to step 1
+    goToStep(1);
+}
+
+function generateFlavorText(clanId, predId) {
+    const clanFlavors = {
+        brujah: "Ваша гаряча кров штовхає вас до бунту, навіть якщо ви намагаєтесь тримати Звіра на ланцюгу.",
+        toreador: "Ви шукаєте красу у вічності, проте кожна крапля крові нагадує про втрачене життя.",
+        nosferatu: "Ховаючись у тінях, ви знаєте всі таємниці міста, яке вас відкидає.",
+        ventrue: "Влада — ваше друге ім'я. Ви звикли контролювати все, включно з тим, чиєю кров'ю харчуєтесь.",
+        tremere: "Ваша кров — це і прокляття, і зброя. Знання даються ціною відчуження.",
+        malkavian: "Мережа голосів шепоче вам істини, які інші воліли б ніколи не чути.",
+        gangrel: "Ви ближче до Звіра, ніж будь-хто інший, і місто для вас — лише бетонні джунглі.",
+        lasombra: "Тіні слухаються вас, але завжди намагаються поглинути вашу душу.",
+        hecata: "Смерть не стала кінцем, а лише інструментом у ваших холодних руках.",
+        banu_haqim: "Ви суддя і кат, але жага до крові інших вампірів — ваше найтяжче випробування.",
+        ministry: "Ви руйнуєте кайдани моралі, пропонуючи свободу тим, хто готовий заплатити ціну.",
+        ravnos: "Життя — це ілюзія, і ви майстерно нею граєте, тікаючи від власного попелу.",
+        tzimisce: "Плоть і дух — лише глина, з якої ви ліпите свою ідеальну сутність.",
+        salubri: "Ви шукаєте порятунку душі, ставши мішенню для тих, хто жадає вашої сили.",
+        caitiff: "Без родоводу і традицій, ви виживаєте завдяки власній кмітливості у світі, де кров означає все.",
+        thinblood: "Ви балансуєте на межі життя і смерті, не прийняті ані людьми, ані родичами."
+    };
+
+    const predFlavors = {
+        alleycat: "Ваше полювання — це напад. Ви забираєте кров силою, не залишаючи жертві вибору.",
+        bagger: "Ви уникаєте пульсуючих вен, надаючи перевагу холодним запасам або трупам.",
+        blood_leech: "Кров смертних для вас прісна. Ви полюєте на інших кровопивць, ризикуючи всім.",
+        cleaver: "Ваші близькі та родина — ваше джерело життя, хоч це і руйнує їхні долі.",
+        consensualist: "Ви п'єте лише за згодою, намагаючись зберегти залишки своєї Людяності.",
+        farmer: "Тваринна кров підтримує ваше існування, хоч і залишає вас завжди трохи голодним.",
+        osiris: "Ви створили культ навколо себе. Ваша паства добровільно віддає вам свою кров.",
+        sandman: "Ви проникаєте в будинки і п'єте кров сплячих, залишаючись непомітним привидом.",
+        scene_queen: "Ви зірка своєї субкультури, і фанати з радістю дозволяють вам живитися ними.",
+        siren: "Ваша зброя — спокуса. Виваблені жертви самі підставляють вам шию в пориві пристрасті."
+    };
+
+    const fallbackPred = "Ваш стиль полювання унікальний і не піддається стандартним класифікаціям.";
+
+    let text = clanFlavors[clanId] || clanFlavors["caitiff"];
+    let predText = predFlavors[predId] || fallbackPred;
+
+    return `${text} ${predText}`;
+}
+
+// --- AI Flavor Generation ---
+async function generateAIFlavorText() {
+    const btn = document.getElementById('btn-generate-ai');
+    const flavorEl = document.getElementById('summary-flavor-text');
+    
+    if (!btn || !flavorEl) return;
+
+    // Build the character context
+    const name = document.getElementById('character-name')?.value || 'Безіменний';
+    
+    const clanInfo = clansData[state.clan] || {};
+    const clanName = clanInfo.name || 'Невідомо';
+    
+    const predator = state.selectedPredator ? state.predatorData.find(p => p.id === state.selectedPredator) : null;
+    const predatorName = predator ? predator.name : 'Не обрано';
+
+    // Get top attributes (e.g. 3 and 4 dots)
+    let topAttrs = [];
+    for (const [attr, dots] of Object.entries(state.attributes)) {
+        if (dots >= 3) {
+            topAttrs.push(`${attr} (${dots})`);
+        }
+    }
+
+    // Get top skills (e.g. 3+ dots)
+    let topSkills = [];
+    for (const [skill, dots] of Object.entries(state.skills)) {
+        if (dots >= 3) {
+            topSkills.push(`${skill} (${dots})`);
+        }
+    }
+
+    // Merits & Flaws
+    let meritsList = state.advantages.merits.map(m => m.name).join(', ') || 'Немає';
+    let flawsList = state.advantages.flaws.map(f => f.name).join(', ') || 'Немає';
+
+    const payload = {
+        name,
+        clan: clanName,
+        predator: predatorName,
+        attributes: topAttrs.join(', '),
+        skills: topSkills.join(', '),
+        merits: meritsList,
+        flaws: flawsList
+    };
+
+    // UI Loading state
+    const originalBtnHTML = btn.innerHTML;
+    btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Генерація...</span>`;
+    btn.disabled = true;
+    flavorEl.innerHTML = `<span class="animate-pulse text-gray-500">Звертаємось до Звіра...</span>`;
+
+    try {
+        const response = await fetch('/api/generate-backstory', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            flavorEl.innerText = data.text;
+        } else {
+            flavorEl.innerHTML = `<span class="text-red-500">Помилка: ${data.error || 'Не вдалося згенерувати'}</span>`;
+        }
+    } catch (err) {
+        flavorEl.innerHTML = `<span class="text-red-500">Помилка з'єднання. Перевірте консоль.</span>`;
+        console.error(err);
+    } finally {
+        btn.innerHTML = originalBtnHTML;
+        btn.disabled = false;
+    }
 }
