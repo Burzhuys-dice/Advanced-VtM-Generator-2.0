@@ -547,11 +547,14 @@
             <p class="text-gray-600 mb-4 text-sm">Розподіліть крапки між 9 характеристиками. <br><span class="font-bold">Правило:</span> Одна характеристика на 4, три на 3, чотири на 2, і одна залишається на 1 (мінімальне значення для всіх).</p>
             
             <!-- Блок вибору архетипу характеристик -->
-            <div class="mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-red-50 p-4 rounded-lg border border-red-100">
-                <label class="text-sm font-bold text-red-900 uppercase tracking-wider min-w-max">Шаблон характеристик:</label>
-                <select id="attr-archetype-select" onchange="applyAttributeArchetype(this.value)" class="w-full sm:w-auto flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
-                    <option value="">-- Вручну / Оберіть шаблон --</option>
-                </select>
+            <div class="mb-8 flex flex-col gap-4 bg-red-50 p-4 rounded-lg border border-red-100">
+                <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    <label class="text-sm font-bold text-red-900 uppercase tracking-wider min-w-max">Шаблон характеристик:</label>
+                    <select id="attr-archetype-select" onchange="applyAttributeArchetype(this.value)" class="w-full sm:w-auto flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
+                        <option value="">-- Вручну / Оберіть шаблон --</option>
+                    </select>
+                </div>
+                <p id="attr-archetype-desc" class="text-sm text-gray-700 italic hidden"></p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12" id="attributes-grid"></div>
@@ -600,11 +603,14 @@
             </div>
 
             <!-- Блок вибору архетипу навичок -->
-            <div class="mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-red-50 p-4 rounded-lg border border-red-100">
-                <label class="text-sm font-bold text-red-900 uppercase tracking-wider min-w-max">Шаблон навичок:</label>
-                <select id="skill-archetype-select" onchange="applySkillArchetype(this.value)" class="w-full sm:w-auto flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
-                    <option value="">-- Вручну / Оберіть шаблон --</option>
-                </select>
+            <div class="mb-8 flex flex-col gap-4 bg-red-50 p-4 rounded-lg border border-red-100">
+                <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                    <label class="text-sm font-bold text-red-900 uppercase tracking-wider min-w-max">Шаблон навичок:</label>
+                    <select id="skill-archetype-select" onchange="applySkillArchetype(this.value)" class="w-full sm:w-auto flex-grow bg-white border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#8b0000]">
+                        <option value="">-- Вручну / Оберіть шаблон --</option>
+                    </select>
+                </div>
+                <p id="skill-archetype-desc" class="text-sm text-gray-700 italic hidden"></p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 mb-10" id="skills-grid"></div>
@@ -614,14 +620,14 @@
                     <h3 class="text-2xl font-bold text-[#8b0000] vtm-font uppercase">Спеціалізації</h3>
                     <span id="predator-spec-display" class="text-xs font-bold bg-[#4b0082] text-white px-3 py-1 rounded-full shadow-sm hidden transition-all duration-300">Спеціалізація хижака: Немає</span>
                 </div>
-                <p class="text-sm text-gray-600 mb-6">До знань, ремесла, виступу й науки ви отримуєте безплатні спеціалізації (якщо маєте хоча б 1 крапку в них). Також виберіть ще одну будь-яку безплатну спеціалізацію.</p>
+                <p class="text-sm text-gray-600 mb-6">До знань, ремесла, виступу й науки ви отримуєте безплатні спеціалізації (якщо маєте хоча б 1 крапку в них). Якщо жодної крапки немає - вписання тут спеціалізації дасть вам одну безкоштовну крапку першого рівня (зеленого кольору). Також виберіть ще одну будь-яку безплатну спеціалізацію.</p>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-4">
-                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Знання:</span><input type="text" id="spec-academics" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
-                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Ремесло:</span><input type="text" id="spec-craft" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
-                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Виступ:</span><input type="text" id="spec-performance" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
-                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-right">Наука:</span><input type="text" id="spec-science" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-left">Знання:</span><input type="text" id="spec-academics" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-left">Ремесло:</span><input type="text" id="spec-craft" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-left">Виступ:</span><input type="text" id="spec-performance" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
+                        <div class="flex items-center gap-4"><span class="w-24 font-bold text-gray-700 text-left">Наука:</span><input type="text" id="spec-science" class="custom-input flex-grow text-base border border-gray-300 rounded p-1"></div>
                     </div>
                     <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
                         <h4 class="font-bold text-gray-800 uppercase tracking-widest text-xs mb-4">Додаткова спеціалізація</h4>

@@ -296,19 +296,68 @@ function populateArchetypes() {
 
     if (skillSelect && state.archetypesData.skills) {
         let html = '<option value="">-- Вручну / Оберіть шаблон --</option>';
-        state.archetypesData.skills.forEach(s => {
-            html += `<option value="${s.id}">${s.name}</option>`;
-        });
+        
+        const specialists = state.archetypesData.skills.filter(s => s.category === 'specialist');
+        const balanced = state.archetypesData.skills.filter(s => s.category === 'balanced');
+        const jacks = state.archetypesData.skills.filter(s => s.category === 'jack');
+        
+        if (specialists.length > 0) {
+            html += '<optgroup label="🎯 Спеціалісти (1x4, 3x3, 3x2, 3x1)">';
+            specialists.forEach(s => {
+                html += `<option value="${s.id}">${s.name}</option>`;
+            });
+            html += '</optgroup>';
+        }
+        
+        if (balanced.length > 0) {
+            html += '<optgroup label="⚖️ Збалансовані (3x3, 5x2, 7x1)">';
+            balanced.forEach(s => {
+                html += `<option value="${s.id}">${s.name}</option>`;
+            });
+            html += '</optgroup>';
+        }
+        
+        if (jacks.length > 0) {
+            html += '<optgroup label="🤹 Майстри на всі руки (1x3, 8x2, 10x1)">';
+            jacks.forEach(s => {
+                html += `<option value="${s.id}">${s.name}</option>`;
+            });
+            html += '</optgroup>';
+        }
+
+        // Fallback if no category is defined
+        if (specialists.length === 0 && balanced.length === 0 && jacks.length === 0) {
+            state.archetypesData.skills.forEach(s => {
+                html += `<option value="${s.id}">${s.name}</option>`;
+            });
+        }
+
         skillSelect.innerHTML = html;
     }
 }
    
 // Застосування архетипу до характеристик
 function applyAttributeArchetype(archId) {
-    if (!archId) return; // Якщо обрано "Вручну", не змінюємо поточні дані
+    const descElement = document.getElementById('attr-archetype-desc');
+    
+    if (!archId) {
+        if (descElement) {
+            descElement.classList.add('hidden');
+            descElement.textContent = '';
+        }
+        return; // Якщо обрано "Вручну", не змінюємо поточні дані
+    }
     
     const archetype = state.archetypesData.attributes.find(a => a.id === archId);
     if (!archetype) return;
+
+    if (descElement && archetype.desc) {
+        descElement.textContent = archetype.desc;
+        descElement.classList.remove('hidden');
+    } else if (descElement) {
+        descElement.classList.add('hidden');
+        descElement.textContent = '';
+    }
 
     // Скидаємо всі характеристики до базового рівня (1)
     Object.keys(state.attributes).forEach(k => state.attributes[k] = 1);
@@ -326,10 +375,35 @@ function applyAttributeArchetype(archId) {
 
 // Застосування архетипу до навичок
 function applySkillArchetype(archId) {
-    if (!archId) return; // Якщо обрано "Вручну", не змінюємо поточні дані
+    const descElement = document.getElementById('skill-archetype-desc');
+    
+    if (!archId) {
+        if (descElement) {
+            descElement.classList.add('hidden');
+            descElement.textContent = '';
+        }
+        return; // Якщо обрано "Вручну", не змінюємо поточні дані
+    }
     
     const archetype = state.archetypesData.skills.find(s => s.id === archId);
     if (!archetype) return;
+
+    if (descElement && archetype.desc) {
+        descElement.textContent = archetype.desc;
+        descElement.classList.remove('hidden');
+    } else if (descElement) {
+        descElement.classList.add('hidden');
+        descElement.textContent = '';
+    }
+
+    // Автоматично змінюємо метод розподілу відповідно до архетипу
+    if (archetype.category) {
+        state.distribution = archetype.category;
+        const distSelect = document.getElementById('skill-distribution');
+        if (distSelect) {
+            distSelect.value = archetype.category;
+        }
+    }
 
     // Скидаємо всі навички до базового рівня (0)
     Object.keys(state.skills).forEach(k => state.skills[k] = 0);
@@ -723,6 +797,11 @@ function handleDotClick(type, id, clickedIndex, baseValue, min) {
         state.attributes[id] = newValue;
         renderAttributes();
         document.getElementById('attr-archetype-select').value = ""; // Скидаємо селект при ручній зміні
+        const descElement = document.getElementById('attr-archetype-desc');
+        if (descElement) {
+            descElement.classList.add('hidden');
+            descElement.textContent = '';
+        }
     } else if (type === 'skill') {
         state.skills[id] = newValue;
         if (newValue === 0 && state.skillSpecs && state.skillSpecs[id] && state.skillSpecs[id].trim() !== '') {
@@ -735,6 +814,11 @@ function handleDotClick(type, id, clickedIndex, baseValue, min) {
         }
         renderSkills();
         document.getElementById('skill-archetype-select').value = ""; // Скидаємо селект при ручній зміні
+        const descElement = document.getElementById('skill-archetype-desc');
+        if (descElement) {
+            descElement.classList.add('hidden');
+            descElement.textContent = '';
+        }
     } else if (type === 'discipline') {
         state.disciplines[id] = newValue;
         renderDisciplines();

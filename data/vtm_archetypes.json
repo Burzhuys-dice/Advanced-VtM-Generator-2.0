@@ -1,343 +1,814 @@
 {
   "attributes": [
-      {
-    "id": "attr_scholar",
-    "name": "Учений (Scholar)",
-    "desc": "Архетип, зосереджений на академічних знаннях, пам'яті та глибоких дослідженнях.",
-    "values": {
-      "strength": 1,
-      "dexterity": 2,
-      "stamina": 2,
-      "charisma": 2,
-      "manipulation": 2,
-      "composure": 3,
-      "intelligence": 4,
-      "wits": 3,
-      "resolve": 3
+    {
+      "id": "attr_scholar",
+      "name": "Учений (Scholar)",
+      "desc": "Архетип, зосереджений на академічних знаннях, пам'яті та глибоких дослідженнях.",
+      "values": {
+        "strength": 1,
+        "dexterity": 2,
+        "stamina": 2,
+        "charisma": 2,
+        "manipulation": 2,
+        "composure": 3,
+        "intelligence": 4,
+        "wits": 3,
+        "resolve": 3
+      }
+    },
+    {
+      "id": "attr_socialite",
+      "name": "Світська особа (Socialite)",
+      "desc": "Майстер переговорів та соціальної взаємодії, чия головна зброя — особистий шарм.",
+      "values": {
+        "strength": 1,
+        "dexterity": 2,
+        "stamina": 2,
+        "charisma": 4,
+        "manipulation": 3,
+        "composure": 3,
+        "intelligence": 2,
+        "wits": 3,
+        "resolve": 2
+      }
+    },
+    {
+      "id": "attr_veteran",
+      "name": "Ветеран (Veteran)",
+      "desc": "Загартований боєць, що покладається на витривалість тіла та швидку реакцію в бою.",
+      "values": {
+        "strength": 3,
+        "dexterity": 3,
+        "stamina": 4,
+        "charisma": 2,
+        "manipulation": 2,
+        "composure": 2,
+        "intelligence": 1,
+        "wits": 2,
+        "resolve": 3
+      }
+    },
+    {
+      "id": "attr_investigator",
+      "name": "Розслідувач (Investigator)",
+      "desc": "Детектив або аналітик, що миттєво оцінює ситуацію та помічає деталі, які інші пропускають.",
+      "values": {
+        "strength": 1,
+        "dexterity": 2,
+        "stamina": 2,
+        "charisma": 2,
+        "manipulation": 3,
+        "composure": 2,
+        "intelligence": 3,
+        "wits": 4,
+        "resolve": 3
+      }
+    },
+    {
+      "id": "attr_hacker",
+      "name": "Хакер (Hacker/Coder)",
+      "desc": "Спеціаліст із цифрових систем зі спритними пальцями та високим рівнем логічного мислення.",
+      "values": {
+        "strength": 2,
+        "dexterity": 4,
+        "stamina": 2,
+        "charisma": 1,
+        "manipulation": 2,
+        "composure": 2,
+        "intelligence": 3,
+        "wits": 3,
+        "resolve": 3
+      }
+    },
+    {
+      "id": "attr_executive",
+      "name": "Керівник (Executive)",
+      "desc": "Людина влади, здатна переконувати або змушувати інших виконувати свою волю.",
+      "values": {
+        "strength": 1,
+        "dexterity": 2,
+        "stamina": 2,
+        "charisma": 3,
+        "manipulation": 4,
+        "composure": 3,
+        "intelligence": 3,
+        "wits": 2,
+        "resolve": 2
+      }
+    },
+    {
+      "id": "attr_mafioso",
+      "name": "Злочинець (Mafioso/Thug)",
+      "desc": "Вуличний боєць, що покладається на фізичну силу, живучість та залякування.",
+      "values": {
+        "strength": 4,
+        "dexterity": 2,
+        "stamina": 3,
+        "charisma": 2,
+        "manipulation": 3,
+        "composure": 2,
+        "intelligence": 1,
+        "wits": 3,
+        "resolve": 2
+      }
+    },
+    {
+      "id": "attr_mystic",
+      "name": "Містик (Mystic/Occultist)",
+      "desc": "Людина, занурена в потаємне, з непохитною концентрацією та залізною волею.",
+      "values": {
+        "strength": 1,
+        "dexterity": 2,
+        "stamina": 2,
+        "charisma": 2,
+        "manipulation": 2,
+        "composure": 3,
+        "intelligence": 3,
+        "wits": 3,
+        "resolve": 4
+      }
     }
-  },
-  {
-    "id": "attr_socialite",
-    "name": "Світська особа (Socialite)",
-    "desc": "Майстер переговорів та соціальної динаміки, чия головна зброя — особистий шарм.",
-    "values": {
-      "strength": 1,
-      "dexterity": 2,
-      "stamina": 2,
-      "charisma": 4,
-      "manipulation": 3,
-      "composure": 3,
-      "intelligence": 2,
-      "wits": 3,
-      "resolve": 2
-    }
-  },
-  {
-    "id": "attr_veteran",
-    "name": "Ветеран (Veteran)",
-    "desc": "Загартований боєць, що покладається на витривалість тіла та швидку реакцію в бою.",
-    "values": {
-      "strength": 3,
-      "dexterity": 3,
-      "stamina": 4,
-      "charisma": 2,
-      "manipulation": 2,
-      "composure": 2,
-      "intelligence": 1,
-      "wits": 2,
-      "resolve": 3
-    }
-  },
-  {
-    "id": "attr_investigator",
-    "name": "Розслідувач (Investigator)",
-    "desc": "Детектив або аналітик, що миттєво оцінює ситуацію та помічає деталі, які інші пропускають.",
-    "values": {
-      "strength": 1,
-      "dexterity": 2,
-      "stamina": 2,
-      "charisma": 2,
-      "manipulation": 3,
-      "composure": 2,
-      "intelligence": 3,
-      "wits": 4,
-      "resolve": 3
-    }
-  },
-  {
-    "id": "attr_hacker",
-    "name": "Хакер (Hacker/Coder)",
-    "desc": "Спеціаліст із цифрових систем зі спритними пальцями та високим рівнем логічного мислення.",
-    "values": {
-      "strength": 2,
-      "dexterity": 4,
-      "stamina": 2,
-      "charisma": 1,
-      "manipulation": 2,
-      "composure": 2,
-      "intelligence": 3,
-      "wits": 3,
-      "resolve": 3
-    }
-  },
-  {
-    "id": "attr_executive",
-    "name": "Керівник (Executive)",
-    "desc": "Людина влади, здатна переконувати або змушувати інших виконувати свою волю.",
-    "values": {
-      "strength": 1,
-      "dexterity": 2,
-      "stamina": 2,
-      "charisma": 3,
-      "manipulation": 4,
-      "composure": 3,
-      "intelligence": 3,
-      "wits": 2,
-      "resolve": 2
-    }
-  },
-  {
-    "id": "attr_mafioso",
-    "name": "Злочинець (Mafioso/Thug)",
-    "desc": "Вуличний силовик, що покладається на фізичну силу, живучість та залякування.",
-    "values": {
-      "strength": 4,
-      "dexterity": 2,
-      "stamina": 3,
-      "charisma": 2,
-      "manipulation": 3,
-      "composure": 2,
-      "intelligence": 1,
-      "wits": 3,
-      "resolve": 2
-    }
-  },
-  {
-    "id": "attr_mystic",
-    "name": "Містик (Mystic/Occultist)",
-    "desc": "Людина, занурена в потаємне, з непохитною концентрацією та залізною волею.",
-    "values": {
-      "strength": 1,
-      "dexterity": 2,
-      "stamina": 2,
-      "charisma": 2,
-      "manipulation": 2,
-      "composure": 3,
-      "intelligence": 3,
-      "wits": 3,
-      "resolve": 4
-    }
-  }
   ],
   "skills": [
-     {
-    "id": "skill_veteran",
-    "name": "Ветеран (Veteran)",
-    "desc": "Персонаж із військовим минулим, навчений діяти в екстремальних умовах.",
-    "values": {
-      "firearms": 3,
-      "athletics": 3,
-      "stealth": 2,
-      "survival": 2
+    {
+      "id": "skill_pro_athlete",
+      "name": "Професійний атлет (Professional Athlete)",
+      "desc": "Видатний спортсмен, чиє життя присвячене тренуванням та фізичній досконалості.",
+      "category": "specialist",
+      "values": {
+        "athletics": 4,
+        "brawl": 3,
+        "drive": 3,
+        "survival": 3,
+        "melee": 2,
+        "intimidation": 2,
+        "awareness": 2,
+        "medicine": 1,
+        "performance": 1,
+        "leadership": 1
+      }
+    },
+    {
+      "id": "skill_sniper",
+      "name": "Снайпер / Кілер (Sniper / Hitman)",
+      "desc": "Холоднокровний стрілець, який ніколи не хибить і розчиняється в темряві після пострілу.",
+      "category": "specialist",
+      "values": {
+        "firearms": 4,
+        "stealth": 3,
+        "awareness": 3,
+        "survival": 3,
+        "technology": 2,
+        "athletics": 2,
+        "subterfuge": 2,
+        "melee": 1,
+        "drive": 1,
+        "streetwise": 1
+      }
+    },
+    {
+      "id": "skill_cult_leader",
+      "name": "Харизматичний демагог / Культист (Demagogue / Cult Leader)",
+      "desc": "Майстер володіння натовпом, здатний повести за собою тисячі людей одним полум'яним словом.",
+      "category": "specialist",
+      "values": {
+        "persuasion": 4,
+        "leadership": 3,
+        "subterfuge": 3,
+        "insight": 3,
+        "performance": 2,
+        "occult": 2,
+        "intimidation": 2,
+        "etiquette": 1,
+        "academics": 1,
+        "awareness": 1
+      }
+    },
+    {
+      "id": "skill_master_surgeon",
+      "name": "Хірург-віртуоз (Master Surgeon)",
+      "desc": "Блискучий лікар із залізною витримкою та філігранним розумінням анатомії.",
+      "category": "specialist",
+      "values": {
+        "medicine": 4,
+        "academics": 3,
+        "science": 3,
+        "investigation": 3,
+        "insight": 2,
+        "technology": 2,
+        "craft": 2,
+        "persuasion": 1,
+        "awareness": 1,
+        "etiquette": 1
+      }
+    },
+    {
+      "id": "skill_occult_scholar",
+      "name": "Окультний схоласт (Occult Scholar)",
+      "desc": "Дослідник заборонених таємниць, стародавніх манускриптів та ритуальних практик.",
+      "category": "specialist",
+      "values": {
+        "occult": 4,
+        "academics": 3,
+        "investigation": 3,
+        "insight": 3,
+        "awareness": 2,
+        "subterfuge": 2,
+        "science": 2,
+        "persuasion": 1,
+        "technology": 1,
+        "stealth": 1
+      }
+    },
+    {
+      "id": "skill_elite_hacker",
+      "name": "Елітний хакер / Нетраннер (Elite Hacker)",
+      "desc": "Цифровий геній, здатний зламати будь-яку систему безпеки та знищити репутацію ворога кліком миші.",
+      "category": "specialist",
+      "values": {
+        "technology": 4,
+        "investigation": 3,
+        "science": 3,
+        "larceny": 3,
+        "academics": 2,
+        "subterfuge": 2,
+        "finance": 2,
+        "awareness": 1,
+        "stealth": 1,
+        "streetwise": 1
+      }
+    },
+    {
+      "id": "skill_martial_master",
+      "name": "Майстер бойових мистецтв (Martial Arts Master)",
+      "desc": "Людина, яка перетворила власне тіло на смертоносну зброю через роки суворих тренувань.",
+      "category": "specialist",
+      "values": {
+        "brawl": 4,
+        "athletics": 3,
+        "melee": 3,
+        "awareness": 3,
+        "intimidation": 2,
+        "survival": 2,
+        "insight": 2,
+        "academics": 1,
+        "stealth": 1,
+        "leadership": 1
+      }
+    },
+    {
+      "id": "skill_puppetmaster",
+      "name": "Аристократичний маніпулятор (High Society Puppetmaster)",
+      "desc": "Інтриган вищого світу, що плете павутиння обману, шантажу та фальшивих посмішок.",
+      "category": "specialist",
+      "values": {
+        "subterfuge": 4,
+        "etiquette": 3,
+        "persuasion": 3,
+        "insight": 3,
+        "politics": 2,
+        "finance": 2,
+        "intimidation": 2,
+        "performance": 1,
+        "awareness": 1,
+        "leadership": 1
+      }
+    },
+    {
+      "id": "skill_master_infiltrator",
+      "name": "Тіньовий злодій (Master Infiltrator)",
+      "desc": "Привид, здатний безшумно проникнути до найзахищенішого сховища та зникнути без сліду.",
+      "category": "specialist",
+      "values": {
+        "stealth": 4,
+        "larceny": 3,
+        "athletics": 3,
+        "awareness": 3,
+        "technology": 2,
+        "survival": 2,
+        "subterfuge": 2,
+        "streetwise": 1,
+        "investigation": 1,
+        "melee": 1
+      }
+    },
+    {
+      "id": "skill_financial_tycoon",
+      "name": "Фінансовий магнат (Financial Tycoon)",
+      "desc": "Акула Волл-стріт, що керує корпораціями, потоками капіталу та покупкою впливових фігур.",
+      "category": "specialist",
+      "values": {
+        "finance": 4,
+        "persuasion": 3,
+        "politics": 3,
+        "insight": 3,
+        "leadership": 2,
+        "etiquette": 2,
+        "subterfuge": 2,
+        "academics": 1,
+        "technology": 1,
+        "investigation": 1
+      }
+    },
+    {
+      "id": "skill_homicide_detective",
+      "name": "Детектив забійного відділу (Homicide Detective)",
+      "desc": "Досвідчений слідчий поліції, звиклий до брудних вулиць, допитів та місць злочину.",
+      "category": "balanced",
+      "values": {
+        "investigation": 3,
+        "insight": 3,
+        "firearms": 3,
+        "streetwise": 2,
+        "awareness": 2,
+        "intimidation": 2,
+        "drive": 2,
+        "athletics": 2,
+        "brawl": 1,
+        "melee": 1,
+        "subterfuge": 1,
+        "technology": 1,
+        "politics": 1,
+        "medicine": 1,
+        "persuasion": 1
+      }
+    },
+    {
+      "id": "skill_mercenary_officer",
+      "name": "Військовий офіцер / Найманець (Military Officer / Mercenary)",
+      "desc": "Загартований тактик і лідер, готовий командувати операціями будь-якої складності.",
+      "category": "balanced",
+      "values": {
+        "firearms": 3,
+        "leadership": 3,
+        "athletics": 3,
+        "melee": 2,
+        "survival": 2,
+        "intimidation": 2,
+        "awareness": 2,
+        "drive": 2,
+        "brawl": 1,
+        "stealth": 1,
+        "medicine": 1,
+        "technology": 1,
+        "persuasion": 1,
+        "insight": 1,
+        "politics": 1
+      }
+    },
+    {
+      "id": "skill_defense_lawyer",
+      "name": "Адвокат у кримінальних справах (Criminal Defense Lawyer)",
+      "desc": "Красномовний юрист, що вміє маніпулювати судовою системою та викривати брехню.",
+      "category": "balanced",
+      "values": {
+        "persuasion": 3,
+        "politics": 3,
+        "academics": 3,
+        "insight": 2,
+        "subterfuge": 2,
+        "investigation": 2,
+        "etiquette": 2,
+        "finance": 2,
+        "intimidation": 1,
+        "leadership": 1,
+        "awareness": 1,
+        "technology": 1,
+        "streetwise": 1,
+        "performance": 1,
+        "drive": 1
+      }
+    },
+    {
+      "id": "skill_spec_ops",
+      "name": "Розвідник / Спецпризначенець (Spec Ops Scout)",
+      "desc": "Експерт із таємних операцій, здатний діяти в тилу ворога та виживати за будь-яких умов.",
+      "category": "balanced",
+      "values": {
+        "stealth": 3,
+        "survival": 3,
+        "firearms": 3,
+        "athletics": 2,
+        "melee": 2,
+        "awareness": 2,
+        "technology": 2,
+        "drive": 2,
+        "brawl": 1,
+        "larceny": 1,
+        "subterfuge": 1,
+        "insight": 1,
+        "medicine": 1,
+        "streetwise": 1,
+        "craft": 1
+      }
+    },
+    {
+      "id": "skill_investigative_journalist",
+      "name": "Журналіст-розслідувач (Investigative Journalist)",
+      "desc": "Шукач сенсацій та прихованої правди, готовий ризикувати заради викриття корупції.",
+      "category": "balanced",
+      "values": {
+        "investigation": 3,
+        "subterfuge": 3,
+        "persuasion": 3,
+        "insight": 2,
+        "awareness": 2,
+        "technology": 2,
+        "academics": 2,
+        "streetwise": 2,
+        "politics": 1,
+        "stealth": 1,
+        "drive": 1,
+        "finance": 1,
+        "performance": 1,
+        "etiquette": 1,
+        "athletics": 1
+      }
+    },
+    {
+      "id": "skill_mob_boss",
+      "name": "Кримінальний авторитет (Mob Boss)",
+      "desc": "Лідер синдикату, що контролює вулиці через авторитет, страх та холодний розрахунок.",
+      "category": "balanced",
+      "values": {
+        "streetwise": 3,
+        "intimidation": 3,
+        "leadership": 3,
+        "subterfuge": 2,
+        "persuasion": 2,
+        "finance": 2,
+        "brawl": 2,
+        "firearms": 2,
+        "insight": 1,
+        "politics": 1,
+        "melee": 1,
+        "drive": 1,
+        "awareness": 1,
+        "larceny": 1,
+        "etiquette": 1
+      }
+    },
+    {
+      "id": "skill_stage_star",
+      "name": "Зірка сцени / Перформер (Stage Star / Performer)",
+      "desc": "Артист, чий магнетизм приковує погляди та змушує серця глядачів битися швидше.",
+      "category": "balanced",
+      "values": {
+        "performance": 3,
+        "insight": 3,
+        "persuasion": 3,
+        "athletics": 2,
+        "etiquette": 2,
+        "subterfuge": 2,
+        "craft": 2,
+        "awareness": 2,
+        "academics": 1,
+        "finance": 1,
+        "leadership": 1,
+        "drive": 1,
+        "streetwise": 1,
+        "brawl": 1,
+        "technology": 1
+      }
+    },
+    {
+      "id": "skill_wilderness_ranger",
+      "name": "Єгер / Слідопит дикої природи (Wilderness Ranger)",
+      "desc": "Знавець дикої природи, тваринного світу та орієнтування поза межами цивілізації.",
+      "category": "balanced",
+      "values": {
+        "survival": 3,
+        "animalKen": 3,
+        "awareness": 3,
+        "stealth": 2,
+        "athletics": 2,
+        "firearms": 2,
+        "melee": 2,
+        "medicine": 2,
+        "brawl": 1,
+        "drive": 1,
+        "craft": 1,
+        "insight": 1,
+        "investigation": 1,
+        "intimidation": 1,
+        "science": 1
+      }
+    },
+    {
+      "id": "skill_forensic_scientist",
+      "name": "Науковець-криміналіст (Forensic Scientist)",
+      "desc": "Експерт наукової лабораторії, що перетворює мікроскопічні докази на неспростовні звинувачення.",
+      "category": "balanced",
+      "values": {
+        "science": 3,
+        "medicine": 3,
+        "investigation": 3,
+        "academics": 2,
+        "technology": 2,
+        "awareness": 2,
+        "insight": 2,
+        "craft": 2,
+        "subterfuge": 1,
+        "persuasion": 1,
+        "drive": 1,
+        "politics": 1,
+        "occult": 1,
+        "survival": 1,
+        "finance": 1
+      }
+    },
+    {
+      "id": "skill_political_strategist",
+      "name": "Політичний радник / Політтехнолог (Political Strategist)",
+      "desc": "Сірий кардинал виборчих кампаній, що розраховує кожен крок на політичній шахівниці.",
+      "category": "balanced",
+      "values": {
+        "politics": 3,
+        "subterfuge": 3,
+        "insight": 3,
+        "persuasion": 2,
+        "leadership": 2,
+        "etiquette": 2,
+        "finance": 2,
+        "academics": 2,
+        "investigation": 1,
+        "awareness": 1,
+        "technology": 1,
+        "intimidation": 1,
+        "performance": 1,
+        "streetwise": 1,
+        "drive": 1
+      }
+    },
+    {
+      "id": "skill_globetrotter",
+      "name": "Мандрівник / Авантюрист (Globetrotter / Adventurer)",
+      "desc": "Шукач пригод, що об'їздив пів світу, знайомий із десятком культур та вміє виплутуватися з будь-яких халеп.",
+      "category": "jack",
+      "values": {
+        "survival": 3,
+        "athletics": 2,
+        "drive": 2,
+        "firearms": 2,
+        "stealth": 2,
+        "insight": 2,
+        "persuasion": 2,
+        "streetwise": 2,
+        "academics": 2,
+        "brawl": 1,
+        "melee": 1,
+        "craft": 1,
+        "larceny": 1,
+        "animalKen": 1,
+        "etiquette": 1,
+        "subterfuge": 1,
+        "awareness": 1,
+        "medicine": 1,
+        "investigation": 1
+      }
+    },
+    {
+      "id": "skill_private_eye",
+      "name": "Приватний детектив / Нишпорка (Private Eye)",
+      "desc": "Самостійний детектив широкого профілю: стеження, злом замків, допити та розшук зниклих.",
+      "category": "jack",
+      "values": {
+        "investigation": 3,
+        "awareness": 2,
+        "insight": 2,
+        "streetwise": 2,
+        "subterfuge": 2,
+        "stealth": 2,
+        "firearms": 2,
+        "drive": 2,
+        "larceny": 2,
+        "athletics": 1,
+        "brawl": 1,
+        "melee": 1,
+        "craft": 1,
+        "intimidation": 1,
+        "persuasion": 1,
+        "academics": 1,
+        "medicine": 1,
+        "technology": 1,
+        "finance": 1
+      }
+    },
+    {
+      "id": "skill_street_fixer",
+      "name": "Вуличний ділок / Барига (Street Fixer)",
+      "desc": "Людина, яка знає все і всіх у підпільному світі, може дістати будь-який товар або знайти потрібну людину.",
+      "category": "jack",
+      "values": {
+        "streetwise": 3,
+        "subterfuge": 2,
+        "persuasion": 2,
+        "larceny": 2,
+        "drive": 2,
+        "insight": 2,
+        "intimidation": 2,
+        "awareness": 2,
+        "finance": 2,
+        "athletics": 1,
+        "brawl": 1,
+        "melee": 1,
+        "firearms": 1,
+        "stealth": 1,
+        "craft": 1,
+        "leadership": 1,
+        "technology": 1,
+        "investigation": 1,
+        "politics": 1
+      }
+    },
+    {
+      "id": "skill_handyman",
+      "name": "Майстер на всі руки / Майстровий (Handyman / Jack-of-all-trades)",
+      "desc": "Практична людина, яка вміє лагодити механізми, водити будь-який транспорт та знаходить спільну мову з робітниками.",
+      "category": "jack",
+      "values": {
+        "craft": 3,
+        "technology": 2,
+        "drive": 2,
+        "athletics": 2,
+        "brawl": 2,
+        "survival": 2,
+        "awareness": 2,
+        "insight": 2,
+        "streetwise": 2,
+        "melee": 1,
+        "larceny": 1,
+        "stealth": 1,
+        "animalKen": 1,
+        "persuasion": 1,
+        "intimidation": 1,
+        "academics": 1,
+        "medicine": 1,
+        "science": 1,
+        "investigation": 1
+      }
+    },
+    {
+      "id": "skill_undercover_agent",
+      "name": "Шпигун-диверсант (Undercover Agent)",
+      "desc": "Універсальний таємний агент, підготовлений до маскування, збору даних, стрільби та самозахисту.",
+      "category": "jack",
+      "values": {
+        "subterfuge": 3,
+        "stealth": 2,
+        "investigation": 2,
+        "insight": 2,
+        "persuasion": 2,
+        "firearms": 2,
+        "athletics": 2,
+        "technology": 2,
+        "drive": 2,
+        "brawl": 1,
+        "melee": 1,
+        "larceny": 1,
+        "survival": 1,
+        "etiquette": 1,
+        "intimidation": 1,
+        "awareness": 1,
+        "academics": 1,
+        "medicine": 1,
+        "politics": 1
+      }
+    },
+    {
+      "id": "skill_bohemian_dilettante",
+      "name": "Богемний дилетант (Bohemian Dilettante)",
+      "desc": "Заможний любитель прекрасного, що пробував себе у живописі, музиці, філософії та нічному житті богеми.",
+      "category": "jack",
+      "values": {
+        "performance": 3,
+        "insight": 2,
+        "etiquette": 2,
+        "persuasion": 2,
+        "academics": 2,
+        "craft": 2,
+        "awareness": 2,
+        "finance": 2,
+        "subterfuge": 2,
+        "athletics": 1,
+        "drive": 1,
+        "stealth": 1,
+        "animalKen": 1,
+        "leadership": 1,
+        "streetwise": 1,
+        "investigation": 1,
+        "medicine": 1,
+        "occult": 1,
+        "politics": 1
+      }
+    },
+    {
+      "id": "skill_urban_survivalist",
+      "name": "Виживальник у нетрях (Urban Survivalist)",
+      "desc": "Людина, загартована суворим життям на дні мегаполісу, готова до аварій, заворушень та катастроф.",
+      "category": "jack",
+      "values": {
+        "survival": 3,
+        "brawl": 2,
+        "athletics": 2,
+        "stealth": 2,
+        "larceny": 2,
+        "streetwise": 2,
+        "awareness": 2,
+        "craft": 2,
+        "medicine": 2,
+        "melee": 1,
+        "drive": 1,
+        "firearms": 1,
+        "animalKen": 1,
+        "insight": 1,
+        "intimidation": 1,
+        "subterfuge": 1,
+        "investigation": 1,
+        "technology": 1,
+        "science": 1
+      }
+    },
+    {
+      "id": "skill_antiquarian",
+      "name": "Антиквар / Оцінювач раритетів (Antiquarian / Appraiser)",
+      "desc": "Знавець старовини, що розуміється на історії, мистецтві, підробках, оцінці майна та торгах.",
+      "category": "jack",
+      "values": {
+        "academics": 3,
+        "insight": 2,
+        "investigation": 2,
+        "finance": 2,
+        "occult": 2,
+        "craft": 2,
+        "awareness": 2,
+        "persuasion": 2,
+        "etiquette": 2,
+        "athletics": 1,
+        "drive": 1,
+        "larceny": 1,
+        "stealth": 1,
+        "subterfuge": 1,
+        "leadership": 1,
+        "streetwise": 1,
+        "technology": 1,
+        "science": 1,
+        "politics": 1
+      }
+    },
+    {
+      "id": "skill_diplomatic_attache",
+      "name": "Дипломат / Аташе (Diplomatic Attaché)",
+      "desc": "Представник міжнародних місій, підготовлений до протокольних зустрічей, аналітики та переговорів.",
+      "category": "jack",
+      "values": {
+        "etiquette": 3,
+        "politics": 2,
+        "persuasion": 2,
+        "subterfuge": 2,
+        "insight": 2,
+        "leadership": 2,
+        "academics": 2,
+        "awareness": 2,
+        "finance": 2,
+        "athletics": 1,
+        "drive": 1,
+        "melee": 1,
+        "firearms": 1,
+        "stealth": 1,
+        "performance": 1,
+        "intimidation": 1,
+        "investigation": 1,
+        "technology": 1,
+        "medicine": 1
+      }
+    },
+    {
+      "id": "skill_night_cabby",
+      "name": "Нічний таксист / Інсайдер міста (Night Cabby / City Insider)",
+      "desc": "Водій нічного міста, який бачив усе: від кримінальних розбірок до таємниць багатіїв на задньому сидінні.",
+      "category": "jack",
+      "values": {
+        "drive": 3,
+        "streetwise": 2,
+        "awareness": 2,
+        "insight": 2,
+        "subterfuge": 2,
+        "athletics": 2,
+        "firearms": 2,
+        "technology": 2,
+        "brawl": 2,
+        "craft": 1,
+        "larceny": 1,
+        "stealth": 1,
+        "survival": 1,
+        "intimidation": 1,
+        "persuasion": 1,
+        "investigation": 1,
+        "academics": 1,
+        "medicine": 1,
+        "finance": 1
+      }
     }
-  },
-  {
-    "id": "skill_executive",
-    "name": "Керівник (Executive)",
-    "desc": "Професіонал у сфері бізнесу та управління персоналом.",
-    "values": {
-      "finance": 3,
-      "persuasion": 3,
-      "insight": 2,
-      "subterfuge": 2
-    }
-  },
-  {
-    "id": "skill_mafioso",
-    "name": "Мафіозі (Mafioso)",
-    "desc": "Представник організованої злочинності, що знає закони вулиць.",
-    "values": {
-      "streetwise": 3,
-      "brawl": 3,
-      "intimidation": 2,
-      "larceny": 2
-    }
-  },
-  {
-    "id": "skill_artist",
-    "name": "Митець (Artist)",
-    "desc": "Творча особистість, зосереджена на самовираженні та сприйнятті світу.",
-    "values": {
-      "performance": 3,
-      "insight": 3,
-      "academics": 2,
-      "awareness": 2
-    }
-  },
-  {
-    "id": "skill_junkie",
-    "name": "Наркоман (Junkie)",
-    "desc": "Людина, чий досвід обмежений виживанням у маргінальних шарах суспільства.",
-    "values": {
-      "streetwise": 3,
-      "subterfuge": 3,
-      "larceny": 2,
-      "brawl": 2
-    }
-  },
-  {
-    "id": "skill_coder",
-    "name": "Програміст (Coder)",
-    "desc": "Технічний спеціаліст, що працює з даними та цифровими системами.",
-    "values": {
-      "technology": 3,
-      "academics": 3,
-      "finance": 2,
-      "persuasion": 2
-    }
-  },
-  {
-    "id": "skill_investigator",
-    "name": "Розслідувач (Investigator)",
-    "desc": "Детектив або приватний нишпорка, навчений шукати приховану інформацію.",
-    "values": {
-      "investigation": 3,
-      "insight": 3,
-      "awareness": 2,
-      "firearms": 2
-    }
-  },
-  {
-    "id": "skill_socialite",
-    "name": "Світська особа (Socialite)",
-    "desc": "Людина, чиє життя проходить на публіці та в центрі уваги.",
-    "values": {
-      "performance": 3,
-      "finance": 3,
-      "insight": 2,
-      "etiquette": 2
-    }
-  },
-  {
-    "id": "skill_scholar",
-    "name": "Учений (Scholar)",
-    "desc": "Академік, присвячений глибоким дослідженням та накопиченню знань.",
-    "values": {
-      "academics": 3,
-      "science": 3,
-      "craft": 2,
-      "persuasion": 2
-    }
-  },
-      {
-    "id": "skill_police",
-    "name": "Правоохоронець (Police Officer)",
-    "desc": "Служитель закону, навчений реагувати на небезпеку та розуміти кримінальну психологію.",
-    "values": {
-      "firearms": 3,
-      "streetwise": 3,
-      "awareness": 2,
-      "insight": 2
-    }
-  },
-  {
-    "id": "skill_physician",
-    "name": "Лікар (Physician)",
-    "desc": "Експерт із людської анатомії, здатний рятувати життя або професійно приховувати причини смерті.",
-    "values": {
-      "medicine": 3,
-      "academics": 3,
-      "insight": 2,
-      "science": 2
-    }
-  },
-  {
-    "id": "skill_politician",
-    "name": "Політик (Politician)",
-    "desc": "Майстер маніпуляцій державними структурами та ораторського мистецтва.",
-    "values": {
-      "politics": 3,
-      "persuasion": 3,
-      "leadership": 2,
-      "etiquette": 2
-    }
-  },
-  {
-    "id": "skill_burglar",
-    "name": "Зломщик (Burglar)",
-    "desc": "Фахівець із проникнення в захищені приміщення та обходу механічних систем безпеки.",
-    "values": {
-      "larceny": 3,
-      "stealth": 3,
-      "technology": 2,
-      "streetwise": 2
-    }
-  },
-  {
-    "id": "skill_occultist",
-    "name": "Окультист (Occultist)",
-    "desc": "Дослідник потаємного, що присвятив життя пошуку заборонених знань та містичних знаків.",
-    "values": {
-      "occult": 3,
-      "investigation": 3,
-      "academics": 2,
-      "awareness": 2
-    }
-  },
-  {
-    "id": "skill_driver",
-    "name": "Водій (Professional Driver)",
-    "desc": "Професійний перевізник, здатний відірватися від будь-якої погоні в міських джунглях.",
-    "values": {
-      "drive": 3,
-      "streetwise": 3,
-      "technology": 2,
-      "firearms": 2
-    }
-  },
-  {
-    "id": "skill_laborer",
-    "name": "Робітник (Blue-collar Worker)",
-    "desc": "Людина фізичної праці, що звикла покладатися на власну міць та вміння працювати інструментами.",
-    "values": {
-      "craft": 3,
-      "athletics": 3,
-      "brawl": 2,
-      "survival": 2
-    }
-  },
-  {
-    "id": "skill_clergyman",
-    "name": "Священнослужитель (Clergy)",
-    "desc": "Духовний наставник, чия зброя — глибока емпатія та вміння вести за собою паству.",
-    "values": {
-      "academics": 3,
-      "insight": 3,
-      "leadership": 2,
-      "performance": 2
-    }
-  },
-  {
-    "id": "skill_athlete",
-    "name": "Професійний атлет (Athlete)",
-    "desc": "Людина з винятковою фізичною підготовкою, звикла працювати на межі людських можливостей.",
-    "values": {
-      "athletics": 3,
-      "brawl": 3,
-      "performance": 2,
-      "awareness": 2
-    }
-  },
-  {
-    "id": "skill_journalist",
-    "name": "Журналіст (Journalist)",
-    "desc": "Нишпорка, що спеціалізується на видобуванні правди з людей та закритих архівів.",
-    "values": {
-      "investigation": 3,
-      "subterfuge": 3,
-      "technology": 2,
-      "insight": 2
-    }
-  }
   ]
 }
