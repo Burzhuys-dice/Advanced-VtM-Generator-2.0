@@ -162,6 +162,10 @@ document.getElementById('btn-random-conviction2')?.addEventListener('click', () 
     generateRandomConviction('conviction2', 'touchstone2');
 });
 
+document.getElementById('btn-random-conviction3')?.addEventListener('click', () => {
+    generateRandomConviction('conviction3', 'touchstone3');
+});
+
 async function generateCharacterName(gender) {
     try {
         let namesData = state.namesData;
@@ -277,6 +281,10 @@ async function generateRandomConcept() {
 document.getElementById('btn-gen-concept')?.addEventListener('click', () => {
     generateRandomConcept();
 });
+
+
+
+
 
 function getRandomItem(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
@@ -550,6 +558,29 @@ function setPredatorCategoryFilter(categoryId) {
     renderPredatorTypes();
 }
 
+function getPredatorChecks(id) {
+    const checks = {
+        'alleycat': 'Міць + Боротьба (для силового захоплення) або Кмітливість + Вуличний досвід (для пошуку злочинців)',
+        'bagger': 'Інтелект + Вуличний досвід',
+        'blood_leech': 'Цей тип хижака не радиться зводити до простого набору кісток',
+        'cleaner': 'Маніпуляція + Хитрість',
+        'consensualist': 'Маніпуляція + Переконливість',
+        'farmer': 'Витримка + Розуміння тварин',
+        'osiris': 'Маніпуляція + Хитрість або Залякування + Слава',
+        'sandman': 'Спритність + Непомітність',
+        'scene_queen': 'Маніпуляція + Переконливість',
+        'siren': 'Харизма + Хитрість',
+        'extortionist': 'Міць або Маніпуляція + Залякування',
+        'graverobber': 'Рішучість + Медицина (для пошуку серед мерців) або Маніпуляція + Проникливість (для полювання серед живих)',
+        'roadside_killer': 'Спритність або Харизма + Керування',
+        'grim_reaper': 'Інтелект + Спостережливість або Медицина',
+        'montero': 'Інтелект + Непомітність (для планування) або Рішучість + Непомітність (для терплячого очікування)',
+        'pursuer': 'Інтелект + Розслідування (для пошуку жертви) або Витривалість + Непомітність (для тривалого стеження)',
+        'trapdoor': 'Харизма + Непомітність (для заманювання), Спритність + Непомітність (для полювання на порушників) або Кмітливість + Спостережливість + крапки Прихистку (для навігації у лігві)'
+    };
+    return checks[id] || 'Немає специфічних рекомендацій';
+}
+
 function renderPredatorTypes() {
     const container = document.getElementById('predator-container') || document.getElementById('predator-grid');
     if (!container || state.predatorData.length === 0) return;
@@ -628,17 +659,37 @@ function renderPredatorTypes() {
                 advantagesDisplay = `<div class="bg-purple-50/70 p-2 rounded-lg text-[11px] font-bold text-indigo-900 border border-purple-100 mt-auto">Немає додаткових благ/вад</div>`;
             }
 
+                        const arrowSvg = isSelected 
+                ? '<svg class="w-4 h-4 text-[#4b0082]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>'
+                : '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
+
             cardsHtml += `
-                <div class="predator-card flex flex-col bg-white p-4 sm:p-5 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:border-gray-300 hover:shadow transition-all overflow-hidden ${isSelected ? 'selected' : ''}" 
-                     onclick="selectPredator('${predator.id}')">
-                    <div class="flex items-center justify-between gap-2 mb-2 w-full">
-                        <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border max-w-[60%] truncate ${category.badgeStyle}">${category.icon} ${category.name}</span>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 whitespace-nowrap ${modifierColor}">${modifierText}</span>
+                <div class="predator-card flex flex-col bg-white rounded-xl border ${isSelected ? 'border-[#4b0082] shadow-md ring-1 ring-[#4b0082]' : 'border-gray-200 shadow-sm hover:border-gray-300 hover:shadow'} cursor-pointer transition-all overflow-hidden"
+                      onclick="selectPredator('${predator.id}')">
+                    <!-- Завжди видимий заголовок -->
+                    <div class="flex items-center justify-between p-4 sm:p-5">
+                        <h3 class="font-serif font-bold text-base sm:text-lg ${isSelected ? 'text-[#4b0082]' : 'text-[#1a1a1a]'} leading-snug">${predator.name}</h3>
+                        ${arrowSvg}
                     </div>
-                    <h3 class="font-serif font-bold text-base sm:text-lg text-[#1a1a1a] leading-snug w-full mb-2">${predator.name}</h3>
-                    <p class="text-xs text-gray-600 mb-3 leading-relaxed text-justify">${predator.description}</p>
-                    ${advantagesDisplay}
-                    ${optionsHtml}
+                    
+                    <!-- Прихований контент -->
+                    ${isSelected ? `
+                    <div class="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 animate-[fadeIn_0.2s_ease-in-out]">
+                        <div class="flex items-center justify-between gap-2 mb-3 w-full border-t border-gray-100 pt-3">
+                            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border max-w-[60%] truncate ${category.badgeStyle}">${category.icon} ${category.name}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 whitespace-nowrap ${modifierColor}">${modifierText}</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mb-4 leading-relaxed text-justify">${predator.description}</p>
+                        
+                        <div class="bg-gray-50 border-l-2 border-[#4b0082] p-3 mb-4 rounded-r shadow-sm">
+                            <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Рекомендовані перевірки:</span>
+                            <span class="text-xs font-semibold text-gray-800">${getPredatorChecks(predator.id)}</span>
+                        </div>
+                        
+                        ${advantagesDisplay}
+                        ${optionsHtml}
+                    </div>
+                    ` : ''}
                 </div>
             `;
         });
@@ -667,6 +718,18 @@ function renderPredatorTypes() {
 }
 
 function selectPredator(id) {
+    if (state.selectedPredator === id) {
+        state.selectedPredator = null;
+        state.predatorChoices = { discipline: null, skill: null, specName: null };
+        state.selectedAdvantages = state.selectedAdvantages.filter(adv => adv.source !== 'predator');
+        
+        renderPredatorTypes();
+        applyPredatorGlobalUpdates();
+        renderSelectedAdvantages();
+        updateTrackers();
+        return;
+    }
+
     if (state.selectedPredator !== id) {
         state.selectedPredator = id;
         state.predatorChoices = { discipline: null, skill: null, specName: null };
@@ -760,13 +823,20 @@ function renderPredatorAdvantagesInfo() {
 
 function updateHumanityDisplay() {
     let currentHumanity = 7;
-    if (state.selectedPredator) {
+    if (state.selectedPredator && Array.isArray(state.predatorData)) {
         const predator = state.predatorData.find(p => p.id === state.selectedPredator);
         if (predator && predator.humanity_modifier) {
             currentHumanity += predator.humanity_modifier;
         }
     }
-    document.getElementById('humanity-display').innerText = currentHumanity;
+    const humDisplay = document.getElementById('humanity-display');
+    if (humDisplay) {
+        humDisplay.innerText = currentHumanity;
+    }
+    const summaryHum = document.getElementById('summary-humanity');
+    if (summaryHum) {
+        summaryHum.innerText = currentHumanity;
+    }
 }
 
 function createDotsHTML(type, id, baseValue, maxDots = 5, bonusValue = 0, freeSpecDot = 0) {
@@ -1670,7 +1740,13 @@ function changeClan(clanId) {
     const compulsionText = document.getElementById('clan-compulsion-text');
     if (compulsionContainer && compulsionText) {
         if (clanInfo.clan_compultion && clanInfo.clan_compultion.trim().toLowerCase() !== "відсутнє") {
-            compulsionText.innerText = clanInfo.clan_compultion;
+            // Bold the title
+            let text = clanInfo.clan_compultion;
+            const splitMatch = text.match(/^(.*?)(:|\.)(.*)$/);
+            if (splitMatch) {
+                text = `<strong class="font-bold">${splitMatch[1]}${splitMatch[2]}</strong> ${splitMatch[3]}`;
+            }
+            compulsionText.innerHTML = text;
             compulsionContainer.classList.remove('hidden');
         } else {
             compulsionContainer.classList.add('hidden');
@@ -1681,7 +1757,13 @@ function changeClan(clanId) {
     const baneText = document.getElementById('clan-bane-text');
     if (baneContainer && baneText) {
         if (clanInfo.clan_bane && clanInfo.clan_bane.trim().toLowerCase() !== "відсутнє") {
-            baneText.innerText = clanInfo.clan_bane;
+            // Bold the title
+            let text = clanInfo.clan_bane;
+            // For bane, it might be "Основне прокляття — Назва: Опис" or "Назва: Опис"
+            // We can replace both the main title and the alternative title
+            text = text.replace(/^(.*?)(:|\.)/g, '<strong class="font-bold">$1$2</strong>');
+            text = text.replace(/(Альтернативне прокляття.*?)(:|\.)/g, '<strong class="font-bold text-red-800">$1$2</strong>');
+            baneText.innerHTML = text;
             baneContainer.classList.remove('hidden');
         } else {
             baneContainer.classList.add('hidden');
@@ -2076,6 +2158,7 @@ function renderMeritsFlawsSheetRows() {
 function finishGen() {
     const name = document.getElementById('character-name')?.value || 'Безіменний Кревний';
     const concept = document.getElementById('concept-phrase')?.value || '';
+    const shortConcept = concept.split(/[:\-\—]/)[0].trim();
     const backgroundText = document.getElementById('concept-bg')?.value || '';
     const chronicle = document.getElementById('chronicle-name')?.value || '';
     const sire = document.getElementById('sire-name')?.value || '';
@@ -2094,11 +2177,25 @@ function finishGen() {
     const touch1 = document.getElementById('touchstone1')?.value || '';
     const conv2 = document.getElementById('conviction2')?.value || '';
     const touch2 = document.getElementById('touchstone2')?.value || '';
+    const conv3 = document.getElementById('conviction3')?.value || '';
+    const touch3 = document.getElementById('touchstone3')?.value || '';
 
     const clanInfo = clansData[state.clan] || {};
     const clanName = clanInfo.name || 'Невідомо';
-    const clanCompulsion = clanInfo.clan_compultion && clanInfo.clan_compultion.trim().toLowerCase() !== "відсутнє" ? clanInfo.clan_compultion : 'Немає';
-    const clanBane = clanInfo.clan_bane && clanInfo.clan_bane.trim().toLowerCase() !== "відсутнє" ? clanInfo.clan_bane : 'Немає';
+    let clanCompulsion = clanInfo.clan_compultion && clanInfo.clan_compultion.trim().toLowerCase() !== "відсутнє" ? clanInfo.clan_compultion : 'Немає';
+    let clanBane = clanInfo.clan_bane && clanInfo.clan_bane.trim().toLowerCase() !== "відсутнє" ? clanInfo.clan_bane : 'Немає';
+
+    if (clanCompulsion !== 'Немає') {
+        const splitMatch = clanCompulsion.match(/^(.*?)(:|\.)(.*)$/);
+        if (splitMatch) {
+            clanCompulsion = `<strong class="font-bold">${splitMatch[1]}${splitMatch[2]}</strong> ${splitMatch[3]}`;
+        }
+    }
+
+    if (clanBane !== 'Немає') {
+        clanBane = clanBane.replace(/^(.*?)(:|\.)/g, '<strong class="font-bold">$1$2</strong>');
+        clanBane = clanBane.replace(/(Альтернативне прокляття.*?)(:|\.)/g, '<strong class="font-bold text-[#8b0000]">$1$2</strong>');
+    }
     
     const predator = state.selectedPredator ? state.predatorData.find(p => p.id === state.selectedPredator) : null;
     const predatorName = predator ? predator.name : 'Не обрано';
@@ -2127,13 +2224,9 @@ function finishGen() {
     const summaryNameEl = document.getElementById('summary-name');
     const summaryConceptEl = document.getElementById('summary-concept');
     const summaryHumanityEl = document.getElementById('summary-humanity');
-    const summaryFlavorEl = document.getElementById('summary-flavor-text');
-    
     if (summaryNameEl) summaryNameEl.innerText = name;
-    if (summaryConceptEl) summaryConceptEl.innerText = `${concept || 'Без концепту'} | ${clanName} | ${predatorName}`;
+    if (summaryConceptEl) summaryConceptEl.innerText = `${shortConcept || 'Без концепту'} | ${clanName} | ${predatorName}`;
     if (summaryHumanityEl) summaryHumanityEl.innerText = currentHumanity;
-    if (summaryFlavorEl) summaryFlavorEl.innerText = generateFlavorText(state.clan, state.selectedPredator);
-
     let availableDisc = [...(clansData[state.clan]?.disciplines || [])];
     if (state.predatorChoices.discipline && !availableDisc.includes(state.predatorChoices.discipline)) {
         availableDisc.push(state.predatorChoices.discipline);
@@ -2177,7 +2270,7 @@ function finishGen() {
                         <div class="vtm-profile-cell"><span class="vtm-cell-label">Ім'я:</span> <span class="vtm-cell-val">${name}</span></div>
                         <div class="vtm-profile-cell"><span class="vtm-cell-label">Хижак:</span> <span class="vtm-cell-val">${predatorName}</span></div>
                         <div class="vtm-profile-cell"><span class="vtm-cell-label">Хроніка:</span> <span class="vtm-cell-val">${chronicle}</span></div>
-                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Концепт:</span> <span class="vtm-cell-val">${concept}</span></div>
+                        <div class="vtm-profile-cell"><span class="vtm-cell-label">Концепт:</span> <span class="vtm-cell-val">${shortConcept}</span></div>
                         <div class="vtm-profile-cell"><span class="vtm-cell-label">Клан:</span> <span class="vtm-cell-val">${clanName}</span></div>
                         <div class="vtm-profile-cell"><span class="vtm-cell-label">Амбіція:</span> <span class="vtm-cell-val">${ambition}</span></div>
                         <div class="vtm-profile-cell"><span class="vtm-cell-label">Сір:</span> <span class="vtm-cell-val">${sire}</span></div>
@@ -2315,6 +2408,10 @@ function finishGen() {
                                     <span class="font-bold text-[#8b0000]">2.</span> ${conv2 ? `<span class="italic">«${conv2}»</span>` : '<span class="text-gray-400">________________________</span>'}
                                     ${touch2 ? `<div class="text-[7pt] text-gray-700 font-sans uppercase font-bold pl-2">Опора: ${touch2}</div>` : ''}
                                 </div>
+                                <div class="mt-1">
+                                    <span class="font-bold text-[#8b0000]">3.</span> ${conv3 ? `<span class="italic">«${conv3}»</span>` : '<span class="text-gray-400">________________________</span>'}
+                                    ${touch3 ? `<div class="text-[7pt] text-gray-700 font-sans uppercase font-bold pl-2">Опора: ${touch3}</div>` : ''}
+                                </div>
                             </div>
                         </div>
 
@@ -2415,7 +2512,7 @@ function finishGen() {
             <h3 class="text-xl font-bold text-[#8b0000] border-b-2 border-gray-200 pb-2 mb-4 uppercase tracking-widest vtm-font">1. Концепт та Кров</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div>
-                    <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Концепт:</strong> <span class="text-gray-900 font-serif text-base">${concept || 'Не вказано'}</span></p>
+                    <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Концепт:</strong> <span class="text-gray-900 font-serif text-base">${shortConcept || 'Не вказано'}</span></p>
                     <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Клан:</strong> <span class="text-gray-900 font-serif text-base">${clanName}</span></p>
                     <p class="mb-2"><strong class="text-gray-700 uppercase text-xs tracking-wider block">Історія / Фон:</strong> <span class="text-gray-700 font-serif italic block mt-1">${backgroundText || 'Не вказано'}</span></p>
                 </div>
@@ -4171,120 +4268,251 @@ function restoreUIFromState() {
     goToStep(1);
 }
 
-function generateFlavorText(clanId, predId) {
-    const clanFlavors = {
-        brujah: "Ваша гаряча кров штовхає вас до бунту, навіть якщо ви намагаєтесь тримати Звіра на ланцюгу.",
-        toreador: "Ви шукаєте красу у вічності, проте кожна крапля крові нагадує про втрачене життя.",
-        nosferatu: "Ховаючись у тінях, ви знаєте всі таємниці міста, яке вас відкидає.",
-        ventrue: "Влада — ваше друге ім'я. Ви звикли контролювати все, включно з тим, чиєю кров'ю харчуєтесь.",
-        tremere: "Ваша кров — це і прокляття, і зброя. Знання даються ціною відчуження.",
-        malkavian: "Мережа голосів шепоче вам істини, які інші воліли б ніколи не чути.",
-        gangrel: "Ви ближче до Звіра, ніж будь-хто інший, і місто для вас — лише бетонні джунглі.",
-        lasombra: "Тіні слухаються вас, але завжди намагаються поглинути вашу душу.",
-        hecata: "Смерть не стала кінцем, а лише інструментом у ваших холодних руках.",
-        banu_haqim: "Ви суддя і кат, але жага до крові інших вампірів — ваше найтяжче випробування.",
-        ministry: "Ви руйнуєте кайдани моралі, пропонуючи свободу тим, хто готовий заплатити ціну.",
-        ravnos: "Життя — це ілюзія, і ви майстерно нею граєте, тікаючи від власного попелу.",
-        tzimisce: "Плоть і дух — лише глина, з якої ви ліпите свою ідеальну сутність.",
-        salubri: "Ви шукаєте порятунку душі, ставши мішенню для тих, хто жадає вашої сили.",
-        caitiff: "Без родоводу і традицій, ви виживаєте завдяки власній кмітливості у світі, де кров означає все.",
-        thinblood: "Ви балансуєте на межі життя і смерті, не прийняті ані людьми, ані родичами."
+
+
+
+window.getClanIcon = function(clanId) {
+    const map = {
+        'brujah': 'Clan_symbols/Brujah_symbol.png',
+        'gangrel': 'Clan_symbols/Gangrel_symbol.png',
+        'malkavian': 'Clan_symbols/Malkavian_symbol.png',
+        'nosferatu': 'Clan_symbols/Nosferatu_symbol.png',
+        'toreador': 'Clan_symbols/Toreador_symbol.png',
+        'tremere': 'Clan_symbols/Tremere_symbol.png',
+        'ventrue': 'Clan_symbols/Ventrue_symbol.png',
+        'thin-blood': 'Clan_symbols/Thinblood_symbol.png',
+        'thin_blood': 'Clan_symbols/Thinblood_symbol.png',
+        'banu_haqim': 'Clan_symbols/Banu_Haqim_Symbol.png',
+        'hecata': 'Clan_symbols/Hecata_symbol.png',
+        'lasombra': 'Clan_symbols/Lasombra_symbol.png',
+        'ministry': 'Clan_symbols/Ministry_symbol.png',
+        'ravnos': 'Clan_symbols/Ravnos_symbol.png',
+        'salubri': 'Clan_symbols/Salubri_symbol.png',
+        'tzimisce': 'Clan_symbols/Tzimisce_symbol.png',
+        'unknown': 'Clan_symbols/Caitiff_symbol.png',
+        'caitiff': 'Clan_symbols/Caitiff_symbol.png'
     };
+    return map[clanId] || 'Clan_symbols/Caitiff_symbol.png';
+};
 
-    const predFlavors = {
-        alleycat: "Ваше полювання — це напад. Ви забираєте кров силою, не залишаючи жертві вибору.",
-        bagger: "Ви уникаєте пульсуючих вен, надаючи перевагу холодним запасам або трупам.",
-        blood_leech: "Кров смертних для вас прісна. Ви полюєте на інших кровопивць, ризикуючи всім.",
-        cleaver: "Ваші близькі та родина — ваше джерело життя, хоч це і руйнує їхні долі.",
-        consensualist: "Ви п'єте лише за згодою, намагаючись зберегти залишки своєї Людяності.",
-        farmer: "Тваринна кров підтримує ваше існування, хоч і залишає вас завжди трохи голодним.",
-        osiris: "Ви створили культ навколо себе. Ваша паства добровільно віддає вам свою кров.",
-        sandman: "Ви проникаєте в будинки і п'єте кров сплячих, залишаючись непомітним привидом.",
-        scene_queen: "Ви зірка своєї субкультури, і фанати з радістю дозволяють вам живитися ними.",
-        siren: "Ваша зброя — спокуса. Виваблені жертви самі підставляють вам шию в пориві пристрасті."
-    };
-
-    const fallbackPred = "Ваш стиль полювання унікальний і не піддається стандартним класифікаціям.";
-
-    let text = clanFlavors[clanId] || clanFlavors["caitiff"];
-    let predText = predFlavors[predId] || fallbackPred;
-
-    return `${text} ${predText}`;
-}
-
-// --- AI Flavor Generation ---
-async function generateAIFlavorText() {
-    const btn = document.getElementById('btn-generate-ai');
-    const flavorEl = document.getElementById('summary-flavor-text');
+window.openBgModal = function() {
+    const modal = document.getElementById('bg-modal');
+    const content = document.getElementById('bg-modal-content');
+    if (!modal || !content) return;
     
-    if (!btn || !flavorEl) return;
+    let html = '';
+    const currentClanId = state.clan || 'unknown';
+    const currentClan = clansData[currentClanId];
 
-    // Build the character context
-    const name = document.getElementById('character-name')?.value || 'Безіменний';
-    
-    const clanInfo = clansData[state.clan] || {};
-    const clanName = clanInfo.name || 'Невідомо';
-    
-    const predator = state.selectedPredator ? state.predatorData.find(p => p.id === state.selectedPredator) : null;
-    const predatorName = predator ? predator.name : 'Не обрано';
-
-    // Get top attributes (e.g. 3 and 4 dots)
-    let topAttrs = [];
-    for (const [attr, dots] of Object.entries(state.attributes)) {
-        if (dots >= 3) {
-            topAttrs.push(`${attr} (${dots})`);
-        }
-    }
-
-    // Get top skills (e.g. 3+ dots)
-    let topSkills = [];
-    for (const [skill, dots] of Object.entries(state.skills)) {
-        if (dots >= 3) {
-            topSkills.push(`${skill} (${dots})`);
-        }
-    }
-
-    // Merits & Flaws
-    let meritsList = state.selectedAdvantages.filter(a => a.type === 'merit').map(m => m.name).join(', ') || 'Немає';
-    let flawsList = state.selectedAdvantages.filter(a => a.type === 'flaw').map(f => f.name).join(', ') || 'Немає';
-
-    const payload = {
-        name,
-        clan: clanName,
-        predator: predatorName,
-        attributes: topAttrs.join(', '),
-        skills: topSkills.join(', '),
-        merits: meritsList,
-        flaws: flawsList
-    };
-
-    // UI Loading state
-    const originalBtnHTML = btn.innerHTML;
-    btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Генерація...</span>`;
-    btn.disabled = true;
-    flavorEl.innerHTML = `<span class="animate-pulse text-gray-500">Звертаємось до Звіра...</span>`;
-
-    try {
-        const response = await fetch('/api/generate-backstory', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
+    function renderClanCard(clanId, clan) {
+        if (!clan || !clan.backgrounds || clan.backgrounds.length === 0) return '';
+        const iconSrc = window.getClanIcon(clanId);
+        let clanHtml = `
+            <div class="mb-6 bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center gap-4 mb-4 border-b border-gray-100 pb-3">
+                    <div class="w-12 h-12 bg-black rounded p-2 flex items-center justify-center shrink-0 border border-gray-800 shadow-sm">
+                        <img src="${iconSrc}" class="w-full h-full object-contain filter invert" alt="${clan.name}">
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-serif font-bold text-gray-900">${clan.name}</h3>
+                        <p class="text-xs text-gray-500 italic mt-0.5">${clan.desc}</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+        `;
         
-        if (response.ok) {
-            flavorEl.innerText = data.text;
-        } else {
-            flavorEl.innerHTML = `<span class="text-red-500">Помилка: ${data.error || 'Не вдалося згенерувати'}</span>`;
-        }
-    } catch (err) {
-        flavorEl.innerHTML = `<span class="text-red-500">Помилка з'єднання. Перевірте консоль.</span>`;
-        console.error(err);
-    } finally {
-        btn.innerHTML = originalBtnHTML;
-        btn.disabled = false;
+        clan.backgrounds.forEach(bg => {
+            let formattedBg = bg;
+            const splitMatch = bg.match(/^(.*?)(:|—|-)(.*)$/);
+            if (splitMatch) {
+                formattedBg = `<strong class="text-gray-900 font-bold">${splitMatch[1].trim()}:</strong> ${splitMatch[3].trim()}`;
+            }
+            
+            const safeBg = bg.replace(/'/g, "\'").replace(/"/g, '&quot;');
+            
+            clanHtml += `
+                <div onclick="selectBackground('${safeBg}')" class="p-3.5 rounded-lg border border-gray-200 hover:border-[#8b0000] hover:bg-red-50/60 transition-all cursor-pointer group shadow-xs">
+                    <p class="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">${formattedBg}</p>
+                </div>
+            `;
+        });
+        
+        clanHtml += `</div></div>`;
+        return clanHtml;
     }
+
+    if (currentClan && currentClan.backgrounds && currentClan.backgrounds.length > 0) {
+        // Only show the currently selected clan's backgrounds
+        html += renderClanCard(currentClanId, currentClan);
+    } else {
+        // Caitiff or unlisted clan: can choose any background
+        html += `
+            <div class="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 leading-relaxed">
+                <strong>Каїтиф (або вільний вибір):</strong> Для вашого персонажа немає суворих кланових обмежень передісторії. Ви можете обрати будь-яку з наведених нижче історій:
+            </div>
+        `;
+        for (const [clanId, clan] of Object.entries(clansData)) {
+            html += renderClanCard(clanId, clan);
+        }
+    }
+    
+    content.innerHTML = html;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+
+window.closeBgModal = function() {
+    const modal = document.getElementById('bg-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+window.selectBackground = function(bgText) {
+    const bgInput = document.getElementById('concept-bg');
+    if (bgInput) {
+        bgInput.value = bgText;
+        bgInput.dispatchEvent(new Event('input', { bubbles: true }));
+        bgInput.dispatchEvent(new Event('change', { bubbles: true }));
+        
+        bgInput.classList.add('ring-2', 'ring-[#8b0000]', 'border-[#8b0000]');
+        setTimeout(() => {
+            bgInput.classList.remove('ring-2', 'ring-[#8b0000]', 'border-[#8b0000]');
+        }, 350);
+    }
+    closeBgModal();
+};
+
+// ==================== GLOSSARY (СЛОВНИК) ====================
+let vtmGlossaryData = [];
+
+async function loadGlossaryData() {
+    if (vtmGlossaryData && vtmGlossaryData.length > 0) return vtmGlossaryData;
+    try {
+        const res = await fetch('data/vtm_glossary.json');
+        if (res.ok) {
+            vtmGlossaryData = await res.json();
+        }
+    } catch (e) {
+        console.error('Помилка завантаження словника:', e);
+    }
+    return vtmGlossaryData;
 }
+
+window.openGlossaryModal = async function() {
+    const modal = document.getElementById('glossary-modal');
+    if (!modal) return;
+    
+    await loadGlossaryData();
+    
+    const searchInput = document.getElementById('glossary-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    const clearBtn = document.getElementById('glossary-search-clear');
+    if (clearBtn) {
+        clearBtn.classList.add('hidden');
+    }
+    
+    renderGlossaryList(vtmGlossaryData);
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    if (searchInput) {
+        setTimeout(() => searchInput.focus(), 80);
+    }
+};
+
+window.closeGlossaryModal = function() {
+    const modal = document.getElementById('glossary-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+function renderGlossaryList(items) {
+    const content = document.getElementById('glossary-modal-content');
+    const countNum = document.getElementById('glossary-count-num');
+    if (!content) return;
+    
+    if (countNum) {
+        countNum.innerText = items ? items.length : 0;
+    }
+    
+    if (!items || items.length === 0) {
+        content.innerHTML = `
+            <div class="py-12 text-center text-zinc-500">
+                <svg class="w-12 h-12 mx-auto mb-3 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm font-semibold">Термінів не знайдено</p>
+                <p class="text-xs text-zinc-600 mt-1">Спробуйте змінити пошуковий запит</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">';
+    items.forEach(item => {
+        html += `
+            <div class="bg-zinc-900/80 p-4 rounded-xl border border-zinc-800/80 hover:border-red-900/60 hover:bg-zinc-900/95 transition-all flex flex-col justify-start shadow-xs group">
+                <div>
+                    <h4 class="text-sm sm:text-base font-bold text-red-500 font-serif tracking-wide uppercase group-hover:text-red-400 transition-colors">${item.term}</h4>
+                    <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed mt-1.5">${item.definition}</p>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    content.innerHTML = html;
+}
+
+window.filterGlossary = function() {
+    const searchInput = document.getElementById('glossary-search-input');
+    const clearBtn = document.getElementById('glossary-search-clear');
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    
+    if (clearBtn) {
+        if (query.length > 0) {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+    
+    if (!query) {
+        renderGlossaryList(vtmGlossaryData);
+        return;
+    }
+    
+    const filtered = vtmGlossaryData.filter(item => {
+        return (item.term && item.term.toLowerCase().includes(query)) ||
+               (item.definition && item.definition.toLowerCase().includes(query));
+    });
+    
+    renderGlossaryList(filtered);
+};
+
+window.clearGlossarySearch = function() {
+    const searchInput = document.getElementById('glossary-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+    filterGlossary();
+};
+
+// Also close on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const glossaryModal = document.getElementById('glossary-modal');
+        if (glossaryModal && !glossaryModal.classList.contains('hidden')) {
+            closeGlossaryModal();
+        }
+    }
+});

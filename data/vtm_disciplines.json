@@ -659,6 +659,17 @@
     "dice_pool": "Немає",
     "resistance": "Немає"
   },
+ {
+    "disc": "oblivion",
+    "discipline": "Забуття (Oblivion)",
+    "ability_name": "там, де завіса тоншає (Where the Veil Thins / Where the Shroud Thins)",
+    "level": 1,
+    "requirement": "Немає",
+    "effect_description": "Дозволяє ідентифікувати місця, де завіса (Саван) між світом живих і мертвих витончена. У таких локаціях складність церемоній Забуття зменшується. Без цієї сили вампір не може отримувати вигоду від витончення завіси.",
+    "rouse_cost": "Одне збурення крові",
+    "dice_pool": "Інтелект + Забуття або Кмітливість + Забуття",
+    "resistance": "Немає"
+  },
   {
     "disc": "oblivion",
     "discipline": "Забуття (Oblivion)",
@@ -692,17 +703,7 @@
     "dice_pool": "Немає",
     "resistance": "Немає"
   },
-  {
-    "disc": "oblivion",
-    "discipline": "Забуття (Oblivion)",
-    "ability_name": "там, де завіса тоншає (Where the Veil Thins / Where the Shroud Thins)",
-    "level": 1,
-    "requirement": "Немає",
-    "effect_description": "Дозволяє ідентифікувати місця, де завіса (Саван) між світом живих і мертвих витончена. У таких локаціях складність церемоній Забуття зменшується. Без цієї сили вампір не може отримувати вигоду від витончення завіси.",
-    "rouse_cost": "Одне збурення крові",
-    "dice_pool": "Інтелект + Забуття або Кмітливість + Забуття",
-    "resistance": "Немає"
-  },
+
   {
     "disc": "oblivion",
     "discipline": "Забуття (Oblivion)",
