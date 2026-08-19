@@ -10,22 +10,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+// На Render порт задається автоматично (Render передає змінну середовища RENDER=true)
+const PORT = process.env.RENDER ? process.env.PORT : 3000;
 
 app.use(express.json());
 // Serve static files from the current directory
 app.use(express.static(__dirname));
 
-// Initialize Gemini API
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
 app.post('/api/generate-backstory', async (req, res) => {
     try {
         const { name, clan, predator, attributes, skills, merits, flaws } = req.body;
         
-        if (!process.env.GEMINI_API_KEY || !process.env.GEMINI_API_KEY.startsWith('AIza')) {
-            return res.status(500).json({ error: 'Будь ласка, додайте свій GEMINI_API_KEY у налаштуваннях (Settings > Secrets).' });
+        let apiKey = process.env.GEMINI_API_KEY;
+        
+        // Очищаємо ключ від можливих лапок або пробілів (якщо випадково скопіювали так на Render)
+        if (apiKey) {
+            apiKey = apiKey.replace(/^["']|["']$/g, '').trim();
         }
+
+        if (!apiKey || !apiKey.startsWith('AIza')) {
+            console.error("Invalid API Key format or missing key.");
+            return res.status(500).json({ error: 'Сервер не бачить правильного GEMINI_API_KEY. Якщо ви додали його на Render, переконайтеся, що ви перезапустили (Manual Deploy) сервіс.' });
+        }
+
+        // Initialize Gemini API (ініціалізуємо тут, щоб брати найсвіжіший ключ)
+        const ai = new GoogleGenAI({ apiKey: apiKey });
 
         const prompt = `Ти — майстер гри у Vampire: The Masquerade 5e. Напиши коротку, атмосферну та унікальну історію (бексторі/флейвор текст) для персонажа (від другої особи, "Ти..."). 
 Історія має бути на 2-3 речення. Враховуй такі параметри:
@@ -51,10 +60,10 @@ app.post('/api/generate-backstory', async (req, res) => {
         res.json({ text: response.text });
     } catch (error) {
         console.error('Error generating backstory:', error);
-        res.status(500).json({ error: 'Помилка при генерації історії.' });
+        res.status(500).json({ error: 'Помилка при генерації історії: ' + error.message });
     }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running on http://0.0.0.0:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
