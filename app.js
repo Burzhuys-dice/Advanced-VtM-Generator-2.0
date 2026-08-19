@@ -33,7 +33,7 @@ async function init() {
 
 async function fetchAllData() {
     try {
-        const [advRes, predRes, coreRes, clansRes, discRes, archRes, namesRes, conceptsRes] = await Promise.all([
+        const [advRes, predRes, coreRes, clansRes, discRes, archRes, namesRes, conceptsRes, glossRes] = await Promise.all([
             fetch('data/vtm_merits_data.json'),
             fetch('data/vtm_predator-types_1.json'),
             fetch('data/vtm_char_and_skills.json'),
@@ -41,8 +41,13 @@ async function fetchAllData() {
             fetch('data/vtm_disciplines.json'),
             fetch('data/vtm_archetypes.json'), // Завантажуємо файл архетипів
             fetch('data/vtm_names.json'), // Завантажуємо файл імен
-            fetch('data/vtm_consepts.json') // Завантажуємо файл концептів
+            fetch('data/vtm_consepts.json'), // Завантажуємо файл концептів
+            fetch('data/vtm_glossary.json') // Завантажуємо файл словника
         ]);
+
+        if (glossRes && glossRes.ok) {
+            vtmGlossaryData = await glossRes.json();
+        }
 
         if(advRes.ok) {
             state.advantagesData = await advRes.json();
@@ -649,10 +654,10 @@ function renderPredatorTypes() {
             if (predator.advantages_text || predator.advantages_text_full) {
                 advantagesDisplay = `<div class="bg-purple-50/70 p-2.5 rounded-lg text-indigo-900 border border-purple-100 flex flex-col gap-1 mt-auto">`;
                 if (predator.advantages_text) {
-                    advantagesDisplay += `<span class="text-[11px] font-bold">${predator.advantages_text}</span>`;
+                    advantagesDisplay += `<span class="text-[11px] font-bold">${typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(predator.advantages_text) : predator.advantages_text}</span>`;
                 }
                 if (predator.advantages_text_full) {
-                    advantagesDisplay += `<span class="text-[10px] leading-snug opacity-90">${predator.advantages_text_full}</span>`;
+                    advantagesDisplay += `<span class="text-[10px] leading-snug opacity-90">${typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(predator.advantages_text_full) : predator.advantages_text_full}</span>`;
                 }
                 advantagesDisplay += `</div>`;
             } else {
@@ -662,6 +667,9 @@ function renderPredatorTypes() {
                         const arrowSvg = isSelected 
                 ? '<svg class="w-4 h-4 text-[#4b0082]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>'
                 : '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>';
+
+            const highlightedDesc = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(predator.description || '') : (predator.description || '');
+            const highlightedChecks = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(getPredatorChecks(predator.id)) : getPredatorChecks(predator.id);
 
             cardsHtml += `
                 <div class="predator-card flex flex-col bg-white rounded-xl border ${isSelected ? 'border-[#4b0082] shadow-md ring-1 ring-[#4b0082]' : 'border-gray-200 shadow-sm hover:border-gray-300 hover:shadow'} cursor-pointer transition-all overflow-hidden"
@@ -679,11 +687,11 @@ function renderPredatorTypes() {
                             <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border max-w-[60%] truncate ${category.badgeStyle}">${category.icon} ${category.name}</span>
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded border shrink-0 whitespace-nowrap ${modifierColor}">${modifierText}</span>
                         </div>
-                        <p class="text-xs text-gray-600 mb-4 leading-relaxed text-justify">${predator.description}</p>
+                        <p class="text-xs text-gray-600 mb-4 leading-relaxed text-justify">${highlightedDesc}</p>
                         
                         <div class="bg-gray-50 border-l-2 border-[#4b0082] p-3 mb-4 rounded-r shadow-sm">
                             <span class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 mb-1">Рекомендовані перевірки:</span>
-                            <span class="text-xs font-semibold text-gray-800">${getPredatorChecks(predator.id)}</span>
+                            <span class="text-xs font-semibold text-gray-800">${highlightedChecks}</span>
                         </div>
                         
                         ${advantagesDisplay}
@@ -970,7 +978,7 @@ function renderDisciplines() {
                         ${dotsHtml}
                     </div>
                 </div>
-                <p class="text-sm text-gray-500 text-justify leading-relaxed mb-4">${discInfo.desc || ''}</p>
+                <p class="text-sm text-gray-500 text-justify leading-relaxed mb-4">${typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(discInfo.desc || '') : (discInfo.desc || '')}</p>
         `;
 
         if (totalDots > 0) {
@@ -994,10 +1002,12 @@ function renderDisciplines() {
                 if (selectedPowerId) {
                     let foundPower = availablePowers.find(p => p.id === selectedPowerId);
                     if (foundPower) {
+                        const highlightedPowerDesc = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(foundPower.desc || '') : foundPower.desc;
+                        const highlightedReq = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(foundPower.requirement || '') : foundPower.requirement;
                         selectedDesc = `
                             <div class="mt-2 text-xs text-gray-600 bg-white p-2.5 rounded border border-gray-100 space-y-1">
-                                <p class="italic leading-snug">${foundPower.desc}</p>
-                                ${(foundPower.requirement && String(foundPower.requirement).trim().toLowerCase() !== 'немає' && String(foundPower.requirement).trim() !== '') ? `<p><strong>Вимога:</strong> ${foundPower.requirement}</p>` : ''}
+                                <p class="italic leading-snug">${highlightedPowerDesc}</p>
+                                ${(foundPower.requirement && String(foundPower.requirement).trim().toLowerCase() !== 'немає' && String(foundPower.requirement).trim() !== '') ? `<p><strong>Вимога:</strong> ${highlightedReq}</p>` : ''}
                                 ${(foundPower.rouseCost && String(foundPower.rouseCost).trim().toLowerCase() !== 'немає' && String(foundPower.rouseCost).trim() !== '') ? `<p><strong>Збурення:</strong> ${foundPower.rouseCost}</p>` : ''}
                                 ${(foundPower.dicePool && String(foundPower.dicePool).trim().toLowerCase() !== 'немає' && String(foundPower.dicePool).trim() !== '') ? `<p><strong>Пул кубиків:</strong> ${foundPower.dicePool}</p>` : ''}
                                 ${(foundPower.resistance && String(foundPower.resistance).trim().toLowerCase() !== 'немає' && String(foundPower.resistance).trim() !== '') ? `<p><strong>Опір:</strong> ${foundPower.resistance}</p>` : ''}
@@ -1353,7 +1363,7 @@ function renderAdvantageCard(item) {
                     </div>
                 </div>
                 <h4 class="font-serif font-bold text-sm text-gray-900 leading-snug group-hover:text-[#8b0000] transition-colors">${item.name}</h4>
-                <p class="text-xs text-gray-600 leading-relaxed text-justify mt-2">${item.desc}</p>
+                <p class="text-xs text-gray-600 leading-relaxed text-justify mt-2">${typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(item.desc || '') : (item.desc || '')}</p>
             </div>
         </div>
     `;
@@ -1734,7 +1744,7 @@ function changeClan(clanId) {
     }
     
     const desc1 = document.getElementById('clan-desc-1');
-    if (desc1) desc1.innerText = clanInfo.desc || '';
+    if (desc1) desc1.innerHTML = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(clanInfo.desc || '') : (clanInfo.desc || '');
     
     const compulsionContainer = document.getElementById('clan-compulsion-container');
     const compulsionText = document.getElementById('clan-compulsion-text');
@@ -1746,7 +1756,7 @@ function changeClan(clanId) {
             if (splitMatch) {
                 text = `<strong class="font-bold">${splitMatch[1]}${splitMatch[2]}</strong> ${splitMatch[3]}`;
             }
-            compulsionText.innerHTML = text;
+            compulsionText.innerHTML = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(text) : text;
             compulsionContainer.classList.remove('hidden');
         } else {
             compulsionContainer.classList.add('hidden');
@@ -1763,7 +1773,7 @@ function changeClan(clanId) {
             // We can replace both the main title and the alternative title
             text = text.replace(/^(.*?)(:|\.)/g, '<strong class="font-bold">$1$2</strong>');
             text = text.replace(/(Альтернативне прокляття.*?)(:|\.)/g, '<strong class="font-bold text-red-800">$1$2</strong>');
-            baneText.innerHTML = text;
+            baneText.innerHTML = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(text) : text;
             baneContainer.classList.remove('hidden');
         } else {
             baneContainer.classList.add('hidden');
@@ -2611,12 +2621,14 @@ function finishGen() {
                 if (powerId) {
                     let powerInfo = disciplinesPowersMap[discKey]?.find(p => p.id === powerId);
                     if (powerInfo) {
+                        const highlightedPowerDesc = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(powerInfo.desc || '') : powerInfo.desc;
+                        const highlightedReq = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(powerInfo.requirement || '') : powerInfo.requirement;
                         summaryHTML += `
                             <li class="text-sm border-t border-gray-100 pt-2">
                                 <div class="font-bold text-gray-800 mb-1">Рівень ${i}: ${powerInfo.name}</div>
-                                <p class="text-xs text-gray-600 leading-snug text-justify mb-2">${powerInfo.desc}</p>
+                                <p class="text-xs text-gray-600 leading-snug text-justify mb-2">${highlightedPowerDesc}</p>
                                 <div class="text-[11px] text-gray-500 space-y-0.5">
-                                    ${(powerInfo.requirement && String(powerInfo.requirement).trim().toLowerCase() !== 'немає' && String(powerInfo.requirement).trim() !== '') ? `<p><span class="font-bold text-gray-700">Вимога:</span> ${powerInfo.requirement}</p>` : ''}
+                                    ${(powerInfo.requirement && String(powerInfo.requirement).trim().toLowerCase() !== 'немає' && String(powerInfo.requirement).trim() !== '') ? `<p><span class="font-bold text-gray-700">Вимога:</span> ${highlightedReq}</p>` : ''}
                                     ${(powerInfo.rouseCost && String(powerInfo.rouseCost).trim().toLowerCase() !== 'немає' && String(powerInfo.rouseCost).trim() !== '') ? `<p><span class="font-bold text-gray-700">Збурення:</span> ${powerInfo.rouseCost}</p>` : ''}
                                     ${(powerInfo.dicePool && String(powerInfo.dicePool).trim().toLowerCase() !== 'немає' && String(powerInfo.dicePool).trim() !== '') ? `<p><span class="font-bold text-gray-700">Пул:</span> ${powerInfo.dicePool}</p>` : ''}
                                 </div>
@@ -4002,194 +4014,29 @@ function rollDice() {
         rollName = parts.length > 0 ? parts.join(' + ') : 'Кидок з аркуша';
     }
     
-    if (typeof diceHistory === 'undefined') {
-        window.diceHistory = [];
-    }
-    
-    window.diceHistory.unshift({ name: rollName, successes: successes, messy: messyCritical, bestial: bestialFailure });
-    if (window.diceHistory.length > 5) window.diceHistory.pop();
-    
-    renderDiceHistory();
+    addDiceHistory(rollName, successes, messyCritical, bestialFailure);
 }
 
-function renderDiceHistory() {
-    const container = document.getElementById('dice-history-container');
+let diceHistory = [];
+function addDiceHistory(name, successes, isMessyCrit, isBestialFail) {
     const list = document.getElementById('dice-history-list');
-    if (!container || !list) return;
-
-    if (!window.diceHistory || window.diceHistory.length === 0) {
-        container.classList.add('hidden');
-        return;
-    }
-
+    const container = document.getElementById('dice-history-container');
+    if (!list || !container) return;
+    
+    diceHistory.unshift({ name, successes, isMessyCrit, isBestialFail, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) });
+    if (diceHistory.length > 5) diceHistory = diceHistory.slice(0, 5);
+    
     container.classList.remove('hidden');
-    list.innerHTML = '';
-    window.diceHistory.forEach(roll => {
-        let alerts = [];
-        if (roll.messy) alerts.push('<span class="text-yellow-500 text-[10px] ml-1 font-bold uppercase" title="Звіриний Розгром">!Розгром!</span>');
-        if (roll.bestial) alerts.push('<span class="text-red-500 text-[10px] ml-1 font-bold uppercase" title="Звіриний Провал">!Провал!</span>');
-        
-        list.innerHTML += `
-            <li class="bg-gray-800 p-2 rounded border border-gray-700 flex justify-between items-center">
-                <span class="text-xs text-gray-300 truncate max-w-[200px]" title="${roll.name}">${roll.name}</span>
-                <span class="text-sm font-bold text-white flex items-center">Успіхи: <span class="text-[#8b0000] ml-1 mr-1">${roll.successes}</span> ${alerts.join('')}</span>
-            </li>
-        `;
-    });
-}
-
-
-
-// --- Health & Willpower Trackers ---
-
-function getHealthMax() {
-    return (state.attributes['stamina'] || 1) + 3;
-}
-
-function getWillpowerMax() {
-    return (state.attributes['resolve'] || 1) + (state.attributes['composure'] || 1);
-}
-
-function handleDamageClick(type, index) {
-    let arr = type === 'health' ? state.healthDamage : state.willpowerDamage;
-    let max = type === 'health' ? getHealthMax() : getWillpowerMax();
-    
-    while(arr.length < max) arr.push(0);
-    if(arr.length > max) arr.splice(max);
-    
-    arr[index] = (arr[index] + 1) % 3;
-    
-    renderHealthWillpower();
-}
-
-function renderHealthWillpower() {
-    const healthMax = getHealthMax();
-    const wpMax = getWillpowerMax();
-    
-    if (!state.healthDamage) state.healthDamage = [];
-    if (!state.willpowerDamage) state.willpowerDamage = [];
-    
-    let hArr = state.healthDamage;
-    while(hArr.length < healthMax) hArr.push(0);
-    if(hArr.length > healthMax) hArr.splice(healthMax);
-    
-    let wArr = state.willpowerDamage;
-    while(wArr.length < wpMax) wArr.push(0);
-    if(wArr.length > wpMax) wArr.splice(wpMax);
-    
-    let hHtml = '';
-    for(let i=0; i<healthMax; i++) {
-        let content = hArr[i] === 1 ? '/' : (hArr[i] === 2 ? 'X' : '');
-        hHtml += `<div class="w-8 h-8 md:w-10 md:h-10 border-2 border-gray-400 bg-gray-50 flex items-center justify-center font-bold text-lg md:text-xl cursor-pointer hover:bg-gray-200 select-none text-red-600 print:border-gray-500" onclick="handleDamageClick('health', ${i})">${content}</div>`;
-    }
-    
-    let wHtml = '';
-    for(let i=0; i<wpMax; i++) {
-        let content = wArr[i] === 1 ? '/' : (wArr[i] === 2 ? 'X' : '');
-        wHtml += `<div class="w-8 h-8 md:w-10 md:h-10 border-2 border-gray-400 bg-gray-50 flex items-center justify-center font-bold text-lg md:text-xl cursor-pointer hover:bg-gray-200 select-none text-red-600 print:border-gray-500" onclick="handleDamageClick('willpower', ${i})">${content}</div>`;
-    }
-    
-    ['health-tracker-step2', 'health-tracker-step7'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = hHtml;
-    });
-    
-    ['willpower-tracker-step2', 'willpower-tracker-step7'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = wHtml;
-    });
-}
-
-// --- Clan Selection Modal ---
-
-const clanCategories = [
-    {
-        title: "Правителі та командири",
-        clans: ["ventrue", "tzimisce", "lasombra"]
-    },
-    {
-        title: "Бійці та захисники",
-        clans: ["brujah", "gangrel", "banu_haqim"]
-    },
-    {
-        title: "Спокусники та обманщики",
-        clans: ["toreador", "ravnos", "ministry"]
-    },
-    {
-        title: "Розслідувачі та дослідники",
-        clans: ["malkavian", "tremere", "hecata"]
-    },
-    {
-        title: "Тіні та спостерігачі",
-        clans: ["nosferatu", "salubri"]
-    },
-    {
-        title: "Відлюдники та вигнанці",
-        clans: ["unknown", "thin-blood"]
-    }
-];
-
-function openClanModal() {
-    renderClanModal();
-    document.getElementById('clan-modal').classList.remove('hidden');
-    document.getElementById('clan-modal').classList.add('flex');
-}
-
-function closeClanModal() {
-    document.getElementById('clan-modal').classList.add('hidden');
-    document.getElementById('clan-modal').classList.remove('flex');
-}
-
-function selectClanFromModal(clanId) {
-    changeClan(clanId);
-    
-    // Оновлюємо прихований селект для сумісності
-    const sel = document.getElementById('clan-select-1');
-    if (sel) sel.value = clanId;
-    
-    closeClanModal();
-}
-
-function renderClanModal() {
-    const container = document.getElementById('clan-modal-content');
-    if (!container) return;
-    
-    let html = '<div class="space-y-8">';
-    
-    clanCategories.forEach(cat => {
-        html += `
-            <div>
-                <h3 class="text-xl font-bold text-gray-400 uppercase tracking-widest border-b border-gray-700 pb-2 mb-4">${cat.title}</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        `;
-        
-        cat.clans.forEach(clanId => {
-            const clanData = clansData[clanId];
-            if (!clanData) return;
-            
-            const imgSrc = (typeof getClanIconPath === 'function') ? getClanIconPath(clanId) : (clanData.image ? `Clan_symbols/${clanData.image}` : 'Clan_symbols/Caitiff_symbol.png');
-            
-            html += `
-                <button onclick="selectClanFromModal('${clanId}')" class="flex items-start p-3 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-red-500 rounded-lg transition-all group text-left h-full">
-                    <div class="shrink-0 mr-4 bg-gray-900 rounded p-2 border border-gray-700 group-hover:border-red-500 transition-colors w-16 h-16 flex items-center justify-center">
-                        <img src="${imgSrc}" class="w-full h-full object-contain filter invert opacity-70 group-hover:opacity-100 transition-opacity" alt="${clanData.name}">
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="text-lg font-serif font-bold text-white group-hover:text-red-400 truncate">${clanData.name}</h4>
-                        <p class="text-xs text-gray-400 mt-1 line-clamp-3 leading-tight">${clanData.desc || ''}</p>
-                    </div>
-                </button>
-            `;
-        });
-        
-        html += `
-                </div>
+    list.innerHTML = diceHistory.map(item => `
+        <li class="bg-gray-800/80 p-2 rounded text-xs flex justify-between items-center border border-gray-700">
+            <span class="text-gray-300 font-medium truncate max-w-[150px]">${item.name}</span>
+            <div class="flex items-center gap-2">
+                ${item.isMessyCrit ? '<span class="text-yellow-500 font-bold" title="Звіриний Розгром">⚡ ЗР</span>' : ''}
+                ${item.isBestialFail ? '<span class="text-red-500 font-bold" title="Звіриний Провал">💀 ЗП</span>' : ''}
+                <span class="bg-[#8b0000] text-white px-2 py-0.5 rounded font-bold">${item.successes}</span>
             </div>
-        `;
-    });
-    
-    html += '</div>';
-    container.innerHTML = html;
+        </li>
+    `).join('');
 }
 
 // --- Save / Load Draft ---
@@ -4268,9 +4115,6 @@ function restoreUIFromState() {
     goToStep(1);
 }
 
-
-
-
 window.getClanIcon = function(clanId) {
     const map = {
         'brujah': 'Clan_symbols/Brujah_symbol.png',
@@ -4307,6 +4151,7 @@ window.openBgModal = function() {
     function renderClanCard(clanId, clan) {
         if (!clan || !clan.backgrounds || clan.backgrounds.length === 0) return '';
         const iconSrc = window.getClanIcon(clanId);
+        const highlightedClanDesc = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(clan.desc || '') : (clan.desc || '');
         let clanHtml = `
             <div class="mb-6 bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                 <div class="flex items-center gap-4 mb-4 border-b border-gray-100 pb-3">
@@ -4315,7 +4160,7 @@ window.openBgModal = function() {
                     </div>
                     <div>
                         <h3 class="text-xl font-serif font-bold text-gray-900">${clan.name}</h3>
-                        <p class="text-xs text-gray-500 italic mt-0.5">${clan.desc}</p>
+                        <p class="text-xs text-gray-500 italic mt-0.5">${highlightedClanDesc}</p>
                     </div>
                 </div>
                 <div class="space-y-3">
@@ -4328,11 +4173,12 @@ window.openBgModal = function() {
                 formattedBg = `<strong class="text-gray-900 font-bold">${splitMatch[1].trim()}:</strong> ${splitMatch[3].trim()}`;
             }
             
+            const highlightedBg = typeof highlightGlossaryTerms === 'function' ? highlightGlossaryTerms(formattedBg) : formattedBg;
             const safeBg = bg.replace(/'/g, "\'").replace(/"/g, '&quot;');
             
             clanHtml += `
                 <div onclick="selectBackground('${safeBg}')" class="p-3.5 rounded-lg border border-gray-200 hover:border-[#8b0000] hover:bg-red-50/60 transition-all cursor-pointer group shadow-xs">
-                    <p class="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">${formattedBg}</p>
+                    <p class="text-sm text-gray-800 leading-relaxed group-hover:text-gray-900">${highlightedBg}</p>
                 </div>
             `;
         });
@@ -4361,7 +4207,6 @@ window.openBgModal = function() {
     modal.classList.add('flex');
 };
 
-
 window.closeBgModal = function() {
     const modal = document.getElementById('bg-modal');
     if (modal) {
@@ -4388,6 +4233,133 @@ window.selectBackground = function(bgText) {
 // ==================== GLOSSARY (СЛОВНИК) ====================
 let vtmGlossaryData = [];
 
+// Highlighting rules with Ukrainian inflections and precise glossary mappings
+const GLOSSARY_HIGHLIGHT_RULES = [
+    { pattern: 'друго(?:ї|ю|і|у|я)?\\s+інквізиці(?:ї|єю|ю|я|ях|ям|ями)?', term: 'ДРУГА ІНКВІЗИЦІЯ' },
+    { pattern: 'книг(?:а|и|ою|і|у|ах|ам|ами)?\\s+нода', term: 'КНИГА НОДА (АРХАЇЧНЕ)' },
+    { pattern: 'червон(?:ий|ого|ому|им|ім|і|их|ими)\\s+список|червон(?:ого|ому|им|ім)?\\s+списку', term: 'ЧЕРВОНИЙ СПИСОК' },
+    { pattern: 'чорн(?:е|ого|ому|им|ім)\\s+сонц(?:е|я|ем|ю|і)', term: 'ЧОРНЕ СОНЦЕ (ЖАРГОН)' },
+    { pattern: 'судин(?:а|и|ою|і|у|ах|ам|ами)', term: 'СУДИНА' },
+    { pattern: 'камариль(?:я|ї|єю|ю|ях|ям|ями)?', term: 'КАМАРИЛЬЯ' },
+    { pattern: 'шабаш(?:у|ем|і|а|ів|ам|ами)?', term: 'ШАБАШ' },
+    { pattern: 'анарх(?:и|ів|ам|ами|ах|а|ом|у|е)?', term: 'АНАРХ' },
+    { pattern: 'маскарад(?:у|ом|і|а|ів|ам|ами)?', term: 'МАСКАРАД' },
+    { pattern: 'кревн(?:і|их|им|ними|ому|ого|ої|ій)', term: 'КРЕВНІ' },
+    { pattern: 'діаблер(?:і|у|іст|іста|істи|істом)', term: 'ДІАБЛЕРІ' },
+    { pattern: 'гул(?:і|ів|ям|ями|ях|я|ем|ю)', term: 'ГУЛЬ' },
+    { pattern: 'сір(?:а|ові|ом|е|и|ів|ам|ами|ах)?', term: 'СIP' },
+    { pattern: 'клік(?:а|и|ою|і|у|ах|ам|ами)?', term: 'КЛІКА' },
+    { pattern: 'принц(?:а|ем|еві|і|ів|ам|ами|ах)?', term: 'ПРИНЦ' },
+    { pattern: 'примоген(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'ПРИМОГЕН' },
+    { pattern: 'барон(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'БАРОН' },
+    { pattern: 'шериф(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'ШЕРИФ' },
+    { pattern: 'сенешал(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'СЕНЕШАЛЬ' },
+    { pattern: 'гарпі(?:я|ї|єю|ю|ях|ям|ями)?', term: 'ГАРПІЯ' },
+    { pattern: 'бич(?:а|ем|еві|і|ів|ам|ами|ах)?', term: 'БИЧ' },
+    { pattern: 'архонт(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'АРХОНТ' },
+    { pattern: 'юстиціар(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'ЮСТИЦІАР' },
+    { pattern: 'неонат(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'НЕОНАТ' },
+    { pattern: 'анцил(?:а|и|ою|і|у|ах|ам|ами|ів)?', term: 'АНЦИЛА' },
+    { pattern: 'старійшин(?:а|и|ою|і|у|ах|ам|ами|ів)?', term: 'СТАРІЙШИНА' },
+    { pattern: 'дитя(?:ти|тем|ті|та|там|тами|тах)?', term: 'ДИТЯ' },
+    { pattern: 'каїтиф(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'КАЇТИФ' },
+    { pattern: 'рідкокровн(?:і|их|им|ними|ого|ому|ій|а|ий|им|ім)?|рідкокров(?:ець|ця|цем|цеві|ці|ців|цям|цями|цях)?', term: 'РІДКОКРОВЕЦЬ' },
+    { pattern: 'безкланов(?:і|их|им|ними|ого|ому|ій)?', term: 'БЕЗКЛАНОВІ' },
+    { pattern: 'вольні(?:ми|х)?|вольн(?:і|их|им|ними|ого|ому)?', term: 'ВОЛЬНІ' },
+    { pattern: 'автарк(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'АВТАРКИ (АРХАЇЧНЕ)' },
+    { pattern: 'автохтон(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'АВТОХТОНИ (ЖАРГОН)' },
+    { pattern: 'парія(?:ми|х|м)?|парі(?:ї|ю|єю)', term: 'ПАРІЯ' },
+    { pattern: 'голод(?:у|ом|і|а)?', term: 'ГОЛОД' },
+    { pattern: 'звір(?:я|ем|еві|і|ів|ам|ами|ах)?', term: 'ЗВІР' },
+    { pattern: 'бестіарі(?:й|ю|єм|ї|їв)?', term: 'БЕСТІАРІЙ' },
+    { pattern: 'віте', term: 'ВІТЕ (АРХАЇЧНЕ)' },
+    { pattern: 'елізіум(?:у|ом|і|а|ів|ам|ами)?', term: 'ЕЛІЗІУМ' },
+    { pattern: 'сховищ(?:е|а|ем|і|у|ах|ам|ами)?', term: 'СХОВИЩЕ' },
+    { pattern: 'торпор(?:у|ом|і)?', term: 'ТОРПОР' },
+    { pattern: 'ґолконд(?:а|и|ою|і|у)?', term: 'ҐОЛКОНДА' },
+    { pattern: 'дисимуляці(?:я|ї|єю|ю|ях|ям)?', term: 'ДИСИМУЛЯЦІЯ' },
+    { pattern: 'становленн(?:я|ям|і|ь)?', term: 'СТАНОВЛЕННЯ' },
+    { pattern: 'узи\\s+крові', term: 'УЗИ КРОВІ' },
+    { pattern: 'кровно\\s+зв\'язан(?:ий|ого|ому|им|ім|і|их|ними|а|ої|ій|у)?', term: 'КРОВНО ЗВ’ЯЗАНИЙ' },
+    { pattern: 'поколінн(?:я|ям|і|ь)?', term: 'ПОКОЛІННЯ' },
+    { pattern: 'клятв(?:а|и|ою|і|у|ах|ам|ами)?\\s+крові', term: 'КЛЯТВА КРОВІ (АРХАЇЧНЕ)' },
+    { pattern: 'маніфест(?:у|ом|і|а|ів|ам|ами)?', term: 'МАНІФЕСТ' },
+    { pattern: 'мафусаїл(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'МАФУСАЇЛ' },
+    { pattern: 'допотопн(?:і|их|им|ними|ого|ому|ій)?', term: 'ДОПОТОПНІ' },
+    { pattern: 'каїніт(?:и|ів|ам|ами|ах|а|ом|у|ові)?', term: 'КАЇНІТИ (АРХАЇЧНЕ)' },
+    { pattern: 'фермер(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'ФЕРМЕР' },
+    { pattern: 'веган(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'ВЕГАН (ГРУБЕ)' },
+    { pattern: 'осирак(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'ОСИРАК (ГРУБЕ)' },
+    { pattern: 'пташк(?:а|и|ою|і|у|ах|ам|ами|ів)?', term: 'ПТАШКА (ЖАРГОН)' },
+    { pattern: 'п\'явк(?:а|и|ою|і|у|ах|ам|ами|ів)?', term: 'П’ЯВКА (ГРУБЕ)' },
+    { pattern: 'головоріз(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'ГОЛОВОPІЗ (ЖАРГОН)' },
+    { pattern: 'голуб(?:и|ів|ам|ами|ах|а|ом|у|ем)?', term: 'ГОЛУБ (ЖАРГОН)' },
+    { pattern: 'козел|козл(?:а|ом|у|е|и|ів|ам|ами|ах)', term: 'КОЗЕЛ (ЖАРГОН)' },
+    { pattern: 'кріп(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'КРІП (ГРУБЕ)' },
+    { pattern: 'ляльк(?:а|и|ою|і|у|ах|ам|ами|ів)?', term: 'ЛЯЛЬКА (ЖАРГОН)' },
+    { pattern: 'метелик(?:и|ів|ам|ами|ах|а|ом|у)?', term: 'МЕТЕЛИК (ЖАРГОН)' },
+    { pattern: 'мішок\\s+соку|мішк(?:а|у|ом|і|ів|ам|ами|ах)\\s+соку', term: 'МІШОК СОКУ (ГРУБЕ)' },
+    { pattern: 'вівц(?:я|і|ею|ю|ям|ями|ях)?', term: 'ВІВЦЯ (ЖАРГОН)' },
+    { pattern: 'повій(?:ники|ника|нику|ником|ників|никам|никами|никах)?', term: 'ПОВІЙНИК (ЖАРГОН)' },
+    { pattern: 'прохолодн(?:і|их|им|ними|ого|ому|ій)?', term: 'ПРОХОЛОДНІ (ЖАРГОН)' },
+    { pattern: 'родовід(?:у|ом|і)?', term: 'РОДОВІД' },
+    { pattern: 'розум(?:у|ом|і)?\\s+вулика', term: 'РОЗУМ ВУЛИКА' },
+    { pattern: 'склеп(?:у|ом|і|а|ів|ам|ами|ах)?', term: 'СКЛЕП (ЖАРГОН)' },
+    { pattern: 'слідчи(?:й|го|му|м|і|х|ми)?', term: 'СЛІДЧИЙ' },
+    { pattern: 'суспільств(?:о|а|ом|і|у)?\\s+леопольда', term: 'СУСПІЛЬСТВО ЛЕОПОЛЬДА' },
+    { pattern: 'чаш(?:а|і|ею|у|ах|ам|ами)?', term: 'ЧАША (АРХАЇЧНЕ)' },
+    { pattern: 'чудовиськ(?:о|а|ом|у|ах|ам|ами)?', term: 'ЧУДОВИСЬКО' },
+    { pattern: 'амарант(?:у|ом|і)?', term: 'АМАРАНТ (АРХАЇЧНЕ)' },
+    { pattern: 'вигнан(?:ець|ця|цем|цеві|ці|ців|цям|цями|цях)', term: 'ВИГНАНЕЦЬ (ЖАРГОН)' },
+    { pattern: 'визнан(?:ий|ого|ому|им|ім|і|их|ними|а|ої|ій|у|ня|ням|ні|ь)?', term: 'ВИЗНАННЯ' },
+    { pattern: 'вискочен(?:ь|я|ем|еві|і|ів|ям|ями|ях)', term: 'ВИСКОЧЕНЬ (ЖАРГОН)' },
+    { pattern: 'вільн(?:ий|ого|ому|им|ім|і|их|ними)\\s+князь|вільн(?:ого|ому|им|ім|і|их|ними)\\s+княз(?:я|ем|еві|і|ів|ям|ями|ях)', term: 'ВІЛЬНИЙ КНЯЗЬ' },
+    { pattern: 'геєн(?:а|и|ою|і|у)', term: 'ГЕЄНА (АРХАЇЧНЕ)' },
+    { pattern: 'гуля(?:ми|х|м)?', term: 'ГУЛЯ' },
+    { pattern: 'декаданс(?:у|ом|і)?', term: 'ДЕКАДАНС (АРХАЇЧНЕ)' },
+    { pattern: 'демарш(?:у|ем|і|а|ів|ам|ами|ах)?', term: 'ДЕМАРШ' },
+    { pattern: 'договор(?:и|ів|ам|ами|ах|а|ом|у)?\\s+тіролю', term: 'ДОГОВОРИ ТІРОЛЮ' },
+    { pattern: 'диха(?:ч|ча|чем|чеві|чі|чів|чам|чами|чах)', term: 'ДИХАЧ (ГРУБЕ)' },
+    { pattern: 'журнал(?:и|ів|ам|ами|ах|а|ом|у|і)?', term: 'ЖУРНАЛ' },
+    { pattern: 'згра(?:я|ї|єю|ю|ях|ям|ями)', term: 'ЗГРАЯ' }
+];
+
+// Single-pass regex builder
+const COMBINED_GLOSSARY_REGEX = new RegExp(
+    '(?:^|(?<=[^\\p{L}\\p{N}_]))(' +
+    GLOSSARY_HIGHLIGHT_RULES.map((r, i) => `(?<g_${i}>${r.pattern})`).join('|') +
+    ')(?:$|(?=[^\\p{L}\\p{N}_]))',
+    'giu'
+);
+
+function replaceTermsInPlainText(text) {
+    if (!text || typeof text !== 'string') return text;
+    return text.replace(COMBINED_GLOSSARY_REGEX, (match, p1, ...args) => {
+        const groups = args[args.length - 1];
+        if (!groups) return match;
+        for (let i = 0; i < GLOSSARY_HIGHLIGHT_RULES.length; i++) {
+            if (groups[`g_${i}`] !== undefined) {
+                const termKey = GLOSSARY_HIGHLIGHT_RULES[i].term;
+                const safeTermKey = termKey.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                return `<span class="vtm-glossary-term cursor-help text-[#8b0000] hover:text-red-700 underline decoration-dotted decoration-[#8b0000]/60 underline-offset-2 font-medium transition-colors" onmouseenter="showGlossaryTooltip(event, '${safeTermKey}')" onmouseleave="hideGlossaryTooltip(event)" onclick="event.stopPropagation(); toggleGlossaryTooltip(event, '${safeTermKey}')" data-glossary-term="${safeTermKey}">${match}</span>`;
+            }
+        }
+        return match;
+    });
+}
+
+function highlightGlossaryTerms(html) {
+    if (!html || typeof html !== 'string') return html;
+    const parts = html.split(/(<[^>]+>)/g);
+    for (let i = 0; i < parts.length; i++) {
+        if (!parts[i].startsWith('<')) {
+            parts[i] = replaceTermsInPlainText(parts[i]);
+        }
+    }
+    return parts.join('');
+}
+window.highlightGlossaryTerms = highlightGlossaryTerms;
+
 async function loadGlossaryData() {
     if (vtmGlossaryData && vtmGlossaryData.length > 0) return vtmGlossaryData;
     try {
@@ -4401,7 +4373,224 @@ async function loadGlossaryData() {
     return vtmGlossaryData;
 }
 
+function findTermInGlossary(termKey) {
+    if (!termKey || !vtmGlossaryData || vtmGlossaryData.length === 0) return null;
+    const cleanKey = termKey.trim().toLowerCase();
+    
+    // 1. Exact match
+    let found = vtmGlossaryData.find(item => item.term && item.term.toLowerCase() === cleanKey);
+    if (found) return found;
+    
+    // 2. Starts with / includes
+    found = vtmGlossaryData.find(item => item.term && (item.term.toLowerCase().startsWith(cleanKey) || cleanKey.startsWith(item.term.toLowerCase())));
+    if (found) return found;
+    
+    // 3. Base key without brackets (e.g. "СІР" matches "СIP")
+    const baseKey = cleanKey.replace(/\s*\(.*?\)/g, '').trim();
+    found = vtmGlossaryData.find(item => {
+        if (!item.term) return false;
+        const itemBase = item.term.toLowerCase().replace(/\s*\(.*?\)/g, '').trim();
+        return itemBase === baseKey;
+    });
+    return found;
+}
+
+// ==================== GLOSSARY FLOATING TOOLTIP (ДОВІДКА) ====================
+let glossaryTooltipTimer = null;
+let isGlossaryTooltipPinned = false;
+let currentGlossaryTarget = null;
+
+function ensureGlossaryTooltipElement() {
+    let tooltip = document.getElementById('glossary-popover-tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'glossary-popover-tooltip';
+        tooltip.className = 'fixed z-[9999] max-w-xs sm:max-w-sm w-72 sm:w-80 p-3.5 bg-gray-900 text-white text-xs leading-relaxed rounded-lg shadow-2xl border border-gray-700/90 pointer-events-auto transition-all duration-150 opacity-0 scale-95 hidden select-text';
+        tooltip.innerHTML = `
+            <div class="flex items-start justify-between gap-2 mb-1.5 border-b border-gray-800 pb-1.5">
+                <span id="glossary-popover-term" class="font-serif font-bold text-red-400 uppercase tracking-wider text-xs"></span>
+                <button type="button" onclick="hideGlossaryTooltip(null, true)" class="text-gray-400 hover:text-white p-0.5 rounded transition-colors text-xs leading-none" title="Закрити">✕</button>
+            </div>
+            <div id="glossary-popover-def" class="text-xs text-zinc-200 leading-relaxed text-justify max-h-48 overflow-y-auto custom-scrollbar pr-1"></div>
+            <div class="mt-2.5 pt-1.5 border-t border-gray-800 flex justify-between items-center text-[10px] text-gray-400">
+                <span class="italic text-gray-400 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.25c-1.354 3.125-6 8.5-6 13.5a6 6 0 0012 0c0-5-4.646-10.375-6-13.5z"/></svg>
+                    <span>Словник VTM</span>
+                </span>
+                <button type="button" id="glossary-popover-open-modal" class="text-red-400 hover:text-red-300 font-medium underline underline-offset-2 flex items-center gap-1">
+                    <span>Увесь словник</span>
+                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </button>
+            </div>
+            <div id="glossary-popover-arrow" class="absolute w-2.5 h-2.5 bg-gray-900 rotate-45 pointer-events-none"></div>
+        `;
+        document.body.appendChild(tooltip);
+
+        tooltip.addEventListener('mouseenter', () => {
+            if (glossaryTooltipTimer) {
+                clearTimeout(glossaryTooltipTimer);
+                glossaryTooltipTimer = null;
+            }
+        });
+        tooltip.addEventListener('mouseleave', () => {
+            if (!isGlossaryTooltipPinned) {
+                hideGlossaryTooltip();
+            }
+        });
+        tooltip.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+    return tooltip;
+}
+
+window.showGlossaryTooltip = function(event, termKey, isClick = false) {
+    if (glossaryTooltipTimer) {
+        clearTimeout(glossaryTooltipTimer);
+        glossaryTooltipTimer = null;
+    }
+    
+    const targetEl = event ? (event.currentTarget || event.target) : null;
+    if (!targetEl) return;
+    
+    if (isClick && isGlossaryTooltipPinned && currentGlossaryTarget === targetEl) {
+        hideGlossaryTooltip(null, true);
+        return;
+    }
+    
+    if (isClick) {
+        isGlossaryTooltipPinned = true;
+    }
+    currentGlossaryTarget = targetEl;
+
+    const tooltip = ensureGlossaryTooltipElement();
+    
+    const renderContent = () => {
+        const termItem = findTermInGlossary(termKey);
+        const termTitle = termItem ? termItem.term : termKey;
+        const termDef = termItem ? termItem.definition : 'Завантаження визначення...';
+
+        const termEl = document.getElementById('glossary-popover-term');
+        const defEl = document.getElementById('glossary-popover-def');
+        const openBtn = document.getElementById('glossary-popover-open-modal');
+        const arrowEl = document.getElementById('glossary-popover-arrow');
+
+        if (termEl) termEl.innerText = termTitle;
+        if (defEl) defEl.innerText = termDef;
+        if (openBtn) {
+            openBtn.onclick = (e) => {
+                e.stopPropagation();
+                hideGlossaryTooltip(null, true);
+                openGlossaryModalWithTerm(termTitle);
+            };
+        }
+
+        tooltip.classList.remove('hidden');
+        tooltip.style.display = 'block';
+
+        const rect = targetEl.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+
+        let top = 0;
+        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+        let isAbove = true;
+
+        if (rect.top >= tooltipRect.height + 14) {
+            top = rect.top - tooltipRect.height - 8;
+            isAbove = true;
+            tooltip.classList.remove('placed-below');
+        } else {
+            top = rect.bottom + 8;
+            isAbove = false;
+            tooltip.classList.add('placed-below');
+        }
+
+        const margin = 10;
+        if (left < margin) left = margin;
+        if (left + tooltipRect.width > viewportWidth - margin) {
+            left = viewportWidth - tooltipRect.width - margin;
+        }
+
+        tooltip.style.top = `${Math.round(top)}px`;
+        tooltip.style.left = `${Math.round(left)}px`;
+
+        if (arrowEl) {
+            const arrowLeft = Math.max(12, Math.min(tooltipRect.width - 16, (rect.left + rect.width / 2) - left - 5));
+            arrowEl.style.left = `${Math.round(arrowLeft)}px`;
+            if (isAbove) {
+                arrowEl.style.top = 'auto';
+                arrowEl.style.bottom = '-5px';
+                arrowEl.style.borderTop = 'none';
+                arrowEl.style.borderLeft = 'none';
+                arrowEl.style.borderRight = '1px solid rgba(55, 65, 81, 0.9)';
+                arrowEl.style.borderBottom = '1px solid rgba(55, 65, 81, 0.9)';
+            } else {
+                arrowEl.style.bottom = 'auto';
+                arrowEl.style.top = '-5px';
+                arrowEl.style.borderRight = 'none';
+                arrowEl.style.borderBottom = 'none';
+                arrowEl.style.borderTop = '1px solid rgba(55, 65, 81, 0.9)';
+                arrowEl.style.borderLeft = '1px solid rgba(55, 65, 81, 0.9)';
+            }
+        }
+
+        requestAnimationFrame(() => {
+            tooltip.classList.remove('opacity-0', 'scale-95');
+            tooltip.classList.add('opacity-100', 'scale-100');
+        });
+    };
+
+    if (!vtmGlossaryData || vtmGlossaryData.length === 0) {
+        loadGlossaryData().then(renderContent);
+    } else {
+        renderContent();
+    }
+};
+
+window.toggleGlossaryTooltip = function(event, termKey) {
+    window.showGlossaryTooltip(event, termKey, true);
+};
+
+window.hideGlossaryTooltip = function(event, immediate = false) {
+    if (glossaryTooltipTimer) {
+        clearTimeout(glossaryTooltipTimer);
+        glossaryTooltipTimer = null;
+    }
+    
+    const tooltip = document.getElementById('glossary-popover-tooltip');
+    if (!tooltip) return;
+
+    const performHide = () => {
+        tooltip.classList.remove('opacity-100', 'scale-100');
+        tooltip.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => {
+            if (tooltip && tooltip.classList.contains('opacity-0')) {
+                tooltip.style.display = 'none';
+                tooltip.classList.add('hidden');
+            }
+        }, 150);
+        isGlossaryTooltipPinned = false;
+        currentGlossaryTarget = null;
+    };
+
+    if (immediate) {
+        performHide();
+    } else {
+        glossaryTooltipTimer = setTimeout(performHide, 220);
+    }
+};
+
+// Global click & esc listener for tooltip
+document.addEventListener('click', function(e) {
+    const tooltip = document.getElementById('glossary-popover-tooltip');
+    if (tooltip && !tooltip.classList.contains('hidden') && !tooltip.contains(e.target) && !e.target.closest('.vtm-glossary-term')) {
+        hideGlossaryTooltip(null, true);
+    }
+});
+
 window.openGlossaryModal = async function() {
+    hideGlossaryTooltip(null, true);
     const modal = document.getElementById('glossary-modal');
     if (!modal) return;
     
@@ -4427,6 +4616,58 @@ window.openGlossaryModal = async function() {
     }
 };
 
+window.openGlossaryModalWithTerm = async function(termKey) {
+    hideGlossaryTooltip(null, true);
+    const modal = document.getElementById('glossary-modal');
+    if (!modal) return;
+    
+    await loadGlossaryData();
+    
+    const searchInput = document.getElementById('glossary-search-input');
+    const clearBtn = document.getElementById('glossary-search-clear');
+    
+    const found = findTermInGlossary(termKey);
+    const targetTermName = found ? found.term : termKey;
+    
+    if (searchInput) {
+        searchInput.value = targetTermName;
+    }
+    
+    if (clearBtn) {
+        clearBtn.classList.remove('hidden');
+    }
+    
+    // Filter and place matched item at top
+    let filtered = vtmGlossaryData.filter(item => {
+        return (item.term && item.term.toLowerCase() === targetTermName.toLowerCase()) || 
+               (item.term && item.term.toLowerCase().includes(termKey.toLowerCase())) || 
+               (item.definition && item.definition.toLowerCase().includes(termKey.toLowerCase()));
+    });
+    
+    if (filtered.length === 0) {
+        filtered = vtmGlossaryData;
+    } else {
+        // Sort exact match first
+        filtered.sort((a, b) => {
+            if (a.term.toLowerCase() === targetTermName.toLowerCase()) return -1;
+            if (b.term.toLowerCase() === targetTermName.toLowerCase()) return 1;
+            return 0;
+        });
+    }
+    
+    renderGlossaryList(filtered, targetTermName);
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    setTimeout(() => {
+        const focusedEl = document.getElementById('glossary-focused-card');
+        if (focusedEl) {
+            focusedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 120);
+};
+
 window.closeGlossaryModal = function() {
     const modal = document.getElementById('glossary-modal');
     if (modal) {
@@ -4435,7 +4676,7 @@ window.closeGlossaryModal = function() {
     }
 };
 
-function renderGlossaryList(items) {
+function renderGlossaryList(items, focusedTerm = null) {
     const content = document.getElementById('glossary-modal-content');
     const countNum = document.getElementById('glossary-count-num');
     if (!content) return;
@@ -4459,12 +4700,19 @@ function renderGlossaryList(items) {
     
     let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">';
     items.forEach(item => {
+        const isFocused = focusedTerm && (item.term.toLowerCase() === focusedTerm.toLowerCase());
+        const cardId = isFocused ? 'id="glossary-focused-card"' : '';
+        const focusedClasses = isFocused 
+            ? 'border-red-500/90 bg-gradient-to-br from-zinc-900 via-red-950/30 to-zinc-900 ring-2 ring-red-500/60 shadow-xl shadow-red-950/60' 
+            : 'border-zinc-800/80 bg-zinc-900/80 hover:border-red-900/60 hover:bg-zinc-900/95';
+        
         html += `
-            <div class="bg-zinc-900/80 p-4 rounded-xl border border-zinc-800/80 hover:border-red-900/60 hover:bg-zinc-900/95 transition-all flex flex-col justify-start shadow-xs group">
-                <div>
+            <div ${cardId} class="${focusedClasses} p-4 rounded-xl border transition-all flex flex-col justify-start shadow-xs group">
+                <div class="flex items-start justify-between gap-2">
                     <h4 class="text-sm sm:text-base font-bold text-red-500 font-serif tracking-wide uppercase group-hover:text-red-400 transition-colors">${item.term}</h4>
-                    <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed mt-1.5">${item.definition}</p>
+                    ${isFocused ? '<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-red-600/30 text-red-300 border border-red-500/50 rounded shrink-0">Обраний</span>' : ''}
                 </div>
+                <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed mt-2">${item.definition}</p>
             </div>
         `;
     });
@@ -4510,6 +4758,7 @@ window.clearGlossarySearch = function() {
 // Also close on ESC key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        hideGlossaryTooltip(null, true);
         const glossaryModal = document.getElementById('glossary-modal');
         if (glossaryModal && !glossaryModal.classList.contains('hidden')) {
             closeGlossaryModal();

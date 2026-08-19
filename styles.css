@@ -139,6 +139,64 @@ h1, h2, h3, .vtm-font {
     background-color: #f8f5ff;
     box-shadow: 0 4px 6px -1px rgba(75, 0, 130, 0.1);
 }
+
+/* VTM Glossary Term Highlighting */
+.vtm-glossary-term {
+    text-decoration: underline dotted #c53030 !important;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1.5px !important;
+    cursor: help;
+    transition: all 0.15s ease-in-out;
+    border-radius: 3px;
+    padding: 0 2px;
+    font-weight: 500;
+}
+
+.vtm-glossary-term:hover {
+    color: #9b1c1c;
+    background-color: rgba(185, 28, 28, 0.12);
+    text-decoration-style: solid !important;
+    text-decoration-color: #9b1c1c !important;
+    text-shadow: 0 0 1px rgba(155, 28, 28, 0.3);
+}
+
+.dark .vtm-glossary-term,
+.bg-gray-800 .vtm-glossary-term,
+.bg-zinc-900 .vtm-glossary-term,
+.bg-\[\#1a1a1a\] .vtm-glossary-term {
+    text-decoration-color: #f87171 !important;
+}
+
+.dark .vtm-glossary-term:hover,
+.bg-gray-800 .vtm-glossary-term:hover,
+.bg-zinc-900 .vtm-glossary-term:hover,
+.bg-\[\#1a1a1a\] .vtm-glossary-term:hover {
+    color: #fca5a5;
+    background-color: rgba(239, 68, 68, 0.2);
+    text-decoration-color: #ef4444 !important;
+}
+
+/* Glossary Popover Tooltip */
+#glossary-popover-tooltip {
+    transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: center bottom;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+#glossary-popover-tooltip.placed-below {
+    transform-origin: center top;
+}
+
+.glossary-card-focused {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4), 0 4px 14px rgba(185, 28, 28, 0.3) !important;
+    animation: glossaryPulse 1.5s ease-in-out 2;
+}
+
+@keyframes glossaryPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
 .attribute-desc {
     font-size: 0.8rem;
     color: #a0aec0;
