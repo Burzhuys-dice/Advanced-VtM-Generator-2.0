@@ -464,10 +464,17 @@ const FALLBACK_LIFEPATHS = [
     }
 ];
 
+function normalizeResourceId(resId) {
+    if (!resId) return '';
+    if (resId === 'physical_wealth') return 'wealth';
+    if (resId === 'physical_weaponry' || resId === 'physical_equipment') return 'physical_repository';
+    return resId;
+}
+
 function getV6LifepathSkillBonuses() {
     const bonuses = {};
     (v6State.lifepaths || []).forEach(lpId => {
-        const allocs = v6State.lifepathSkillAllocations[lpId] || {};
+        const allocs = (v6State.lifepathSkillAllocations && v6State.lifepathSkillAllocations[lpId]) || {};
         Object.entries(allocs).forEach(([skId, dots]) => {
             bonuses[skId] = (bonuses[skId] || 0) + dots;
         });
@@ -478,28 +485,86 @@ function getV6LifepathSkillBonuses() {
 function getV6LifepathResourceBonuses() {
     const bonuses = {};
     (v6State.lifepaths || []).forEach(lpId => {
-        const allocs = v6State.lifepathResourceAllocations[lpId] || {};
+        const allocs = (v6State.lifepathResourceAllocations && v6State.lifepathResourceAllocations[lpId]) || {};
         Object.entries(allocs).forEach(([resId, dots]) => {
-            let normId = resId;
-            if (normId === 'physical_wealth') normId = 'wealth';
-            if (normId === 'physical_weaponry' || normId === 'physical_equipment') normId = 'physical_repository';
+            const normId = normalizeResourceId(resId);
             bonuses[normId] = (bonuses[normId] || 0) + dots;
         });
     });
     return bonuses;
 }
 
-function applyV6LifepathBonuses() {
-    const lpSkills = getV6LifepathSkillBonuses();
-    Object.entries(lpSkills).forEach(([skId, bonus]) => {
-        if (!v6State.skills[skId] || v6State.skills[skId] < bonus) {
-            v6State.skills[skId] = bonus;
+function isV6LifepathSkillBlocked(lpId, skillId) {
+    let otherDots = 0;
+    (v6State.lifepaths || []).forEach(otherId => {
+        if (otherId !== lpId && v6State.lifepathSkillAllocations && v6State.lifepathSkillAllocations[otherId]) {
+            otherDots += (v6State.lifepathSkillAllocations[otherId][skillId] || 0);
         }
     });
+    return otherDots >= 3;
+}
+
+function getV6LifepathSkillMaxAllowed(lpId, skillId) {
+    let otherDots = 0;
+    (v6State.lifepaths || []).forEach(otherId => {
+        if (otherId !== lpId && v6State.lifepathSkillAllocations && v6State.lifepathSkillAllocations[otherId]) {
+            otherDots += (v6State.lifepathSkillAllocations[otherId][skillId] || 0);
+        }
+    });
+    return Math.max(0, 3 - otherDots);
+}
+
+function isV6LifepathResourceBlocked(lpId, resId) {
+    const norm = normalizeResourceId(resId);
+    let otherDots = 0;
+    (v6State.lifepaths || []).forEach(otherId => {
+        if (otherId !== lpId && v6State.lifepathResourceAllocations && v6State.lifepathResourceAllocations[otherId]) {
+            Object.entries(v6State.lifepathResourceAllocations[otherId]).forEach(([rId, dots]) => {
+                if (normalizeResourceId(rId) === norm) {
+                    otherDots += dots;
+                }
+            });
+        }
+    });
+    return otherDots >= 3;
+}
+
+function getV6LifepathResourceMaxAllowed(lpId, resId) {
+    const norm = normalizeResourceId(resId);
+    let otherDots = 0;
+    (v6State.lifepaths || []).forEach(otherId => {
+        if (otherId !== lpId && v6State.lifepathResourceAllocations && v6State.lifepathResourceAllocations[otherId]) {
+            Object.entries(v6State.lifepathResourceAllocations[otherId]).forEach(([rId, dots]) => {
+                if (normalizeResourceId(rId) === norm) {
+                    otherDots += dots;
+                }
+            });
+        }
+    });
+    return Math.max(0, 3 - otherDots);
+}
+
+function applyV6LifepathBonuses() {
+    const lpSkills = getV6LifepathSkillBonuses();
+    getV6Skills().forEach(skill => {
+        const skId = skill.id;
+        const lpBonus = Math.min(3, lpSkills[skId] || 0);
+        const current = v6State.skills[skId] || 0;
+
+        // If lifepath has 3 dots, it directly overwrites/saturates the skill to 3
+        if (lpBonus === 3) {
+            v6State.skills[skId] = 3;
+        } else if (current < lpBonus) {
+            v6State.skills[skId] = lpBonus;
+        } else if (current > 3) {
+            v6State.skills[skId] = 3;
+        }
+    });
+
     const lpRes = getV6LifepathResourceBonuses();
     Object.entries(lpRes).forEach(([resId, bonus]) => {
         if (!v6State.resources[resId] || v6State.resources[resId] < bonus) {
-            v6State.resources[resId] = bonus;
+            v6State.resources[resId] = Math.min(5, bonus);
         }
     });
 }
@@ -527,14 +592,34 @@ window.allocateV6LifepathSkill = function(lpId, skillId, dots) {
     if (!v6State.lifepathSkillAllocations) v6State.lifepathSkillAllocations = {};
     if (!v6State.lifepathSkillAllocations[lpId]) v6State.lifepathSkillAllocations[lpId] = {};
     
+    if (isV6LifepathSkillBlocked(lpId, skillId)) return;
+
+    const maxAllowed = getV6LifepathSkillMaxAllowed(lpId, skillId);
+    if (maxAllowed <= 0) return;
+    if (dots > maxAllowed) dots = maxAllowed;
+
     const current = v6State.lifepathSkillAllocations[lpId][skillId] || 0;
     if (current === dots) {
         v6State.lifepathSkillAllocations[lpId][skillId] = dots - 1; // Toggle down
     } else {
-        const spent = Object.values(v6State.lifepathSkillAllocations[lpId]).reduce((a,b)=>a+b, 0);
-        if (dots > current && (spent + (dots - current)) > 5) return; // Exceeds 5 limit
+        const spentOthers = Object.entries(v6State.lifepathSkillAllocations[lpId]).reduce((acc, [k, v]) => k === skillId ? acc : acc + v, 0);
+        if (spentOthers + dots > 5) {
+            const avail = Math.max(0, 5 - spentOthers);
+            if (avail <= 0) return;
+            dots = Math.min(dots, avail);
+        }
         v6State.lifepathSkillAllocations[lpId][skillId] = dots;
     }
+
+    // If this skill reached 3 dots in this path, clear it from all other lifepaths to enforce the block
+    if ((v6State.lifepathSkillAllocations[lpId][skillId] || 0) === 3) {
+        (v6State.lifepaths || []).forEach(otherId => {
+            if (otherId !== lpId && v6State.lifepathSkillAllocations[otherId] && v6State.lifepathSkillAllocations[otherId][skillId]) {
+                delete v6State.lifepathSkillAllocations[otherId][skillId];
+            }
+        });
+    }
+
     applyV6LifepathBonuses();
     renderV6UI();
 };
@@ -543,14 +628,39 @@ window.allocateV6LifepathResource = function(lpId, resId, dots) {
     if (!v6State.lifepathResourceAllocations) v6State.lifepathResourceAllocations = {};
     if (!v6State.lifepathResourceAllocations[lpId]) v6State.lifepathResourceAllocations[lpId] = {};
     
+    if (isV6LifepathResourceBlocked(lpId, resId)) return;
+
+    const maxAllowed = getV6LifepathResourceMaxAllowed(lpId, resId);
+    if (maxAllowed <= 0) return;
+    if (dots > maxAllowed) dots = maxAllowed;
+
     const current = v6State.lifepathResourceAllocations[lpId][resId] || 0;
     if (current === dots) {
         v6State.lifepathResourceAllocations[lpId][resId] = dots - 1; // Toggle down
     } else {
-        const spent = Object.values(v6State.lifepathResourceAllocations[lpId]).reduce((a,b)=>a+b, 0);
-        if (dots > current && (spent + (dots - current)) > 3) return; // Exceeds 3 limit
+        const spentOthers = Object.entries(v6State.lifepathResourceAllocations[lpId]).reduce((acc, [k, v]) => k === resId ? acc : acc + v, 0);
+        if (spentOthers + dots > 3) {
+            const avail = Math.max(0, 3 - spentOthers);
+            if (avail <= 0) return;
+            dots = Math.min(dots, avail);
+        }
         v6State.lifepathResourceAllocations[lpId][resId] = dots;
     }
+
+    // If this resource reached 3 dots, clear it from all other lifepaths
+    const norm = normalizeResourceId(resId);
+    if ((v6State.lifepathResourceAllocations[lpId][resId] || 0) === 3) {
+        (v6State.lifepaths || []).forEach(otherId => {
+            if (otherId !== lpId && v6State.lifepathResourceAllocations[otherId]) {
+                Object.keys(v6State.lifepathResourceAllocations[otherId]).forEach(otherResId => {
+                    if (normalizeResourceId(otherResId) === norm) {
+                        delete v6State.lifepathResourceAllocations[otherId][otherResId];
+                    }
+                });
+            }
+        });
+    }
+
     applyV6LifepathBonuses();
     renderV6UI();
 };
@@ -1244,14 +1354,19 @@ function setV6SireBonusDiscipline(discId) {
 // -----------------------------------------------------------------------------
 // STEP 4: LIFEPATHS (Mortal vs Vampire Categorization)
 // -----------------------------------------------------------------------------
-function renderLifepathDots(currentDots, maxDots, lpId, targetId, isSkill) {
+function renderLifepathDots(currentDots, maxDots, lpId, targetId, isSkill, isBlocked, maxAllowed = 3) {
     const fnName = isSkill ? 'allocateV6LifepathSkill' : 'allocateV6LifepathResource';
     let html = '<div class="flex gap-1 items-center">';
     for (let i = 1; i <= maxDots; i++) {
         const isFilled = i <= currentDots;
-        html += `<button type="button" onclick="event.stopPropagation(); ${fnName}('${lpId}', '${targetId}', ${i});" class="w-3.5 h-3.5 rounded-full transition-all cursor-pointer ${
-            isFilled ? 'bg-[#8b0000] ring-1 ring-red-900 shadow-xs' : 'bg-zinc-200 hover:bg-zinc-300 border border-zinc-300'
-        }" title="${i}"></button>`;
+        const isDisabled = isBlocked || (i > maxAllowed && !isFilled);
+        if (isDisabled) {
+            html += `<button type="button" disabled onclick="event.stopPropagation();" class="w-3.5 h-3.5 rounded-full bg-zinc-200 opacity-40 cursor-not-allowed border border-zinc-300 transition-all" title="${isBlocked ? 'Заблоковано: 3 крапки вже обрано в іншому шляху' : 'Заблоковано: сумарний ліміт 3 крапки'}"></button>`;
+        } else {
+            html += `<button type="button" onclick="event.stopPropagation(); ${fnName}('${lpId}', '${targetId}', ${i});" class="w-3.5 h-3.5 rounded-full transition-all cursor-pointer ${
+                isFilled ? 'bg-[#8b0000] ring-1 ring-red-900 shadow-xs' : 'bg-zinc-200 hover:bg-zinc-300 border border-zinc-300'
+            }" title="${i}"></button>`;
+        }
     }
     html += '</div>';
     return html;
@@ -1263,8 +1378,18 @@ function renderLifepathCard(lp, maxPaths) {
     
     let contentHtml = '';
     if (!isSel) {
-        const skillsList = Array.isArray(lp.skills) ? lp.skills.map(s => GLOBAL_SKILLS_MAP[s] || s).join(', ') : 'Бонус навичок';
-        const resList = Array.isArray(lp.resources) ? lp.resources.map(r => GLOBAL_RESOURCES_MAP[r] || r).join(', ') : 'Бонус ресурсів';
+        const skillsList = Array.isArray(lp.skills) ? lp.skills.map(s => {
+            const isBlocked = isV6LifepathSkillBlocked(lp.id, s);
+            const name = GLOBAL_SKILLS_MAP[s] || s;
+            return isBlocked ? `<span class="line-through text-zinc-400 font-normal">${name} (🔒 3 в іншому)</span>` : name;
+        }).join(', ') : 'Бонус навичок';
+        
+        const resList = Array.isArray(lp.resources) ? lp.resources.map(r => {
+            const isBlocked = isV6LifepathResourceBlocked(lp.id, r);
+            const name = GLOBAL_RESOURCES_MAP[r] || r;
+            return isBlocked ? `<span class="line-through text-zinc-400 font-normal">${name} (🔒 3 в іншому)</span>` : name;
+        }).join(', ') : 'Бонус ресурсів';
+        
         contentHtml = `
             <div class="flex items-start gap-1">
                 <span class="font-bold text-zinc-900 shrink-0">🎯 Навички:</span>
@@ -1282,21 +1407,31 @@ function renderLifepathCard(lp, maxPaths) {
         const spentRes = Object.values(lpResAllocs).reduce((a, b) => a + b, 0);
 
         const skillsRows = (Array.isArray(lp.skills) ? lp.skills : []).map(sk => {
-            const dots = lpSkillAllocs[sk] || 0;
+            const isBlocked = isV6LifepathSkillBlocked(lp.id, sk);
+            const maxAllowed = getV6LifepathSkillMaxAllowed(lp.id, sk);
+            const dots = isBlocked ? 0 : (lpSkillAllocs[sk] || 0);
             return `
-                <div class="flex justify-between items-center text-[11px] py-0.5">
-                    <span class="text-zinc-800 font-medium">${GLOBAL_SKILLS_MAP[sk] || sk}</span>
-                    ${renderLifepathDots(dots, 3, lp.id, sk, true)}
+                <div class="flex justify-between items-center text-[11px] py-0.5 ${isBlocked ? 'opacity-60' : ''}">
+                    <div class="flex items-center gap-1">
+                        <span class="${isBlocked ? 'text-zinc-400 line-through' : 'text-zinc-800 font-medium'}">${GLOBAL_SKILLS_MAP[sk] || sk}</span>
+                        ${isBlocked ? '<span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 rounded border border-red-200">🔒 3 в іншому</span>' : ''}
+                    </div>
+                    ${renderLifepathDots(dots, 3, lp.id, sk, true, isBlocked, maxAllowed)}
                 </div>
             `;
         }).join('');
 
         const resRows = (Array.isArray(lp.resources) ? lp.resources : []).map(res => {
-            const dots = lpResAllocs[res] || 0;
+            const isBlocked = isV6LifepathResourceBlocked(lp.id, res);
+            const maxAllowed = getV6LifepathResourceMaxAllowed(lp.id, res);
+            const dots = isBlocked ? 0 : (lpResAllocs[res] || 0);
             return `
-                <div class="flex justify-between items-center text-[11px] py-0.5">
-                    <span class="truncate pr-1 text-zinc-800 font-medium">${GLOBAL_RESOURCES_MAP[res] || res}</span>
-                    ${renderLifepathDots(dots, 3, lp.id, res, false)}
+                <div class="flex justify-between items-center text-[11px] py-0.5 ${isBlocked ? 'opacity-60' : ''}">
+                    <div class="flex items-center gap-1 truncate pr-1">
+                        <span class="truncate ${isBlocked ? 'text-zinc-400 line-through' : 'text-zinc-800 font-medium'}">${GLOBAL_RESOURCES_MAP[res] || res}</span>
+                        ${isBlocked ? '<span class="text-[9px] font-bold text-red-600 bg-red-50 px-1 rounded border border-red-200 shrink-0">🔒 3 в іншому</span>' : ''}
+                    </div>
+                    ${renderLifepathDots(dots, 3, lp.id, res, false, isBlocked, maxAllowed)}
                 </div>
             `;
         }).join('');
@@ -1741,12 +1876,12 @@ function renderV6Step5_AttributesSkills() {
             <!-- Sticky Skill Counter -->
             <div class="sticky top-0 z-10 bg-white/95 backdrop-blur py-3 border-b border-zinc-200 mb-6 shadow-sm rounded-b-xl px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-10">
                 <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
-                    <span class="text-zinc-500">Вільні Навички:</span>
+                    <span class="text-zinc-500">Вільні Навички (макс. 3 крапки):</span>
                     <span class="${freeSkillDotsSpent === freeSkillDotsAllowed ? 'text-emerald-700' : (freeSkillDotsSpent > freeSkillDotsAllowed ? 'text-red-600' : 'text-[#8b0000]')}">
                         Витрачено: ${freeSkillDotsSpent} / ${freeSkillDotsAllowed}
                     </span>
                 </div>
-                <span class="text-[10px] text-zinc-500 bg-zinc-100 px-2 py-1 rounded border border-zinc-200">Фокус (+1 кубик) обирається на 1, 3 та 5 крапках</span>
+                <span class="text-[10px] text-zinc-500 bg-zinc-100 px-2 py-1 rounded border border-zinc-200">Фокус (+1 кубик) обирається на 1 та 3 крапках</span>
             </div>
 
             <!-- CONDENSED SKILLS SECTION (13 SKILLS) -->
@@ -1760,10 +1895,10 @@ function renderV6Step5_AttributesSkills() {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     ${(() => {
                         return getV6Skills().map(skill => {
-                            const currentDots = v6State.skills[skill.id] || 0;
+                            const currentDots = Math.min(3, v6State.skills[skill.id] || 0);
                             const hasFocus1 = currentDots >= 1;
                             const skillFocuses = v6State.focuses[skill.id] || [];
-                            const lpBonus = lpSkillBonuses[skill.id] || 0;
+                            const lpBonus = Math.min(3, lpSkillBonuses[skill.id] || 0);
                             const hasLpBonus = lpBonus > 0;
 
                             return `
@@ -1783,7 +1918,7 @@ function renderV6Step5_AttributesSkills() {
                                                 ` : ''}
                                             </div>
                                             <div class="flex gap-1">
-                                                ${[1, 2, 3, 4, 5].map(dot => {
+                                                ${[1, 2, 3].map(dot => {
                                                     const isFilled = dot <= currentDots;
                                                     const isLpDot = isFilled && dot <= lpBonus;
                                                     let dotClass = 'bg-white hover:bg-zinc-200 border-zinc-400';
@@ -1793,7 +1928,7 @@ function renderV6Step5_AttributesSkills() {
                                                         dotClass = 'bg-[#8b0000] border-[#8b0000]';
                                                     }
                                                     return `
-                                                        <button onclick="setV6Skill('${skill.id}', ${dot})" class="w-4 h-4 rounded-full border transition-all ${dotClass}"></button>
+                                                        <button onclick="setV6Skill('${skill.id}', ${dot})" title="${dot <= lpBonus ? 'Отримано з Життєвого шляху' : `Крапка ${dot}`}" class="w-4 h-4 rounded-full border transition-all ${dotClass}"></button>
                                                     `;
                                                 }).join('')}
                                             </div>
@@ -1803,7 +1938,7 @@ function renderV6Step5_AttributesSkills() {
 
                                     <!-- Focus selection input -->
                                     <div class="pt-2 border-t border-zinc-200/80 space-y-2 mt-2">
-                                        ${[1, 3, 5].map(level => {
+                                        ${[1, 3].map(level => {
                                             if (currentDots < level) return '';
                                             
                                             if (v6State.focuses[skill.id] && Array.isArray(v6State.focuses[skill.id])) {
@@ -1811,7 +1946,6 @@ function renderV6Step5_AttributesSkills() {
                                                 v6State.focuses[skill.id] = {};
                                                 if (oldArr[0]) v6State.focuses[skill.id][1] = oldArr[0];
                                                 if (oldArr[1]) v6State.focuses[skill.id][3] = oldArr[1];
-                                                if (oldArr[2]) v6State.focuses[skill.id][5] = oldArr[2];
                                             }
                                             
                                             const savedVal = (v6State.focuses[skill.id] || {})[level] || '';
@@ -1823,7 +1957,7 @@ function renderV6Step5_AttributesSkills() {
                                             return `
                                                 <div>
                                                     <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
-                                                        Фокус навички (${level} крапк${level === 1 ? 'а' : (level === 5 ? 'ок' : 'и')}):
+                                                        Фокус навички (${level} крапк${level === 1 ? 'а' : 'и'}):
                                                     </label>
                                                     <select onchange="setV6SkillFocusLevel('${skill.id}', ${level}, this.value)" class="w-full bg-white border border-zinc-300 rounded px-2 py-1 text-[11px] text-zinc-800 outline-none focus:border-[#8b0000] mb-1">
                                                         <option value="">-- Оберіть спеціалізацію --</option>
@@ -1886,7 +2020,10 @@ function setV6Attribute(attrKey, dots) {
 
 function setV6Skill(skillId, dots) {
     const lpSkillBonuses = getV6LifepathSkillBonuses();
-    const minDots = lpSkillBonuses[skillId] || 0;
+    const minDots = Math.min(3, lpSkillBonuses[skillId] || 0);
+    
+    if (dots > 3) dots = 3;
+
     if (v6State.skills[skillId] === dots && dots > minDots) {
         v6State.skills[skillId] = dots - 1;
     } else {
@@ -2045,23 +2182,47 @@ function renderV6Step6_DisciplinesTraits() {
                                         const isLearned = v6State.selectedPowers.includes(power.id);
                                         const canLearn = currentDots >= power.rank;
                                         return `
-                                            <div onclick="${canLearn ? `toggleV6Power('${power.id}')` : ''}" class="p-4 rounded-xl border transition-all ${
+                                            <div onclick="openV6PowerModal('${power.id}', '${disc.id}')" class="p-4 rounded-xl border transition-all cursor-pointer relative group flex flex-col justify-between ${
                                                 isLearned 
-                                                    ? 'border-[#8b0000] bg-red-50/50 shadow-sm ring-1 ring-red-900/20' 
-                                                    : (canLearn ? 'border-zinc-200 bg-white hover:border-zinc-300 cursor-pointer' : 'border-zinc-100 bg-zinc-100/50 opacity-50 cursor-not-allowed')
+                                                    ? 'border-[#8b0000] bg-red-50/60 shadow-sm ring-1 ring-red-900/20' 
+                                                    : (canLearn ? 'border-zinc-200 bg-white hover:border-[#8b0000]/60 hover:shadow-md' : 'border-zinc-200/60 bg-zinc-50/60 opacity-60 hover:opacity-80')
                                             }">
-                                                <div class="flex items-center justify-between mb-1">
-                                                    <span class="font-bold text-xs text-zinc-900">${power.name}</span>
-                                                    <span class="text-[10px] font-bold text-[#8b0000] bg-red-100 px-2 py-0.5 rounded">${power.cost || '0'}</span>
-                                                </div>
-                                                <div class="text-[10px] text-zinc-400 font-semibold mb-2">Ранг: ${power.rank || 1} ⬤ • Тип: ${power.type || 'Пасивна'}</div>
-                                                <p class="text-xs text-zinc-600 leading-relaxed mb-2">${power.desc || ''}</p>
-                                                ${power.maturing ? `
-                                                    <div class="text-[11px] text-red-900 bg-red-100/50 p-2 rounded-lg border border-red-200/50 mt-2">
-                                                        <strong class="font-bold uppercase tracking-wider block text-[9px] text-red-950">📈 Розширення [Maturing]:</strong>
-                                                        ${power.maturing}
+                                                <div>
+                                                    <div class="flex items-start justify-between gap-2 mb-1.5">
+                                                        <div class="flex-1 pr-1">
+                                                            <span class="font-bold text-xs sm:text-sm text-zinc-900 group-hover:text-[#8b0000] transition-colors line-clamp-1">${power.name}</span>
+                                                            <div class="text-[10px] text-zinc-400 font-semibold mt-0.5">
+                                                                ${power.rankName || `Ранг ${power.rank || 1} ⬤ • ${power.type || 'Physical'}`}
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex items-center gap-1.5 shrink-0" onclick="event.stopPropagation()">
+                                                            <span class="text-[10px] font-bold text-[#8b0000] bg-red-100/80 px-2 py-0.5 rounded">${formatV6Cost(power.cost)}</span>
+                                                            ${canLearn ? `
+                                                                <button type="button" onclick="toggleV6Power('${power.id}')" title="${isLearned ? 'Скасувати вибір' : 'Обрати здатність'}" class="w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
+                                                                    isLearned ? 'bg-[#8b0000] text-white shadow-sm' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-300'
+                                                                }">
+                                                                    <span class="text-xs font-bold">${isLearned ? '✓' : '+'}</span>
+                                                                </button>
+                                                            ` : `
+                                                                <span title="Недостатньо крапок" class="w-6 h-6 rounded-lg bg-zinc-100 text-zinc-400 border border-zinc-200 flex items-center justify-center text-[10px]">🔒</span>
+                                                            `}
+                                                        </div>
                                                     </div>
-                                                ` : ''}
+
+                                                    <!-- Quick specs badges -->
+                                                    <div class="flex items-center gap-1.5 flex-wrap my-2">
+                                                        <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200/80">⏱️ ${formatV6Activate(power.activate)}</span>
+                                                        <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200/80">📏 ${formatV6Distance(power.distance)}</span>
+                                                        <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200/80">🎲 ${formatV6Attribute(power.attribute)}</span>
+                                                    </div>
+
+                                                    <p class="text-xs text-zinc-600 leading-relaxed mb-3 line-clamp-2">${power.desc ? power.desc.split('\n')[0] : ''}</p>
+                                                </div>
+
+                                                <div class="flex items-center justify-between pt-2 border-t border-zinc-100 text-[10px] font-semibold text-zinc-400 group-hover:text-[#8b0000] transition-colors mt-auto">
+                                                    <span class="flex items-center gap-1">🔍 Натисніть для повної картки</span>
+                                                    ${power.maturing ? `<span class="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[9px] font-bold">📈 Maturing</span>` : ''}
+                                                </div>
                                             </div>
                                         `;
                                     }).join('')}
@@ -2155,6 +2316,392 @@ function toggleV6Power(powerId) {
     if (idx >= 0) v6State.selectedPowers.splice(idx, 1);
     else v6State.selectedPowers.push(powerId);
     renderV6UI();
+}
+
+// -----------------------------------------------------------------------------
+// V6 DISCIPLINE POWER FORMATTING & LOCALIZATION
+// -----------------------------------------------------------------------------
+
+function formatV6Activate(val) {
+    if (!val) return 'Дія';
+    const map = {
+        'Action': 'Дія',
+        'Minor action': 'Другорядна дія',
+        'Minor action or reaction': 'Другорядна дія або реакція',
+        'Reaction': 'Реакція',
+        'Free action': 'Вільна дія',
+        'Minor': 'Другорядна дія'
+    };
+    return map[val] || val;
+}
+
+function formatV6Difficulty(val) {
+    if (!val) return 'Немає';
+    const map = {
+        'None': 'Немає',
+        'Resolve': 'Рішучість',
+        'Composure': 'Витримка',
+        'Varies': 'Змінюється',
+        'Stamina': 'Витривалість',
+        'Wits': 'Кмітливість',
+        'Strength': 'Міць',
+        'Intelligence': 'Інтелект'
+    };
+    return map[val] || val;
+}
+
+function formatV6Attribute(val) {
+    if (!val) return 'Кмітливість';
+    const map = {
+        'Wits': 'Кмітливість',
+        'Intelligence': 'Інтелект',
+        'Strength': 'Міць',
+        'Stamina': 'Витривалість',
+        'Dexterity': 'Спритність',
+        'Charisma': 'Харизма',
+        'Manipulation': 'Маніпулювання',
+        'Composure': 'Витримка',
+        'Resolve': 'Рішучість'
+    };
+    return map[val] || val;
+}
+
+function formatV6Cost(val) {
+    if (!val) return 'Без вартості';
+    const map = {
+        '1 Vitae': '1 Віте',
+        '2 Vitae': '2 Віте',
+        '3 Vitae': '3 Віте',
+        '1 Willpower': '1 Сила волі',
+        '2 Willpower': '2 Сили волі',
+        '3 Willpower': '3 Сили волі',
+        '0': 'Без вартості',
+        'None': 'Без вартості'
+    };
+    return map[val] || val;
+}
+
+function formatV6Distance(val) {
+    if (!val) return 'На себе';
+    const map = {
+        'Self': 'На себе',
+        'Touch': 'Дотик',
+        'Close': 'Впритул',
+        'Short': 'Коротка',
+        'Medium': 'Середня',
+        'Long': 'Довга',
+        'Far Away': 'Наддовга',
+        'Впритул': 'Впритул',
+        'На себе': 'На себе',
+        'Дотик': 'Дотик',
+        'Коротка': 'Коротка',
+        'Середня': 'Середня',
+        'Довга': 'Довга',
+        'Наддовга': 'Наддовга'
+    };
+    return map[val] || val;
+}
+
+function formatV6Duration(val) {
+    if (!val) return 'Одна сцена';
+    const map = {
+        'One scene': 'Одна сцена',
+        'One turn': 'Один хід',
+        'One night': 'Одна ніч',
+        'One night or until completed': 'Одна ніч або до завершення',
+        'One night або до виконання': 'Одна ніч або до завершення',
+        'Permanent': 'Постійна',
+        'Instant': 'Миттєва',
+        'Instantaneous': 'Миттєва',
+        'Миттєво': 'Миттєва',
+        'Миттєва': 'Миттєва',
+        'Одна сцена': 'Одна сцена',
+        'Один хід': 'Один хід',
+        'Одна ніч': 'Одна ніч'
+    };
+    return map[val] || val;
+}
+
+// -----------------------------------------------------------------------------
+// V6 DISCIPLINE POWER MODAL HANDLER
+// -----------------------------------------------------------------------------
+
+function openV6PowerModal(powerId, discId) {
+    const disciplines = getV6Disciplines();
+    let targetDisc = disciplines.find(d => d.id === discId);
+    let targetPower = null;
+
+    if (targetDisc) {
+        targetPower = (targetDisc.powers || []).find(p => p.id === powerId);
+    }
+    
+    if (!targetPower) {
+        // search across all disciplines
+        for (const d of disciplines) {
+            const p = (d.powers || []).find(x => x.id === powerId);
+            if (p) {
+                targetDisc = d;
+                targetPower = p;
+                break;
+            }
+        }
+    }
+
+    if (!targetPower || !targetDisc) return;
+
+    const modal = document.getElementById('v6-power-modal');
+    const content = document.getElementById('v6-power-modal-content');
+    if (!modal || !content) return;
+
+    const currentDots = v6State.disciplines[targetDisc.id] || 0;
+    const isLearned = v6State.selectedPowers.includes(targetPower.id);
+    const canLearn = currentDots >= targetPower.rank;
+    const discIcon = typeof DISCIPLINE_ICONS !== 'undefined' ? DISCIPLINE_ICONS[targetDisc.id] : null;
+
+    // Badge styling for physical / mental / social
+    const typeColors = {
+        physical: 'bg-red-950/80 text-red-300 border-red-800',
+        mental: 'bg-blue-950/80 text-blue-300 border-blue-800',
+        social: 'bg-amber-950/80 text-amber-300 border-amber-800'
+    };
+    const powerType = (targetPower.type || 'physical').toLowerCase();
+    const typeBadgeClass = typeColors[powerType] || 'bg-zinc-800 text-zinc-300 border-zinc-700';
+
+    // Format text with paragraph breaks and bullet list recognition
+    const formatDescription = (text) => {
+        if (!text) return '';
+        const paragraphs = text.split('\n\n');
+        return paragraphs.map(para => {
+            const lines = para.split('\n');
+            const hasBullets = lines.some(l => l.trim().startsWith('•') || l.trim().startsWith('*'));
+            if (hasBullets) {
+                const listItems = lines.map(line => {
+                    const clean = line.replace(/^[•*]\s*/, '').trim();
+                    const formatted = clean.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
+                    return `<li class="flex items-start gap-2.5 text-zinc-300 text-xs sm:text-sm leading-relaxed"><span class="text-red-500 font-bold shrink-0 mt-0.5">•</span><span>${formatted}</span></li>`;
+                }).join('');
+                return `<ul class="space-y-2.5 my-3 pl-1 bg-zinc-900/70 p-3.5 rounded-xl border border-zinc-800/90">${listItems}</ul>`;
+            } else {
+                const formatted = para.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
+                return `<p class="text-xs sm:text-sm text-zinc-300 leading-relaxed mb-3 last:mb-0">${formatted}</p>`;
+            }
+        }).join('');
+    };
+
+    // Maturing rendering
+    let maturingHtml = '';
+    if (targetPower.maturingLevels && targetPower.maturingLevels.length > 0) {
+        maturingHtml = `
+            <div class="mt-5 pt-4 border-t border-zinc-800/80">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-amber-500 text-base">📈</span>
+                    <h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300">
+                        Посилення [Maturing]
+                    </h4>
+                </div>
+                <div class="space-y-2.5">
+                    ${targetPower.maturingLevels.map(lvl => {
+                        const isUnlocked = currentDots >= lvl.dots;
+                        return `
+                            <div class="p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                isUnlocked 
+                                    ? 'bg-amber-950/20 border-amber-800/60 shadow-sm ring-1 ring-amber-500/20' 
+                                    : 'bg-zinc-900/50 border-zinc-800/80 opacity-70'
+                            }">
+                                <div class="flex items-start gap-2.5">
+                                    <span class="font-mono text-sm font-black tracking-widest ${isUnlocked ? 'text-amber-400' : 'text-zinc-500'} shrink-0 pt-0.5">
+                                        ${lvl.dotsSymbol || '•'.repeat(lvl.dots)}
+                                    </span>
+                                    <p class="text-xs sm:text-sm ${isUnlocked ? 'text-zinc-200 font-medium' : 'text-zinc-400'} leading-snug">
+                                        ${lvl.desc.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')}
+                                    </p>
+                                </div>
+                                <div class="shrink-0 self-end sm:self-center">
+                                    ${isUnlocked 
+                                        ? `<span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 flex items-center gap-1">
+                                            ✓ Активно (${currentDots} ⬤)
+                                           </span>`
+                                        : `<span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-500 border border-zinc-700 flex items-center gap-1">
+                                            🔒 Потрібно ${lvl.dots} ⬤
+                                           </span>`
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    } else if (targetPower.maturing) {
+        maturingHtml = `
+            <div class="mt-5 pt-4 border-t border-zinc-800/80">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-amber-500 text-base">📈</span>
+                    <h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300">
+                        Посилення [Maturing]
+                    </h4>
+                </div>
+                <div class="p-3.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                    ${targetPower.maturing.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')}
+                </div>
+            </div>
+        `;
+    }
+
+    content.innerHTML = `
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-[#8b0000] via-[#5c0000] to-zinc-950 p-5 flex items-start justify-between gap-4 shrink-0 border-b border-red-950">
+            <div class="flex items-start gap-3.5">
+                <div class="w-12 h-12 rounded-2xl bg-black/50 border border-red-500/30 flex items-center justify-center shrink-0 shadow-lg p-2 mt-0.5">
+                    ${discIcon ? `<img src="${discIcon}" alt="${targetDisc.name}" class="w-full h-full object-contain filter drop-shadow" />` : `<span class="text-2xl">🔮</span>`}
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-red-300 bg-black/40 px-2.5 py-0.5 rounded-full border border-red-800/50">
+                            ${targetDisc.name}
+                        </span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${typeBadgeClass}">
+                            ${targetPower.rankName || `Ранг ${targetPower.rank} ⬤ • ${targetPower.type || 'Physical'}`}
+                        </span>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold vtm-font tracking-wide text-white drop-shadow">
+                        ${targetPower.name}
+                    </h2>
+                </div>
+            </div>
+            <button type="button" onclick="closeV6PowerModal()" class="text-white/70 hover:text-white p-2 rounded-xl hover:bg-black/30 transition-colors shrink-0" title="Закрити (Esc)">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <!-- Scrollable Body -->
+        <div class="p-5 sm:p-6 overflow-y-auto flex-1 custom-scrollbar space-y-5 bg-zinc-950">
+            <!-- Attribute & Parameter Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
+                        <span>⚡</span> Активація:
+                    </div>
+                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
+                        ${formatV6Activate(targetPower.activate)}
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
+                        <span>🎯</span> Складність:
+                    </div>
+                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
+                        ${formatV6Difficulty(targetPower.difficulty)}
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
+                        <span>🎲</span> Характеристика:
+                    </div>
+                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
+                        ${formatV6Attribute(targetPower.attribute)}
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
+                        <span>🩸</span> Вартість:
+                    </div>
+                    <div class="text-xs sm:text-sm font-bold text-red-400 font-mono">
+                        ${formatV6Cost(targetPower.cost)}
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
+                        <span>📏</span> Дистанція:
+                    </div>
+                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
+                        ${formatV6Distance(targetPower.distance)}
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
+                        <span>⏳</span> Тривалість:
+                    </div>
+                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
+                        ${formatV6Duration(targetPower.duration)}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Block -->
+            <div>
+                <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
+                    <span>📖</span> Опис та правила використання
+                </h4>
+                <div class="bg-zinc-900/40 p-4 sm:p-5 rounded-2xl border border-zinc-800/80 shadow-inner">
+                    ${formatDescription(targetPower.desc)}
+                </div>
+            </div>
+
+            <!-- Maturing Block -->
+            ${maturingHtml}
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="bg-zinc-900 p-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+            <div class="flex items-center gap-2 text-xs text-zinc-400">
+                <span>Ваш рівень у ${targetDisc.name.split(' (')[0]}:</span>
+                <span class="font-bold text-white bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">${currentDots} ⬤</span>
+            </div>
+            
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button type="button" onclick="closeV6PowerModal()" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-xl hover:bg-zinc-700 hover:text-white transition-colors">
+                    Закрити
+                </button>
+
+                ${isLearned 
+                    ? `<button type="button" onclick="toggleV6Power('${targetPower.id}'); openV6PowerModal('${targetPower.id}', '${targetDisc.id}')" class="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-[#8b0000] hover:bg-red-700 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
+                        <span>✓</span> Сила обрана (Скасувати)
+                       </button>`
+                    : (canLearn 
+                        ? `<button type="button" onclick="toggleV6Power('${targetPower.id}'); openV6PowerModal('${targetPower.id}', '${targetDisc.id}')" class="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-zinc-800 hover:bg-[#8b0000] border border-zinc-700 hover:border-red-600 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
+                            <span>➕</span> Обрати цю силу
+                           </button>`
+                        : `<button type="button" disabled class="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500 bg-zinc-800/40 border border-zinc-800 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5">
+                            <span>🔒</span> Потрібно ${targetPower.rank} ⬤
+                           </button>`
+                      )
+                }
+            </div>
+        </div>
+    `;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeV6PowerModal() {
+    const modal = document.getElementById('v6-power-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    document.body.style.overflow = '';
+}
+
+// Global exposure
+if (typeof window !== 'undefined') {
+    window.openV6PowerModal = openV6PowerModal;
+    window.closeV6PowerModal = closeV6PowerModal;
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const powerModal = document.getElementById('v6-power-modal');
+            if (powerModal && !powerModal.classList.contains('hidden')) {
+                closeV6PowerModal();
+            }
+        }
+    });
 }
 
 function toggleV6ClanTrait(traitId) {
