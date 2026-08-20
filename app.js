@@ -1074,10 +1074,56 @@ function renderAttributes() {
     });
     
     // Оновлюємо трекери здоров'я та сили волі
-    if (typeof renderHealthWillpower === 'function') {
-        renderHealthWillpower();
-    }
+    renderHealthWillpower();
 }
+
+function renderHealthWillpower() {
+    if (!state.attributes) return;
+    
+    const stamina = (state.attributes && state.attributes['stamina']) || 1;
+    const healthMax = Math.min(10, Math.max(1, stamina + 3));
+    
+    const resolve = (state.attributes && state.attributes['resolve']) || 1;
+    const composure = (state.attributes && state.attributes['composure']) || 1;
+    const willpowerMax = Math.min(10, Math.max(1, resolve + composure));
+    
+    function generateTrackerBoxes(activeCount, total = 10, label = 'Комірка') {
+        let html = '';
+        for (let i = 1; i <= total; i++) {
+            if (i <= activeCount) {
+                html += `
+                    <div class="w-8 h-8 rounded border-2 border-[#8b0000] bg-red-50 text-[#8b0000] font-bold text-xs flex items-center justify-center shadow-xs select-none transition-all" title="${label} ${i} (Активна)">
+                        ${i}
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="w-8 h-8 rounded border border-dashed border-gray-300 bg-gray-100 text-gray-400 font-medium text-xs flex items-center justify-center select-none" title="${label} ${i} (Недоступна)">
+                        -
+                    </div>
+                `;
+            }
+        }
+        return html;
+    }
+
+    const healthBoxesHTML = generateTrackerBoxes(healthMax, 10, 'Здоров\'я');
+    const willpowerBoxesHTML = generateTrackerBoxes(willpowerMax, 10, 'Сила Волі');
+
+    const h2 = document.getElementById('health-tracker-step2');
+    if (h2) h2.innerHTML = healthBoxesHTML;
+
+    const w2 = document.getElementById('willpower-tracker-step2');
+    if (w2) w2.innerHTML = willpowerBoxesHTML;
+
+    const h7 = document.getElementById('health-tracker-step7');
+    if (h7) h7.innerHTML = healthBoxesHTML;
+
+    const w7 = document.getElementById('willpower-tracker-step7');
+    if (w7) w7.innerHTML = willpowerBoxesHTML;
+}
+window.renderHealthWillpower = renderHealthWillpower;
+
 function getDynamicSkillData(skillId) {
     let baseDots = state.skills[skillId] || 0;
     let manualSpec = state.skillSpecs ? (state.skillSpecs[skillId] || "") : "";
@@ -3783,21 +3829,25 @@ function closeDiceModal() {
 
 function switchDiceTab(mode) {
     diceMode = mode;
-    if (mode === 'free') {
-        document.getElementById('dice-tab-free').classList.replace('border-transparent', 'border-[#8b0000]');
-        document.getElementById('dice-tab-free').classList.replace('text-gray-500', 'text-white');
-        document.getElementById('dice-tab-sheet').classList.replace('border-[#8b0000]', 'border-transparent');
-        document.getElementById('dice-tab-sheet').classList.replace('text-white', 'text-gray-500');
-        document.getElementById('dice-mode-free').classList.remove('hidden');
-        document.getElementById('dice-mode-sheet').classList.add('hidden');
-    } else {
-        document.getElementById('dice-tab-sheet').classList.replace('border-transparent', 'border-[#8b0000]');
-        document.getElementById('dice-tab-sheet').classList.replace('text-gray-500', 'text-white');
-        document.getElementById('dice-tab-free').classList.replace('border-[#8b0000]', 'border-transparent');
-        document.getElementById('dice-tab-free').classList.replace('text-white', 'text-gray-500');
-        document.getElementById('dice-mode-sheet').classList.remove('hidden');
-        document.getElementById('dice-mode-free').classList.add('hidden');
-    }
+    const tabs = ['free', 'sheet', 'v6'];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`dice-tab-${t}`);
+        const panel = document.getElementById(`dice-mode-${t}`);
+        if (btn) {
+            if (t === mode) {
+                btn.classList.replace('border-transparent', 'border-[#8b0000]');
+                btn.classList.replace('text-gray-500', 'text-white');
+            } else {
+                btn.classList.replace('border-[#8b0000]', 'border-transparent');
+                btn.classList.replace('text-white', 'text-gray-500');
+            }
+        }
+        if (panel) {
+            if (t === mode) panel.classList.remove('hidden');
+            else panel.classList.add('hidden');
+        }
+    });
+
     const container = document.getElementById('dice-container');
     if (container) container.innerHTML = '';
     document.getElementById('dice-results')?.classList.add('hidden');
@@ -3914,6 +3964,64 @@ function updateSheetDiceTotal() {
 }
 
 function rollDice() {
+    const container = document.getElementById('dice-container');
+    if (!container) return;
+
+    if (diceMode === 'v6') {
+        const attr = parseInt(document.getElementById('dice-v6-attr')?.value) || 0;
+        const skill = parseInt(document.getElementById('dice-v6-skill')?.value) || 0;
+        const diff = parseInt(document.getElementById('dice-v6-diff')?.value) || 0;
+        const quickening = parseInt(document.getElementById('dice-v6-quickening')?.value) || 0;
+
+        let pool = attr + skill - diff + quickening;
+        if (pool < 1) pool = 1; // Always at least 1 chance die
+
+        container.innerHTML = '';
+        let successes = 0;
+        let tens = 0;
+        let ones = 0;
+        let diceHtml = '';
+
+        for (let i = 0; i < pool; i++) {
+            let res = Math.floor(Math.random() * 10) + 1;
+            let isSucc = res >= 8;
+            let isTen = res === 10;
+            let isOne = res === 1;
+
+            if (isSucc) successes++;
+            if (isTen) tens++;
+            if (isOne) ones++;
+
+            let bgStyle = 'bg-stone-900 border-stone-700 text-stone-300';
+            if (isTen) bgStyle = 'bg-amber-950 border-amber-500 text-amber-300 shadow-md shadow-amber-900/50';
+            else if (isSucc) bgStyle = 'bg-emerald-950 border-emerald-500 text-emerald-300';
+            else if (isOne) bgStyle = 'bg-red-950 border-red-800 text-red-400';
+
+            diceHtml += `
+                <div class="w-12 h-12 flex flex-col items-center justify-center rounded-lg border-2 ${bgStyle} font-bold text-lg" title="d10: ${res}">
+                    <span>${res}</span>
+                    <span class="text-[8px] uppercase tracking-tighter">${isTen ? '+⚡ Приск.' : (isSucc ? 'Успіх' : (isOne ? 'Провал' : '—'))}</span>
+                </div>
+            `;
+        }
+
+        let isPainfulFailure = (successes === 0 && ones > 0);
+        let summaryHtml = `
+            <div class="w-full mt-4 p-3.5 bg-gray-800 rounded-lg border border-gray-700 text-center">
+                <div class="text-xs text-gray-400 uppercase tracking-wider mb-1">Пул: ${pool}d10 (Атр ${attr} + Нав ${skill} - Складн ${diff}${quickening > 0 ? ` + Приск ${quickening}` : ''})</div>
+                <div class="text-lg text-white">Успіхи: <span class="font-bold text-2xl ${successes > 0 ? 'text-emerald-400' : 'text-stone-400'} ml-1">${successes}</span></div>
+                ${tens > 0 ? `<div class="text-xs font-bold text-amber-400 mt-1 uppercase tracking-wider">⚡ Отримано Прискорення (Quickening): +${tens}</div>` : ''}
+                ${isPainfulFailure ? `<div class="text-sm font-bold text-red-500 uppercase tracking-widest mt-2">💀 БОЛЮЧИЙ ПРОВАЛ (Painful Failure)!</div>` : ''}
+            </div>
+        `;
+
+        container.innerHTML = `<div class="flex flex-wrap gap-2 justify-center w-full">${diceHtml}</div>${summaryHtml}`;
+        document.getElementById('dice-results')?.classList.remove('hidden');
+
+        addDiceHistory(`V6: Атр(${attr})+Нав(${skill}) проти ${diff}`, successes, tens > 0, isPainfulFailure);
+        return;
+    }
+
     let totalDice = 0;
     let hungerDice = 0;
     
@@ -3930,9 +4038,6 @@ function rollDice() {
     if (hungerDice > totalDice) hungerDice = totalDice;
     
     let normalDice = totalDice - hungerDice;
-    
-    const container = document.getElementById('dice-container');
-    if (!container) return;
     
     container.innerHTML = '';
     
@@ -4888,3 +4993,74 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// Edition Switcher Controller (V5 vs V6 Alpha Playtest)
+window.currentEdition = 'v5';
+
+window.switchEdition = function(edition) {
+    window.currentEdition = edition;
+    const v5Container = document.getElementById('v5-generator-app');
+    const v6Container = document.getElementById('v6-generator-app');
+    const v5Btn = document.getElementById('edition-btn-v5');
+    const v6Btn = document.getElementById('edition-btn-v6');
+    const sideV5Btn = document.getElementById('side-edition-v5');
+    const sideV6Btn = document.getElementById('side-edition-v6');
+    const badge = document.getElementById('header-edition-badge');
+    const footerEdition = document.getElementById('footer-edition-text');
+    const v5NavSteps = document.getElementById('v5-nav-stepper');
+    const v5SideNav = document.getElementById('v5-side-nav-links');
+    const v6SideNav = document.getElementById('v6-side-nav-links');
+
+    if (edition === 'v6') {
+        if (v5Container) v5Container.classList.add('hidden');
+        if (v6Container) v6Container.classList.remove('hidden');
+        if (v5NavSteps) v5NavSteps.classList.add('hidden');
+        if (v5SideNav) v5SideNav.classList.add('hidden');
+        if (v6SideNav) v6SideNav.classList.remove('hidden');
+
+        if (v5Btn) {
+            v5Btn.className = 'px-3 py-1 text-xs font-bold rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer';
+        }
+        if (v6Btn) {
+            v6Btn.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-[#8b0000] text-white shadow transition-all cursor-pointer';
+        }
+        if (sideV5Btn) {
+            sideV5Btn.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-zinc-400 hover:bg-zinc-800 transition-all text-center';
+        }
+        if (sideV6Btn) {
+            sideV6Btn.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-[#8b0000] text-white shadow transition-all text-center';
+        }
+        if (badge) badge.innerText = 'V6';
+        if (footerEdition) footerEdition.innerText = 'Вампіри: Маскарад (6та редакція • Alpha 1.0 Playtest) — Генератор персонажа';
+
+        if (typeof window.initV6 === 'function') {
+            window.initV6();
+        }
+    } else {
+        if (v6Container) v6Container.classList.add('hidden');
+        if (v5Container) v5Container.classList.remove('hidden');
+        if (v5NavSteps) v5NavSteps.classList.remove('hidden');
+        if (v5SideNav) v5SideNav.classList.remove('hidden');
+        if (v6SideNav) v6SideNav.classList.add('hidden');
+
+        if (v6Btn) {
+            v6Btn.className = 'px-3 py-1 text-xs font-bold rounded-lg text-zinc-400 hover:text-white transition-all cursor-pointer';
+        }
+        if (v5Btn) {
+            v5Btn.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-[#8b0000] text-white shadow transition-all cursor-pointer';
+        }
+        if (sideV6Btn) {
+            sideV6Btn.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-zinc-400 hover:bg-zinc-800 transition-all text-center';
+        }
+        if (sideV5Btn) {
+            sideV5Btn.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-[#8b0000] text-white shadow transition-all text-center';
+        }
+        if (badge) badge.innerText = 'V5';
+        if (footerEdition) footerEdition.innerText = 'Вампіри: Маскарад (5та редакція) — Генератор персонажа';
+
+        if (typeof updateHeaderInfo === 'function') {
+            updateHeaderInfo();
+        }
+    }
+};
+

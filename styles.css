@@ -1068,4 +1068,26 @@ h1, h2, h3, .vtm-font {
     .vtm-disc-name {
         color: #8b0000 !important;
     }
+
+    /* V6 Official Single-Page A4 Sheet Print Rules */
+    #v6-official-sheet {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 282mm !important;
+        max-height: 282mm !important;
+        padding: 4mm !important;
+        margin: 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
 }

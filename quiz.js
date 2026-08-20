@@ -276,15 +276,44 @@ function showQuizResult() {
     const runnerUp = clansData[quizRunnerUpKey] || {};
 
     // Оновлення полів результату
-    document.getElementById('quiz-result-clan').innerText = topClan.name || '';
-    document.getElementById('quiz-result-subtitle').innerText = topClan.subtitle || '';
-    document.getElementById('quiz-result-desc').innerText = topClan.desc || '';
-    document.getElementById('quiz-result-compulsion').innerText = topClan.clan_compultion || 'Відсутнє';
-    document.getElementById('quiz-result-bane').innerText = topClan.clan_bane || 'Відсутнє';
-    
-    const runnerUpEl = document.getElementById('quiz-runner-up');
-    if (runnerUpEl && runnerUp.name) {
-        runnerUpEl.innerText = `${runnerUp.name} (${runnerUp.subtitle || ''})`;
+    if (window.currentEdition === 'v6' && typeof getV6Clan === 'function') {
+        const v6Clan = getV6Clan(quizTopClanKey) || {};
+        const v6RunnerUp = getV6Clan(quizRunnerUpKey) || {};
+        
+        document.getElementById('quiz-result-clan').innerText = (v6Clan.name || '').split(' (')[0];
+        document.getElementById('quiz-result-subtitle').innerText = (v6Clan.name || '').match(/\((.*?)\)/)?.[1] || '';
+        document.getElementById('quiz-result-desc').innerText = v6Clan.desc || '';
+        
+        const traitsContainer = document.getElementById('quiz-result-traits-container');
+        if (traitsContainer) {
+            traitsContainer.innerHTML = `
+                <p><strong class="text-red-400">Клановий Звір:</strong> <span class="text-zinc-300">${v6Clan.beastDesc || v6Clan.beast || 'Відсутнє'}</span></p>
+                <p><strong class="text-red-400">Прокляття:</strong> <span class="text-zinc-300">${v6Clan.curseDesc || v6Clan.curse || 'Відсутнє'}</span></p>
+                <p><strong class="text-red-400">Шаленство:</strong> <span class="text-zinc-300">${v6Clan.frenzyDesc || v6Clan.frenzy || 'Відсутнє'}</span></p>
+            `;
+        }
+
+        const runnerUpEl = document.getElementById('quiz-runner-up');
+        if (runnerUpEl && v6RunnerUp.name) {
+            runnerUpEl.innerText = v6RunnerUp.name;
+        }
+    } else {
+        document.getElementById('quiz-result-clan').innerText = topClan.name || '';
+        document.getElementById('quiz-result-subtitle').innerText = topClan.subtitle || '';
+        document.getElementById('quiz-result-desc').innerText = topClan.desc || '';
+        
+        const traitsContainer = document.getElementById('quiz-result-traits-container');
+        if (traitsContainer) {
+            traitsContainer.innerHTML = `
+                <p><strong class="text-red-400">Клановий примус:</strong> <span id="quiz-result-compulsion" class="text-zinc-300">${topClan.clan_compultion || 'Відсутнє'}</span></p>
+                <p><strong class="text-red-400">Кланове прокляття:</strong> <span id="quiz-result-bane" class="text-zinc-300">${topClan.clan_bane || 'Відсутнє'}</span></p>
+            `;
+        }
+        
+        const runnerUpEl = document.getElementById('quiz-runner-up');
+        if (runnerUpEl && runnerUp.name) {
+            runnerUpEl.innerText = `${runnerUp.name} (${runnerUp.subtitle || ''})`;
+        }
     }
 
     // Іконка переможця
@@ -296,16 +325,31 @@ function showQuizResult() {
     // Оновлення кнопок вибору
     const selectTopBtn = document.getElementById('quiz-select-top-btn');
     if (selectTopBtn) {
-        selectTopBtn.innerText = `🩸 Обрати клан: ${topClan.name}`;
+        if (window.currentEdition === 'v6' && typeof getV6Clan === 'function') {
+            const v6Clan = getV6Clan(quizTopClanKey) || {};
+            selectTopBtn.innerText = `🩸 Обрати клан: ${(v6Clan.name || '').split(' (')[0]}`;
+        } else {
+            selectTopBtn.innerText = `🩸 Обрати клан: ${topClan.name}`;
+        }
     }
     
     const selectRunnerBtn = document.getElementById('quiz-select-runner-btn');
     if (selectRunnerBtn) {
-        if (runnerUp && runnerUp.name) {
-            selectRunnerBtn.innerText = `Обрати другий варіант: ${runnerUp.name}`;
-            selectRunnerBtn.classList.remove('hidden');
+        if (window.currentEdition === 'v6' && typeof getV6Clan === 'function') {
+            const v6RunnerUp = getV6Clan(quizRunnerUpKey) || {};
+            if (v6RunnerUp && v6RunnerUp.name) {
+                selectRunnerBtn.innerText = `Обрати другий варіант: ${(v6RunnerUp.name || '').split(' (')[0]}`;
+                selectRunnerBtn.classList.remove('hidden');
+            } else {
+                selectRunnerBtn.classList.add('hidden');
+            }
         } else {
-            selectRunnerBtn.classList.add('hidden');
+            if (runnerUp && runnerUp.name) {
+                selectRunnerBtn.innerText = `Обрати другий варіант: ${runnerUp.name}`;
+                selectRunnerBtn.classList.remove('hidden');
+            } else {
+                selectRunnerBtn.classList.add('hidden');
+            }
         }
     }
     
@@ -317,7 +361,12 @@ function applyQuizClan(isRunnerUp = false) {
     const clanKey = isRunnerUp ? quizRunnerUpKey : quizTopClanKey;
     if (!clanKey) return;
     
-    if (typeof changeClan === 'function') {
+    if (window.currentEdition === 'v6' && typeof selectV6Clan === 'function') {
+        selectV6Clan(clanKey);
+        if (typeof goToV6Step === 'function') {
+            goToV6Step(2); // Ensure we are on the clan step visually
+        }
+    } else if (typeof changeClan === 'function') {
         changeClan(clanKey);
     }
     
