@@ -76,6 +76,7 @@ let v6State = {
         concept: '',
         apparentAge: '',
         actualAge: '',
+        embraceDate: '',
         decade: '',
         flaws: '',
         chronicle: '',
@@ -914,6 +915,7 @@ function renderV6UI() {
             ${renderCurrentV6StepContent()}
         </main>
     `;
+    updateV6Header();
 }
 
 function goToV6Step(stepNum) {
@@ -990,17 +992,133 @@ function renderV6Step1_Tier() {
     `;
 }
 
-function selectV6Tier(tierId) {
-    v6State.tier = tierId;
-    if (tierId === 'neonate') {
-        const clanObj = getV6Clan();
-        if (clanObj && clanObj.traits) {
-            v6State.selectedClanTraits = v6State.selectedClanTraits.filter(tId => {
-                const tr = clanObj.traits.find(t => t.id === tId);
-                return tr && tr.tier !== 'ancilla';
-            });
+const V6_TIER_RANKS = {
+    ghoul: 0,
+    duskborn: 1,
+    neonate: 2,
+    ancilla: 3,
+    elder: 4
+};
+
+function checkV6Prerequisite(prereqStr, itemTier, state = v6State) {
+    if (!prereqStr || prereqStr === 'Немає') {
+        return { satisfied: true, reason: '' };
+    }
+
+    const currentTierId = state.tier || 'neonate';
+    const currentTierRank = V6_TIER_RANKS[currentTierId] ?? 2;
+    const missing = [];
+
+    // Check tier
+    if (itemTier === 'ancilla' || prereqStr.includes('Анцила')) {
+        if (currentTierRank < V6_TIER_RANKS.ancilla) {
+            missing.push('Ранг Анцила або вище');
+        }
+    } else if (itemTier === 'neonate' || (prereqStr.includes('Неонат') && !prereqStr.includes('або вище'))) {
+        if (currentTierRank < V6_TIER_RANKS.neonate) {
+            missing.push('Ранг Неонат або вище');
         }
     }
+
+    const disciplines = state.disciplines || {};
+    const getDots = (id) => disciplines[id] || 0;
+
+    // Check attribute requirements (e.g., "Витривалість 5")
+    if (prereqStr.includes('Витривалість 5')) {
+        const stam = state.attributes?.stamina || 0;
+        if (stam < 5) {
+            missing.push('Витривалість 5');
+        }
+    }
+
+    // Discipline mappings
+    const discMap = [
+        { name: 'Стрімкість', id: 'celerity' },
+        { name: 'Затьмарення', id: 'obfuscate' },
+        { name: 'Чари Крові', id: 'blood_sorcery' },
+        { name: 'Могутність', id: 'potence' },
+        { name: 'Присутність', id: 'presence' },
+        { name: 'Анімалізм', id: 'animalism' },
+        { name: 'Стійкість', id: 'fortitude' },
+        { name: 'Некромантія', id: 'necromancy' },
+        { name: 'Телургія', id: 'tellurgy' },
+        { name: 'Мінливість (Vicissitude)', id: 'vicissitude' },
+        { name: 'Мінливість', id: 'vicissitude' },
+        { name: 'Віщування (Auspex)', id: 'auspex' },
+        { name: 'Віщування', id: 'auspex' },
+        { name: 'Ауспекс', id: 'auspex' },
+        { name: 'Забуття/Спотворення', id: ['oblivion', 'corruption'] },
+        { name: 'Домінування або Присутність', id: ['dominate', 'presence'] },
+        { name: 'Домінування', id: 'dominate' },
+        { name: 'Забуття', id: 'oblivion' },
+        { name: 'Спотворення', id: 'corruption' }
+    ];
+
+    const parts = prereqStr.split(/[,.]+/).map(p => p.trim()).filter(p => p.length > 0);
+
+    for (const part of parts) {
+        if (
+            part.includes('Неонат') ||
+            part.includes('Анцила') ||
+            part.includes('Слабокровний') ||
+            part.includes('Модифікатор') ||
+            part.includes('Немає')
+        ) {
+            continue;
+        }
+
+        const dotCount = (part.match(/•/g) || []).length;
+        if (dotCount === 0) continue;
+
+        for (const dm of discMap) {
+            if (part.includes(dm.name)) {
+                if (Array.isArray(dm.id)) {
+                    const hasEnough = dm.id.some(id => getDots(id) >= dotCount);
+                    if (!hasEnough) {
+                        missing.push(`${dm.name} ${'•'.repeat(dotCount)}`);
+                    }
+                } else {
+                    if (getDots(dm.id) < dotCount) {
+                        missing.push(`${dm.name} ${'•'.repeat(dotCount)}`);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    if (missing.length > 0) {
+        return { satisfied: false, reason: `Потрібно: ${missing.join(', ')}` };
+    }
+
+    return { satisfied: true, reason: '' };
+}
+
+function sanitizeV6InvalidSelections() {
+    const currentClan = getV6Clan();
+    if (currentClan && Array.isArray(currentClan.traits) && Array.isArray(v6State.selectedClanTraits)) {
+        v6State.selectedClanTraits = v6State.selectedClanTraits.filter(traitId => {
+            const trait = currentClan.traits.find(t => t.id === traitId);
+            if (!trait) return false;
+            const res = checkV6Prerequisite(trait.prereq, trait.tier, v6State);
+            return res.satisfied;
+        });
+    }
+
+    if (Array.isArray(v6State.selectedMerits)) {
+        const merits = getV6Merits();
+        v6State.selectedMerits = v6State.selectedMerits.filter(meritId => {
+            const merit = merits.find(m => m.id === meritId);
+            if (!merit) return false;
+            const res = checkV6Prerequisite(merit.prereq, null, v6State);
+            return res.satisfied;
+        });
+    }
+}
+
+function selectV6Tier(tierId) {
+    v6State.tier = tierId;
+    sanitizeV6InvalidSelections();
     renderV6UI();
 }
 
@@ -1202,6 +1320,7 @@ function recalculateV6Disciplines() {
             return false;
         });
     }
+    sanitizeV6InvalidSelections();
 }
 
 function renderV6Step3_Sire() {
@@ -2095,6 +2214,7 @@ function setV6Attribute(attrKey, dots) {
     } else {
         v6State.attributes[attrKey] = Math.max(1, dots);
     }
+    sanitizeV6InvalidSelections();
     renderV6UI();
 }
 
@@ -2132,7 +2252,6 @@ function setV6SkillFocusLevelCustom(skillId, level, value) {
     if (!v6State.focuses) v6State.focuses = {};
     if (!v6State.focuses[skillId]) v6State.focuses[skillId] = {};
     v6State.focuses[skillId][level] = value;
-    renderV6UI();
 }
 
 // -----------------------------------------------------------------------------
@@ -2335,7 +2454,7 @@ function renderV6Step6_DisciplinesTraits() {
                             <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase flex items-center gap-2">
                                 <span>🩸</span> Кланові Риси (${currentClan.name.split(' (')[0]})
                             </h3>
-                            <p class="text-xs text-zinc-500 mt-0.5">Оберіть унікальні риси вашого клану відповідно до рангу.</p>
+                            <p class="text-xs text-zinc-500 mt-0.5">Оберіть унікальні риси вашого клану відповідно до дисциплін та рангу.</p>
                         </div>
                         <div class="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-200 shrink-0">
                             <span class="text-xs font-bold uppercase tracking-wider text-zinc-500">Обрано рис:</span>
@@ -2350,23 +2469,40 @@ function renderV6Step6_DisciplinesTraits() {
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         ${currentClan.traits.map(trait => {
-                            const isLocked = tierObj && tierObj.id === 'neonate' && trait.tier === 'ancilla';
+                            const prereqCheck = checkV6Prerequisite(trait.prereq, trait.tier, v6State);
+                            const isLocked = !prereqCheck.satisfied;
                             const isSel = v6State.selectedClanTraits.includes(trait.id);
                             
                             return `
                                 <div ${!isLocked ? `onclick="toggleV6ClanTrait('${trait.id}')"` : ''} class="p-4 rounded-xl border-2 transition-all ${
-                                    isLocked ? 'border-zinc-200 bg-zinc-100 opacity-50 cursor-not-allowed' :
-                                    (isSel ? 'border-[#8b0000] bg-red-50/40 shadow-sm ring-1 ring-red-900/20 cursor-pointer' : 'border-zinc-200 bg-zinc-50/50 hover:bg-white cursor-pointer')
+                                    isLocked 
+                                        ? 'border-zinc-200 bg-zinc-100/80 opacity-60 cursor-not-allowed select-none' 
+                                        : (isSel 
+                                            ? 'border-[#8b0000] bg-red-50/40 shadow-sm ring-1 ring-red-900/20 cursor-pointer' 
+                                            : 'border-zinc-200 bg-zinc-50/50 hover:bg-white cursor-pointer')
                                 }">
                                     <div class="flex items-center justify-between mb-1">
                                         <h4 class="font-bold text-sm text-zinc-900 flex items-center gap-2">
-                                            ${isLocked ? '🔒 ' : ''}${trait.name}
+                                            ${isLocked ? '<span class="text-zinc-400">🔒</span>' : ''}${trait.name}
                                         </h4>
-                                        <span class="text-[10px] font-bold ${isLocked ? 'text-zinc-500' : 'text-[#8b0000]'} uppercase">${trait.tier || 'неонат'}</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[10px] font-bold ${isLocked ? 'text-zinc-400' : 'text-[#8b0000]'} uppercase">${trait.tier || 'неонат'}</span>
+                                            ${isLocked ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-zinc-200 text-zinc-500">Недоступно</span>` : ''}
+                                        </div>
                                     </div>
-                                    <div class="text-[10px] text-zinc-400 mb-2">Вимога: ${trait.prereq || 'немає'}</div>
+                                    <div class="text-[11px] mb-2 ${
+                                        isLocked 
+                                            ? 'text-red-600 font-bold bg-red-50 px-2.5 py-1 rounded-lg border border-red-200/80 inline-flex items-center gap-1.5 shadow-2xs' 
+                                            : 'text-zinc-500 font-medium'
+                                    }">
+                                        ${isLocked ? '<span class="text-red-500">⚠️</span>' : ''}Вимога: ${trait.prereq || 'немає'}
+                                    </div>
                                     <p class="text-xs ${isLocked ? 'text-zinc-500' : 'text-zinc-600'} leading-relaxed">${trait.desc || ''}</p>
-                                    ${isLocked ? `<div class="mt-2 text-[10px] font-bold text-red-600 uppercase">Недоступно для Неоната</div>` : ''}
+                                    ${isLocked && prereqCheck.reason ? `
+                                        <div class="mt-2.5 text-[10px] font-bold text-red-600 uppercase tracking-wide flex items-center gap-1">
+                                            <span>⛔</span> ${prereqCheck.reason}
+                                        </div>
+                                    ` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -2396,24 +2532,53 @@ function renderV6Step6_DisciplinesTraits() {
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     ${getV6Merits().map(merit => {
+                        const prereqCheck = checkV6Prerequisite(merit.prereq, null, v6State);
+                        const isLocked = !prereqCheck.satisfied;
                         const isSel = v6State.selectedMerits.includes(merit.id);
                         return `
-                            <div class="p-4 rounded-xl border transition-all ${
-                                isSel ? 'border-[#8b0000] bg-red-50/40 shadow-sm ring-1 ring-red-900/20' : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                            <div class="p-4 rounded-xl border transition-all flex flex-col justify-between ${
+                                isLocked 
+                                    ? 'border-zinc-200 bg-zinc-100/70 opacity-60 select-none' 
+                                    : (isSel 
+                                        ? 'border-[#8b0000] bg-red-50/40 shadow-sm ring-1 ring-red-900/20' 
+                                        : 'border-zinc-200 bg-white hover:bg-zinc-50')
                             }">
-                                <div class="flex items-center justify-between mb-1">
-                                    <h4 class="font-bold text-xs text-zinc-900">${merit.name}</h4>
-                                    <button onclick="toggleV6Merit('${merit.id}')" class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all ${isSel ? 'bg-[#8b0000] text-white' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'}">${isSel ? 'Обрано' : 'Обрати'}</button>
+                                <div>
+                                    <div class="flex items-center justify-between mb-1.5 gap-2">
+                                        <h4 class="font-bold text-xs text-zinc-900 flex items-center gap-1">
+                                            ${isLocked ? '<span class="text-zinc-400">🔒</span>' : ''}${merit.name}
+                                        </h4>
+                                        <button ${isLocked ? 'disabled' : `onclick="toggleV6Merit('${merit.id}')"`} class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all shrink-0 ${
+                                            isLocked 
+                                                ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed border border-zinc-300' 
+                                                : (isSel 
+                                                    ? 'bg-[#8b0000] text-white shadow-xs cursor-pointer' 
+                                                    : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300 cursor-pointer')
+                                        }">
+                                            ${isLocked ? 'Недоступно' : (isSel ? 'Обрано' : 'Обрати')}
+                                        </button>
+                                    </div>
+                                    <div class="text-[11px] mb-2 ${
+                                        isLocked 
+                                            ? 'text-red-600 font-bold bg-red-50 px-2.5 py-1 rounded-lg border border-red-200/80 inline-flex items-center gap-1.5 shadow-2xs' 
+                                            : 'text-zinc-500 font-medium'
+                                    }">
+                                        ${isLocked ? '<span class="text-red-500">⚠️</span>' : ''}Вимога: ${merit.prereq || 'немає'}
+                                    </div>
+                                    <p class="text-[11px] ${isLocked ? 'text-zinc-500' : 'text-zinc-600'} leading-relaxed mb-3">${merit.shortDesc || ''}</p>
+                                    ${isLocked && prereqCheck.reason ? `
+                                        <div class="mb-3 text-[10px] font-bold text-red-600 uppercase tracking-wide flex items-center gap-1">
+                                            <span>⛔</span> ${prereqCheck.reason}
+                                        </div>
+                                    ` : ''}
                                 </div>
-                                <div class="text-[10px] text-zinc-400 mb-2">Вимога: ${merit.prereq || 'немає'}</div>
-                                <p class="text-[11px] text-zinc-600 leading-relaxed mb-3">${merit.shortDesc || ''}</p>
                                 
-                                <details class="group">
-                                    <summary class="text-[10px] text-[#8b0000] font-bold cursor-pointer select-none list-none inline-flex items-center gap-1">
+                                <details class="group border-t border-zinc-100 pt-2 mt-auto">
+                                    <summary class="text-[10px] text-[#8b0000] font-bold cursor-pointer select-none list-none inline-flex items-center gap-1 hover:underline">
                                         <span class="group-open:hidden">▶ Повний опис</span>
                                         <span class="hidden group-open:inline">▼ Сховати опис</span>
                                     </summary>
-                                    <div class="mt-2 text-[11px] text-zinc-700 whitespace-pre-wrap p-2 bg-zinc-50 rounded border border-zinc-100">
+                                    <div class="mt-2 text-[11px] text-zinc-700 whitespace-pre-wrap p-2.5 bg-zinc-50 rounded-xl border border-zinc-100">
                                         ${(merit.desc || '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-zinc-900">$1</strong>')}
                                     </div>
                                 </details>
@@ -2453,6 +2618,7 @@ function setV6DisciplineDots(discId, dots) {
         }
     }
     
+    sanitizeV6InvalidSelections();
     renderV6UI();
 }
 
@@ -2870,6 +3036,13 @@ if (typeof window !== 'undefined') {
 }
 
 function toggleV6ClanTrait(traitId) {
+    const currentClan = getV6Clan();
+    const trait = currentClan && currentClan.traits ? currentClan.traits.find(t => t.id === traitId) : null;
+    const isCurrentlySelected = v6State.selectedClanTraits.includes(traitId);
+    if (!isCurrentlySelected && trait) {
+        const check = checkV6Prerequisite(trait.prereq, trait.tier, v6State);
+        if (!check.satisfied) return;
+    }
     const idx = v6State.selectedClanTraits.indexOf(traitId);
     if (idx >= 0) v6State.selectedClanTraits.splice(idx, 1);
     else v6State.selectedClanTraits.push(traitId);
@@ -2877,6 +3050,12 @@ function toggleV6ClanTrait(traitId) {
 }
 
 function toggleV6Merit(meritId) {
+    const merit = getV6Merits().find(m => m.id === meritId);
+    const isCurrentlySelected = v6State.selectedMerits.includes(meritId);
+    if (!isCurrentlySelected && merit) {
+        const check = checkV6Prerequisite(merit.prereq, null, v6State);
+        if (!check.satisfied) return;
+    }
     const idx = v6State.selectedMerits.indexOf(meritId);
     if (idx >= 0) v6State.selectedMerits.splice(idx, 1);
     else v6State.selectedMerits.push(meritId);
@@ -3244,9 +3423,9 @@ function renderV6Step9_SummarySheet() {
         let html = '<div class="flex gap-[3px] items-center">';
         for (let i = 0; i < total; i++) {
             if (i < filled) {
-                html += '<svg width="9" height="9" viewBox="0 0 10 10" class="fill-black"><rect x="1" y="1" width="8" height="8" /><circle cx="5" cy="5" r="2.5" class="fill-white"/></svg>';
+                html += '<svg width="11" height="11" viewBox="0 0 10 10"><rect x="0.5" y="0.5" width="9" height="9" fill="#000000" stroke="#000000" stroke-width="1.2" /></svg>';
             } else {
-                html += '<svg width="9" height="9" viewBox="0 0 10 10" class="fill-none stroke-black stroke-[1.2px]"><rect x="1" y="1" width="8" height="8" /></svg>';
+                html += '<svg width="11" height="11" viewBox="0 0 10 10"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="#1a1a1a" stroke-width="1.5" /></svg>';
             }
         }
         html += '</div>';
@@ -3277,10 +3456,10 @@ function renderV6Step9_SummarySheet() {
         return html;
     };
 
-    const renderHeaderField = (label, value) => `
+    const renderHeaderField = (label, value, valueId = '') => `
         <div class="flex items-end border-b border-black pb-[1px] mb-1.5 w-full">
             <span class="uppercase text-[6px] sm:text-[7px] font-bold tracking-widest text-zinc-600 mr-2 shrink-0">${label}</span>
-            <span class="flex-1 font-serif text-[10px] text-black whitespace-nowrap overflow-hidden">${value || '&nbsp;'}</span>
+            <span ${valueId ? `id="${valueId}"` : ''} class="flex-1 font-serif text-[10px] text-black whitespace-nowrap overflow-hidden">${value ? escapeV6Html(value) : '&nbsp;'}</span>
         </div>
     `;
 
@@ -3413,31 +3592,44 @@ function renderV6Step9_SummarySheet() {
 
             <!-- DETAILS INPUTS (Hidden on print) -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-zinc-200 print:hidden">
-                <h3 class="text-sm font-bold text-zinc-900 uppercase tracking-wider mb-4 border-b border-zinc-200 pb-2">Особисті дані персонажа</h3>
+                <div class="flex items-center justify-between mb-4 border-b border-zinc-200 pb-2">
+                    <div>
+                        <h3 class="text-sm font-bold text-zinc-900 uppercase tracking-wider">Особисті дані персонажа</h3>
+                        <p class="text-[11px] text-zinc-500 mt-0.5">Всі зміни оновлюються на бланку в реальному часі без перезавантаження</p>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div>
                         <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Ім'я персонажа</label>
-                        <input type="text" placeholder="Ім'я..." value="${v6State.characterDetails.name || ''}" oninput="v6State.characterDetails.name = this.value; updateV6Header(); renderV6UI();" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000]">
+                        <input type="text" id="v6-input-name" placeholder="Ім'я..." value="${escapeV6Html(v6State.characterDetails.name || '')}" oninput="updateV6CharacterDetail('name', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Вік на вигляд</label>
-                        <input type="text" placeholder="Напр: 25 років..." value="${v6State.characterDetails.apparentAge || ''}" oninput="v6State.characterDetails.apparentAge = this.value; renderV6UI();" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000]">
+                        <input type="text" id="v6-input-apparentAge" placeholder="Напр: 25 років..." value="${escapeV6Html(v6State.characterDetails.apparentAge || '')}" oninput="updateV6CharacterDetail('apparentAge', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Справжній вік</label>
-                        <input type="text" placeholder="Напр: 120 років..." value="${v6State.characterDetails.actualAge || ''}" oninput="v6State.characterDetails.actualAge = this.value; renderV6UI();" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000]">
+                        <input type="text" id="v6-input-actualAge" placeholder="Напр: 120 років..." value="${escapeV6Html(v6State.characterDetails.actualAge || '')}" oninput="updateV6CharacterDetail('actualAge', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Дата Обернення</label>
-                        <input type="text" placeholder="Напр: 1904..." value="${v6State.characterDetails.embraceDate || ''}" oninput="v6State.characterDetails.embraceDate = this.value; renderV6UI();" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000]">
+                        <input type="text" id="v6-input-embraceDate" placeholder="Напр: 1904..." value="${escapeV6Html(v6State.characterDetails.embraceDate || '')}" oninput="updateV6CharacterDetail('embraceDate', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Ностальгічна декада</label>
-                        <input type="text" placeholder="Напр: 1980-ті..." value="${v6State.characterDetails.decade || ''}" oninput="v6State.characterDetails.decade = this.value; renderV6UI();" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000]">
+                        <input type="text" id="v6-input-decade" placeholder="Напр: 1980-ті..." value="${escapeV6Html(v6State.characterDetails.decade || '')}" oninput="updateV6CharacterDetail('decade', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
                     </div>
                     <div>
+                        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Концепт персонажа</label>
+                        <input type="text" id="v6-input-concept" placeholder="Напр: Детектив у плащі..." value="${escapeV6Html(v6State.characterDetails.concept || '')}" oninput="updateV6CharacterDetail('concept', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
+                    </div>
+                    <div class="sm:col-span-2">
                         <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Вади (Flaws)</label>
-                        <input type="text" placeholder="Опишіть вади..." value="${v6State.characterDetails.flaws || ''}" oninput="v6State.characterDetails.flaws = this.value; renderV6UI();" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000]">
+                        <input type="text" id="v6-input-flaws" placeholder="Опишіть вади..." value="${escapeV6Html(v6State.characterDetails.flaws || '')}" oninput="updateV6CharacterDetail('flaws', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
+                    </div>
+                    <div class="sm:col-span-2 md:col-span-4">
+                        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">Нотатки / Додатково</label>
+                        <input type="text" id="v6-input-notes" placeholder="Додаткові нотатки, зв'язки або особливості..." value="${escapeV6Html(v6State.characterDetails.notes || '')}" oninput="updateV6CharacterDetail('notes', this.value)" class="w-full bg-zinc-50 border border-zinc-300 rounded-lg p-2 text-xs outline-none focus:border-[#8b0000] transition-colors">
                     </div>
                 </div>
             </div>
@@ -3456,19 +3648,15 @@ function renderV6Step9_SummarySheet() {
                     <!-- HEADER SECTION -->
                     <div class="flex justify-between items-start mb-6">
                         <div class="w-[42%] flex flex-col justify-end mt-2">
-                            ${renderHeaderField("Ім'я", v6State.characterDetails.name)}
-                            ${renderHeaderField("Вік на вигляд", v6State.characterDetails.apparentAge)}
-                            ${renderHeaderField("Справжній вік", v6State.characterDetails.actualAge)}
-                            ${renderHeaderField("Дата Обернення", v6State.characterDetails.embraceDate)}
-                            ${renderHeaderField("Ностальгічна Декада", v6State.characterDetails.decade)}
+                            ${renderHeaderField("Ім'я", v6State.characterDetails.name, "sheet-header-name")}
+                            ${renderHeaderField("Вік на вигляд", v6State.characterDetails.apparentAge, "sheet-header-apparentAge")}
+                            ${renderHeaderField("Справжній вік", v6State.characterDetails.actualAge, "sheet-header-actualAge")}
+                            ${renderHeaderField("Дата Обернення", v6State.characterDetails.embraceDate, "sheet-header-embraceDate")}
+                            ${renderHeaderField("Ностальгічна Декада", v6State.characterDetails.decade, "sheet-header-decade")}
                         </div>
                         
                         <div class="flex flex-col items-center justify-start flex-1 px-4 -mt-6">
-                            <svg width="40" height="65" viewBox="0 0 24 34" fill="none" stroke="black" stroke-width="2">
-                                <circle cx="12" cy="7" r="4.5"/>
-                                <path d="M12 11.5v20"/>
-                                <path d="M6 16.5h12"/>
-                            </svg>
+                            <img src="assets/success.png" alt="Success" class="w-20 h-32 object-contain brightness-0" />
                         </div>
 
                         <div class="w-[42%] flex flex-col justify-end mt-2">
@@ -3623,8 +3811,8 @@ function renderV6Step9_SummarySheet() {
                                     <span class="bg-white pr-2">Нотатки</span>
                                     <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
                                 </h3>
-                                <div class="border border-dashed border-zinc-300 min-h-[42px] p-1.5 text-[8px] text-zinc-400">
-                                    ${v6State.characterDetails.concept ? `<span class="text-zinc-700 font-semibold">Концепт: ${v6State.characterDetails.concept}</span>` : 'Місце для додаткових записів...'}
+                                <div id="sheet-char-notes" class="border border-dashed border-zinc-300 min-h-[42px] p-1.5 text-[8px] text-zinc-700">
+                                    ${renderV6NotesBoxContent()}
                                 </div>
                             </div>
                         </div>
@@ -3675,8 +3863,8 @@ function renderV6Step9_SummarySheet() {
                                     <span class="bg-white pr-2">Вади</span>
                                     <div class="absolute -right-1 -top-1 w-2 h-2 border-r border-t border-black"></div>
                                 </h3>
-                                <div class="text-[9px] min-h-[45px]">
-                                    ${v6State.characterDetails.flaws ? `<p class="leading-tight">${v6State.characterDetails.flaws}</p>` : '<p class="text-zinc-400 italic">Відсутні</p>'}
+                                <div id="sheet-char-flaws" class="text-[9px] min-h-[45px]">
+                                    ${v6State.characterDetails.flaws ? `<p class="leading-tight">${escapeV6Html(v6State.characterDetails.flaws)}</p>` : '<p class="text-zinc-400 italic">Відсутні</p>'}
                                 </div>
                             </div>
                             
@@ -3715,9 +3903,93 @@ function renderV6Step9_SummarySheet() {
     `;
 }
 
+function escapeV6Html(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function renderV6NotesBoxContent() {
+    const concept = (v6State.characterDetails && v6State.characterDetails.concept) ? v6State.characterDetails.concept.trim() : '';
+    const notes = (v6State.characterDetails && v6State.characterDetails.notes) ? v6State.characterDetails.notes.trim() : '';
+    if (!concept && !notes) {
+        return '<p class="text-zinc-400 italic">Місце для додаткових записів...</p>';
+    }
+    let html = '';
+    if (concept) {
+        html += `<div><span class="text-zinc-900 font-bold">Концепт:</span> <span class="text-zinc-700 font-semibold">${escapeV6Html(concept)}</span></div>`;
+    }
+    if (notes) {
+        html += `<div class="${concept ? 'mt-1' : ''} text-zinc-700 leading-tight">${escapeV6Html(notes)}</div>`;
+    }
+    return html;
+}
+
+function updateV6CharacterDetail(field, value) {
+    if (!v6State.characterDetails) {
+        v6State.characterDetails = {
+            name: '',
+            alias: '',
+            concept: '',
+            apparentAge: '',
+            actualAge: '',
+            embraceDate: '',
+            decade: '',
+            flaws: '',
+            chronicle: '',
+            notes: ''
+        };
+    }
+    v6State.characterDetails[field] = value;
+
+    // Real-time synchronization directly in DOM without reloading or re-rendering page
+    if (field === 'name') {
+        const sheetEl = document.getElementById('sheet-header-name');
+        if (sheetEl) sheetEl.innerHTML = (value && value.trim()) ? escapeV6Html(value.trim()) : '&nbsp;';
+        updateV6Header();
+    } else if (field === 'apparentAge') {
+        const sheetEl = document.getElementById('sheet-header-apparentAge');
+        if (sheetEl) sheetEl.innerHTML = (value && value.trim()) ? escapeV6Html(value.trim()) : '&nbsp;';
+    } else if (field === 'actualAge') {
+        const sheetEl = document.getElementById('sheet-header-actualAge');
+        if (sheetEl) sheetEl.innerHTML = (value && value.trim()) ? escapeV6Html(value.trim()) : '&nbsp;';
+    } else if (field === 'embraceDate') {
+        const sheetEl = document.getElementById('sheet-header-embraceDate');
+        if (sheetEl) sheetEl.innerHTML = (value && value.trim()) ? escapeV6Html(value.trim()) : '&nbsp;';
+    } else if (field === 'decade') {
+        const sheetEl = document.getElementById('sheet-header-decade');
+        if (sheetEl) sheetEl.innerHTML = (value && value.trim()) ? escapeV6Html(value.trim()) : '&nbsp;';
+    } else if (field === 'flaws') {
+        const flawsEl = document.getElementById('sheet-char-flaws');
+        if (flawsEl) {
+            flawsEl.innerHTML = (value && value.trim()) 
+                ? `<p class="leading-tight">${escapeV6Html(value.trim())}</p>` 
+                : `<p class="text-zinc-400 italic">Відсутні</p>`;
+        }
+    } else if (field === 'concept' || field === 'notes') {
+        const notesEl = document.getElementById('sheet-char-notes');
+        if (notesEl) {
+            notesEl.innerHTML = renderV6NotesBoxContent();
+        }
+    }
+}
+
 function updateV6Header() {
     const nameEl = document.getElementById('header-char-name');
-    if (nameEl) nameEl.innerText = v6State.characterDetails.name || 'Безіменний';
+    if (nameEl) {
+        nameEl.innerText = (v6State.characterDetails && v6State.characterDetails.name && v6State.characterDetails.name.trim()) 
+            ? v6State.characterDetails.name.trim() 
+            : 'Безіменний';
+    }
+    const clanEl = document.getElementById('header-char-clan');
+    if (clanEl) {
+        const clan = getV6Clan();
+        clanEl.innerText = clan ? clan.name.split(' (')[0] : 'Невідомо (Каїтиф)';
+    }
 }
 
 function generateV6PrintableHTML() {
@@ -3980,4 +4252,8 @@ window.openV6PrintSheetInNewWindow = openV6PrintSheetInNewWindow;
 window.generateV6PrintableHTML = generateV6PrintableHTML;
 window.saveV6DraftToFile = saveV6DraftToFile;
 window.rollV6Dice = rollV6Dice;
+window.checkV6Prerequisite = checkV6Prerequisite;
+window.sanitizeV6InvalidSelections = sanitizeV6InvalidSelections;
+window.updateV6CharacterDetail = updateV6CharacterDetail;
+window.escapeV6Html = escapeV6Html;
 window.v6State = v6State;
