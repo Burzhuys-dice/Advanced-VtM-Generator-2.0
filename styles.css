@@ -971,6 +971,16 @@ h1, h2, h3, .vtm-font {
         padding: 0 !important;
     }
 
+    #v6-generator-app {
+        display: block !important;
+        width: 100% !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     #step-7 > div:first-child,
     #step-7 > .border-b-2,
     #step-7 > .mt-12 {

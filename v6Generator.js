@@ -103,7 +103,7 @@ function setupV6InitialState() {
     v6State.disciplines = {};
     if (clanObj && Array.isArray(clanObj.disciplines)) {
         clanObj.disciplines.forEach((d, idx) => {
-            v6State.disciplines[d] = idx === 0 ? 2 : (idx === 1 ? 1 : 0);
+            v6State.disciplines[d] = 0;
         });
     }
     // Add sire bonus
@@ -153,7 +153,7 @@ const FALLBACK_SIRES = [
         desc: 'Ваш Сір був жорстоким, маніпулятивним та безжальним, ставлячись до вас як до пішака чи інструменту у власних підступних схемах. Ви навчилися терпіти біль та виживати за будь-яку ціну.',
         relationship: 'Випробування страхом: Сір навчив вас ламати чужу волю, витримувати нестерпний тиск та ховатися в тінях.',
         disciplineOptions: ['dominate', 'fortitude', 'obfuscate'],
-        bonusText: '+1 крапка (⬤) на вибір: Домінування (Dominate), Стійкість (Fortitude) або Затемнення (Obfuscate)'
+        bonusText: '+1 крапка (⬤) на вибір: Домінування (Dominate), Стійкість (Fortitude) або Затьмарення (Obfuscate)'
     },
     {
         id: 'secretive_sire',
@@ -162,7 +162,7 @@ const FALLBACK_SIRES = [
         desc: 'Ваш Сір був загадковим і відлюдькуватим, приховував майже все та давав лише туманні підказки, навчаючи вас залишатися непоміченим і загострювати власні відчуття.',
         relationship: 'Школа тіней: Сір передав вам надприродну пильність, блискавичну реакцію та вміння розчинятися у пітьмі.',
         disciplineOptions: ['auspex', 'celerity', 'obfuscate'],
-        bonusText: '+1 крапка (⬤) на вибір: Яснобачення (Auspex), Стрімкість (Celerity) або Затемнення (Obfuscate)'
+        bonusText: '+1 крапка (⬤) на вибір: Яснобачення (Auspex), Стрімкість (Celerity) або Затьмарення (Obfuscate)'
     },
     {
         id: 'unknown_sire',
@@ -200,7 +200,7 @@ const FALLBACK_SIRES = [
         desc: 'Ви були обрані як ключова фігура у складній багатовіковій шаховій партії Двору. Сір навчив вас розкривати чужі секрети, смикати за ниточки та бути непомітним серед еліти.',
         relationship: 'Маніпуляція та секрети; вас використовують, але ви перейняли ці самі методи.',
         disciplineOptions: ['dominate', 'presence', 'obfuscate'],
-        bonusText: '+1 крапка (⬤) на вибір: Домінування, Присутність або Затемнення'
+        bonusText: '+1 крапка (⬤) на вибір: Домінування, Присутність або Затьмарення'
     },
     {
         id: 'obsessed_paramour',
@@ -236,7 +236,7 @@ const FALLBACK_SIRES = [
         desc: 'Дикий мисливець міських дахів та підземель, який вибрав вас за бездоганний інстинкт виживання та здатність безжально полювати в камʼяних джунглях.',
         relationship: 'Закони зграї; сильний веде за собою, слабкий стає поживою.',
         disciplineOptions: ['animalism', 'celerity', 'obfuscate'],
-        bonusText: '+1 крапка (⬤) на вибір: Анімалізм, Стрімкість або Затемнення'
+        bonusText: '+1 крапка (⬤) на вибір: Анімалізм, Стрімкість або Затьмарення'
     },
     {
         id: 'renegade_heretic',
@@ -245,7 +245,7 @@ const FALLBACK_SIRES = [
         desc: 'Бунтар проти догматів сект і традицій старійшин, який обрав вас як однодумця для створення нового прихованого ордену серед немертвих.',
         relationship: 'Спільна небезпека та конспірація; ви завжди під прицілом інквізиції чи архонтів.',
         disciplineOptions: ['oblivion', 'celerity', 'obfuscate'],
-        bonusText: '+1 крапка (⬤) на вибір: Забуття, Стрімкість або Затемнення'
+        bonusText: '+1 крапка (⬤) на вибір: Забуття, Стрімкість або Затьмарення'
     },
     {
         id: 'bohemian_creator',
@@ -562,11 +562,7 @@ function applyV6LifepathBonuses() {
     });
 
     const lpRes = getV6LifepathResourceBonuses();
-    Object.entries(lpRes).forEach(([resId, bonus]) => {
-        if (!v6State.resources[resId] || v6State.resources[resId] < bonus) {
-            v6State.resources[resId] = Math.min(5, bonus);
-        }
-    });
+    // Lifepath resources are now calculated dynamically in the UI and summary
 }
 
 const GLOBAL_SKILLS_MAP = {
@@ -767,12 +763,78 @@ const FALLBACK_MERITS = [
 ];
 
 const FALLBACK_NATURES = [
-    { id: 'autocrat', name: 'Автократ (Autocrat)', desc: 'Прагнення контролювати все і всіх навколо.' },
-    { id: 'architect', name: 'Архітектор (Architect)', desc: 'Будівництво планів, організацій та систем на майбутнє.' },
-    { id: 'bon_vivant', name: 'Гедоніст (Bon Vivant)', desc: 'Насолода земними та нічними задоволеннями.' },
-    { id: 'caretaker', name: 'Опікун (Caretaker)', desc: 'Захист слабких та турбота про близьких.' },
-    { id: 'rebel', name: 'Бунтар (Rebel)', desc: 'Боротьба проти встановленого порядку та влади старійшин.' },
-    { id: 'survivor', name: 'Виживальник (Survivor)', desc: 'Головне — вижити за будь-яку ціну.' }
+    {
+        id: 'autocrat',
+        name: 'Автократ (Autocrat)',
+        shortDesc: 'Ви прагнете бути головним і жадаєте влади та контролю.',
+        desc: 'Як Автократ, ви прагнете бути головним. Ви домагаєтеся визнання й лідерства заради них самих, а не тому, що щиро турбуєтеся про спільну справу чи маєте найкращі ідеї (хоча ви часто переконані саме в цьому). Можливо, ви щиро вважаєте всіх довкола некомпетентними, але те, чого ви по-справжньому прагнете, — це влада і повний контроль.',
+        indulging: 'Ви роздаєте накази оточуючим так, ніби ви є беззаперечним командиром. Ви берете на себе роль лідера. Ви відкидаєте пропозиції інших як такі, що явно не відповідають вашим високим стандартам. Ви приймаєте рішення за інших, не радячись із ними.',
+        outburstName: 'Слухайте мене (Listen to Me)',
+        outburst: 'Оточуючі просто не слухають ваших вказівок, тому вам доводиться взяти ситуацію під залізний контроль. Ви не можете використовувати фізичні сили Дисциплін і повинні змусити інших діяти за вашим словом. Оберіть дві цілі у вашому полі зору (принаймні одна з них має бути NPC). У кожен їхній хід ви диктуєте, що кожна з цілей має робити. За кожну ціль, яка проводить свій хід, діючи інакше, ви зазнаєте штрафу до всіх своїх перевірок у розмірі вашого модифікатора покоління.'
+    },
+    {
+        id: 'bon_vivant',
+        name: 'Бонвіван (Bon Vivant)',
+        shortDesc: 'Ви знаєте, що життя поверхове та швидкоплинне. Ви живете тут і зараз та прагнете насолоджуватися моментом за будь-яку ціну.',
+        desc: 'Як Бонвіван, ви усвідомлюєте, що життя і нежиття поверхові й швидкоплинні. Тому ви вирішили насолоджуватися кожною миттю тут і зараз. Ви не обов’язково безвідповідальні; ви просто схильні чудово проводити час на своєму шляху і любите піддаватися насолодам, які можуть запропонувати життя та нежиття.',
+        indulging: 'Ви шукаєте кров людей у стані сп’яніння, щоб розділити їхнє відчуття ейфорії. Ви кидаєте свої обов’язки, розганяючи нудьгу вечірками, гулянками та іншими розвагами. Ви підмовляєте інших приєднатися до ваших легковажних занять.',
+        outburstName: 'Пошук розваг (Seek Fun)',
+        outburst: 'Ви збираєтеся гарно провести час, навіть якщо це коштуватиме вам життя. Ви не можете використовувати ментальні сили Дисциплін і повинні відганяти нудьгу, оскільки раптом усе довкола здається нестерпно прісним і сірим. Ви зазнаєте кумулятивного штрафу -1 кістка щоразу, коли робите дію або проходите перевірку, яку вже здійснювали раніше в цій сцені. Для цього спалаху атака вважається іншою (і тому ненудною) дією за умови, що ціль щоразу змінюється.'
+    },
+    {
+        id: 'bravo',
+        name: 'Задира (Bravo)',
+        shortDesc: 'Ви вірите у верховенство сильного над слабким і завжди дбаєте про те, щоб бути найсильнішим навколо.',
+        desc: 'Як Задира, ви вірите у закон сильного над слабким і завжди дбаєте про те, щоб бути найсильнішим у кімнаті. Ви використовуєте свою міць, щоб залякувати інших та керувати ними, не відчуваючи жодних докорів сумління. Якщо інші хочуть поваги та права діяти самостійно, вони повинні довести, що достатньо сильні, аби протистояти вам.',
+        indulging: 'Ви використовуєте свою силу та сили крові, щоб змусити інших боятися вас і коритися. Ви полюєте на слабких, викладаючи їм урок, якого, на вашу думку, вони потребують. Ви кидаєте виклик іншим, демонструючи власну міць і домінування над ними.',
+        outburstName: 'Право сили (Rule of Might)',
+        outburst: 'Ви найсильніший тут і змусите їх підкорятися, навіть якщо доведеться вбити в них покору кулаками. Ви не можете використовувати соціальні або ментальні сили Дисциплін і повинні вдаватися до грубої сили, щоб змусити інших коритися вам, боятися вас або схилятися перед вами. Ви отримуєте бонус на кістках, що дорівнює вашому модифікатору покоління, до всіх перевірок на підкорення, атаку, залякування або будь-які інші агресивні дії проти найсильнішої істоти, яку ви бачите. Усі інші ваші дії зазнають штрафу на кістках у розмірі подвійного модифікатора покоління.'
+    },
+    {
+        id: 'gallant',
+        name: 'Франт (Gallant)',
+        shortDesc: 'Ви — зірка будь-якого дійства, що постійно шукає світла софітів та загального захоплення.',
+        desc: 'Як Франт, ви завжди прагнете уваги та шансу стати найяскравішою зіркою в кімнаті. Ви шукаєте товариства інших, хоча б лише заради того, щоб здобути їхнє захоплення й обожнювання. Увага публіки рухає вами вперед, а гонитва за нею часто важливіша за фінал. Ніщо не хвилює вас більше, ніж нова аудиторія, яку можна підкорити своїм шармом.',
+        indulging: 'Ви прагнете уваги й готові зробити все, щоб прикувати до себе погляди. Ви влаштовуєте грандіозний ефектний вихід скрізь, куди б не прийшли, і ніколи не соромитеся пояснювати іншим, наскільки ви виняткові та важливі.',
+        outburstName: 'Цвях програми (Showstopper)',
+        outburst: 'Усе має обертатися лише навколо вас. Під час цього спалаху ви не можете використовувати ментальні сили Дисциплін і зобов’язані зробити себе центром абсолютно всієї уваги. Ви повинні привернути увагу якомога більшої кількості істот через напад, застосування сили по площі тощо. Ви не можете ховатися, зникати в тінях або говорити тихіше за гучний вигук. На початку кожного свого ходу оберіть одного ворога у полі зору. До початку вашого наступного ходу ця ціль має бонус на кістках, рівний подвійному модифікатору покоління, на всі перевірки, щоб помітити вас, атакувати вас або вступити з вами в бій.'
+    },
+    {
+        id: 'perfectionist',
+        name: 'Перфекціоніст (Perfectionist)',
+        shortDesc: 'Ви вимагаєте бездоганного виконання від себе та часом від інших.',
+        desc: 'Як Перфекціоніст, ви вимагаєте бездоганного виконання у всьому. Ви очікуєте повної віддачі справі та пильної уваги до найменших деталей як від себе, так і від оточуючих. Можливо, ви занадто вимогливі, але саме досягнення ідеального результату живить вашу внутрішню мотивацію.',
+        indulging: 'Ви з головою занурюєтеся в завдання годинами, доки воно не стане саме таким, яким ви його бачите в ідеалі. Ви критикуєте інших за найменші помилки. Ви ретельно аналізуєте власні уявні недоліки, невпинно працюючи над тим, як їх виправити.',
+        outburstName: 'Перфекціонізм (Perfectionism)',
+        outburst: 'Усе йде зовсім не так, як слід, а все має бути абсолютно досконалим. Ви не можете використовувати соціальні сили Дисциплін, і до кінця сцени повинні витрачати кожен свій хід на перероблення провалених завдань. Якщо ви провалили перевірку на попередньому ходу, ви повинні повторити саме цю перевірку на наступному ходу. Якщо ж ви не провалили перевірку, ви не можете просто повторити свою останню дію; замість цього ви маєте спробувати повторити дію чи перевірку, яку провалив ваш союзник на своєму попередньому ходу, щоб виправити його помилку. Якщо ні ви, ні ваші союзники не провалювали дій на попередньому ходу (або якщо провалену дію фізично неможливо повторити), ви можете діяти вільно, але зазнаєте штрафу на кістках, що дорівнює вашому модифікатору покоління, оскільки вас дратує і відволікає кожна недосконалість довкола.'
+    },
+    {
+        id: 'romantic',
+        name: 'Романтик (Romantic)',
+        shortDesc: 'Ви відчуваєте, що існування має сенс лише тоді, коли ви щиро кохаєте когось і вас кохають у відповідь.',
+        desc: 'Як Романтик, ви відчуваєте, що існування наповнене сенсом лише тоді, коли ви кохаєте когось і отримуєте взаємність. Вас легко зачаровує чужа зовнішність, особистість чи благородні вчинки, і ви нерідко малюєте у своїй уяві романтичні стосунки там, де їх насправді немає. Коли ваші почуття знаходять відповідь, це окрилює вас; коли ж ні — це кидає вас у безодню глибокого смутку.',
+        indulging: 'Ви намагаєтеся справити враження на інших та налагодити з ними емоційний зв’язок, особливо з тим, хто викликав ваш романтичний інтерес. Ви готові ризикувати собою заради об’єкта своєї пристрасті. Ви проводите забагато часу в мріях про стосунки. Ви нехтуєте своїми прямими обов’язками, аби лише побути поруч із тим, кого любите.',
+        outburstName: 'Романтична жертва (Romantic Sacrifice)',
+        outburst: 'Єдине, що має значення, — це кохання, і навіть власне існування здається гідною жертвою заради нього. Ви не можете використовувати ментальні сили Дисциплін і зобов’язані робити все можливе, щоб захистити, вразити або принести користь об’єкту своєї закоханості. Ви отримуєте бонус на кістках, рівний модифікатору покоління, до всіх перевірок на захист або допомогу цій особі. Цей бонус подвоюється, якщо така дія наражає вас на небезпеку або загрожує зірвати ваші первинні плани. Водночас ви зазнаєте штрафу на кістках у розмірі подвійного модифікатора покоління до всіх інших дій, не пов’язаних із цим.'
+    },
+    {
+        id: 'scientist',
+        name: 'Науковець (Scientist)',
+        shortDesc: 'Ви знаєте, що буття — це велична головоломка, і прагнете допомогти зібрати та розгадати її.',
+        desc: 'Як Науковець, ви бачите все існування як величну головоломку, яку прагнете розгадати й упорядкувати. Ви вивчаєте кожну ситуацію та подію логічно й методично, шукаючи закономірності, приховані структури та ймовірні наслідки. Ви не обов’язково шукаєте суто академічне чи раціональне пояснення, але досліджуєте своє оточення надзвичайно скрупульозно та з критичним поглядом.',
+        indulging: 'Ви помічаєте закономірності, приховані структури та системи у навколишньому світі й часто вказуєте на них іншим. Ви аналізуєте патерни поведінки людей і використовуєте ці знання на свою користь. Ви постійно шукаєте логіку та причинно-наслідкові зв’язки в будь-якій незрозумілій ситуації.',
+        outburstName: 'Критичний погляд (Critical Eye)',
+        outburst: 'Кожна дрібниця приковує вашу увагу, перевантажуючи свідомість. Ви не можете використовувати соціальні сили Дисциплін, а ваш розум фіксується на всьому навколо: від ледь відчутного запаху тютюну на пальто суперника до порошинки, що повільно пролітає повз. Ви зазнаєте штрафу на кістках у розмірі вашого модифікатора покоління до всіх перевірок, намагаючись пробитися крізь шквал сенсорних деталей. Якщо ви викинете «10» на будь-якій перевірці до завершення спалаху, вам вдається прорватися крізь хаос і помітити ключову деталь, суть якої стане вам зрозумілою після завершення спалаху. Оповідач вирішує, що саме ви помітили (наприклад, стару пляму крові під ніжкою стільця чи таємниче ім’я, прошепотіле між ворогами).',
+    },
+    {
+        id: 'survivor',
+        name: 'Виживальник (Survivor)',
+        shortDesc: 'Ви завжди долаєте труднощі, виживаючи всупереч усьому, що кидає вам світ.',
+        desc: 'Як Виживальник, ви завжди долаєте будь-які труднощі, виживаючи всупереч усьому, що кидають вам життя чи нежиття. Наодинці чи в групі, ваша непохитна відмова здаватися та приймати поразку часто стає вирішальною різницею між тріумфом і загибеллю. Вас дратує те, як інші покірно приймають «удари долі», і ви ведете безперервну боротьбу за збереження та зміцнення своїх позицій у цьому жорстокому світі.',
+        indulging: 'Ви завжди завчасно готуєтеся до наступної небезпеки, незалежно від того, реальна вона чи ні. Ви дієте обачно, гарантуючи власне виживання й відмовляючись від невиправданих ризиків. Ви допомагаєте іншим втриматися на краю прірви та уникнути фатальних помилок.',
+        outburstName: 'Інстинкт виживання (Survivor’s Instinct)',
+        outburst: 'Ситуація смертельно небезпечна, і ваша головна мета — вижити. Ви не можете використовувати соціальні сили Дисциплін і повинні цілком зосередитися на власному захисті. Ваша загострена пильність до будь-якої загрози розпорошує увагу, через що вам важко робити щось інше, окрім як виходити неушкодженим із небезпеки. Ви отримуєте бонус на кістках, рівний вашому модифікатору покоління, до перевірок на захист, втечу від небезпеки або приховування, але зазнаєте штрафу на кістках у розмірі подвійного модифікатора покоління до атак, наступальних дій та будь-яких дій, які привертають до вас зайву увагу.'
+    }
 ];
 
 function getV6Tiers() { return (v6Data && v6Data.tiers) || [{ id: 'neonate', name: 'Неонат (Neonate)', generations: '11-13-те покоління', generationModifier: 1, maxDots: 5, attributeDots: [7, 5, 3], disciplineDots: '3 + 1', description: 'Молодий вампір' }]; }
@@ -911,6 +973,8 @@ function renderV6Step1_Tier() {
                                 <div class="flex justify-between"><span>Атрибути:</span> <strong class="text-zinc-900">${t.attributeDots ? t.attributeDots.join('/') : '7/5/3'}</strong></div>
                                 <div class="flex justify-between"><span>Дисципліни:</span> <strong class="text-zinc-900">${t.disciplineDots}</strong></div>
                                 <div class="flex justify-between"><span>Життєві шляхи:</span> <strong class="text-zinc-900">${t.lifepathsCount}</strong></div>
+                                <div class="flex justify-between"><span>Блага (Merits):</span> <strong class="text-[#8b0000] font-bold">${t.meritsCount !== undefined ? t.meritsCount : 1}</strong></div>
+                                <div class="flex justify-between"><span>Вільні ресурси:</span> <strong class="text-zinc-900 font-bold">${t.freeResourceDots !== undefined ? t.freeResourceDots : 3}</strong></div>
                             </div>
                         </div>
                     `;
@@ -1113,14 +1177,30 @@ function setV6BroodmateClan(clanId) {
 
 function recalculateV6Disciplines() {
     const clanObj = getV6Clan(v6State.clan);
+    const prevDiscs = { ...(v6State.disciplines || {}) };
     v6State.disciplines = {};
     if (clanObj && Array.isArray(clanObj.disciplines)) {
         clanObj.disciplines.forEach((d) => {
-            v6State.disciplines[d] = 0;
+            v6State.disciplines[d] = prevDiscs[d] || 0;
         });
     }
     if (v6State.sireBonusDiscipline) {
-        v6State.disciplines[v6State.sireBonusDiscipline] = (v6State.disciplines[v6State.sireBonusDiscipline] || 0) + 1;
+        v6State.disciplines[v6State.sireBonusDiscipline] = Math.max(1, v6State.disciplines[v6State.sireBonusDiscipline] || 0);
+    }
+    
+    // Synchronize selected powers with current discipline dots
+    if (Array.isArray(v6State.selectedPowers) && v6State.selectedPowers.length > 0) {
+        const disciplinesList = getV6Disciplines();
+        v6State.selectedPowers = v6State.selectedPowers.filter(pId => {
+            for (const d of disciplinesList) {
+                const p = (d.powers || []).find(x => x.id === pId);
+                if (p) {
+                    const currentDots = v6State.disciplines[d.id] || 0;
+                    return currentDots >= p.rank;
+                }
+            }
+            return false;
+        });
     }
 }
 
@@ -2076,6 +2156,9 @@ function renderV6Step6_DisciplinesTraits() {
         return acc + Math.max(0, isSireBonus ? count - 1 : count);
     }, 0);
 
+    const allowedMeritsCount = (tierObj && tierObj.meritsCount !== undefined) ? tierObj.meritsCount : 1;
+    const selectedMeritsCount = v6State.selectedMerits ? v6State.selectedMerits.length : 0;
+
     const DISCIPLINE_ICONS = {
         animalism: 'data/Disciplines/Animalism_symbol.png',
         auspex: 'data/Disciplines/Auspex_symbol.png',
@@ -2104,7 +2187,7 @@ function renderV6Step6_DisciplinesTraits() {
                 </div>
             </div>
 
-            <!-- Sticky Discipline Counter -->
+            <!-- Sticky Discipline, Merits & Powers Counter -->
             <div class="sticky top-0 z-10 bg-white/95 backdrop-blur py-3 border-b border-zinc-200 mb-6 shadow-sm rounded-b-xl px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
                     <span class="text-zinc-500">Витрачені Крапки Дисциплін (без Сіра):</span>
@@ -2112,8 +2195,17 @@ function renderV6Step6_DisciplinesTraits() {
                         ${spentDisciplineDots} / ${allowedDisciplineDots}
                     </span>
                 </div>
-                <div class="text-[10px] text-zinc-500 bg-zinc-100 px-2 py-1 rounded font-bold border border-zinc-200">
-                    Доступно сил: ${v6State.selectedPowers ? v6State.selectedPowers.length : 0} / ${tierObj ? tierObj.disciplinePowers : 4}
+                <div class="flex items-center gap-2 flex-wrap">
+                    <div class="text-[10px] px-2.5 py-1 rounded font-bold border transition-all ${
+                        selectedMeritsCount === allowedMeritsCount 
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                            : (selectedMeritsCount > allowedMeritsCount ? 'bg-red-50 text-red-800 border-red-300' : 'bg-amber-50 text-amber-900 border-amber-300')
+                    }">
+                        ✨ Блага (Merits): ${selectedMeritsCount} / ${allowedMeritsCount}
+                    </div>
+                    <div class="text-[10px] text-zinc-500 bg-zinc-100 px-2 py-1 rounded font-bold border border-zinc-200">
+                        Доступно сил: ${v6State.selectedPowers ? v6State.selectedPowers.length : 0} / ${tierObj ? tierObj.disciplinePowers : 4}
+                    </div>
                 </div>
             </div>
 
@@ -2177,6 +2269,7 @@ function renderV6Step6_DisciplinesTraits() {
                                 </div>
 
                                 <!-- Powers of this discipline -->
+                                ${currentDots > 0 ? `
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-zinc-200">
                                     ${(disc.powers || []).map(power => {
                                         const isLearned = v6State.selectedPowers.includes(power.id);
@@ -2216,7 +2309,7 @@ function renderV6Step6_DisciplinesTraits() {
                                                         <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200/80">🎲 ${formatV6Attribute(power.attribute)}</span>
                                                     </div>
 
-                                                    <p class="text-xs text-zinc-600 leading-relaxed mb-3 line-clamp-2">${power.desc ? power.desc.split('\n')[0] : ''}</p>
+                                                    <p class="text-xs text-zinc-600 leading-relaxed mb-3 line-clamp-2">${power.shortDesc || (power.desc ? power.desc.split('\n')[0] : '')}</p>
                                                 </div>
 
                                                 <div class="flex items-center justify-between pt-2 border-t border-zinc-100 text-[10px] font-semibold text-zinc-400 group-hover:text-[#8b0000] transition-colors mt-auto">
@@ -2227,6 +2320,7 @@ function renderV6Step6_DisciplinesTraits() {
                                         `;
                                     }).join('')}
                                 </div>
+                                ` : ''}
                             </div>
                         `;
                     }).join('')}
@@ -2236,9 +2330,24 @@ function renderV6Step6_DisciplinesTraits() {
             <!-- CLAN TRAITS -->
             ${currentClan && currentClan.traits && currentClan.traits.length > 0 ? `
                 <div class="mb-10">
-                    <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase mb-4 flex items-center gap-2">
-                        <span>🩸</span> Кланові Риси (${currentClan.name.split(' (')[0]})
-                    </h3>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase flex items-center gap-2">
+                                <span>🩸</span> Кланові Риси (${currentClan.name.split(' (')[0]})
+                            </h3>
+                            <p class="text-xs text-zinc-500 mt-0.5">Оберіть унікальні риси вашого клану відповідно до рангу.</p>
+                        </div>
+                        <div class="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-200 shrink-0">
+                            <span class="text-xs font-bold uppercase tracking-wider text-zinc-500">Обрано рис:</span>
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                                v6State.selectedClanTraits.length === (tierObj ? tierObj.clanTraitsCount : 2)
+                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs'
+                                    : (v6State.selectedClanTraits.length > (tierObj ? tierObj.clanTraitsCount : 2) ? 'bg-red-100 text-red-800 border-red-300' : 'bg-amber-100 text-amber-900 border-amber-300')
+                            }">
+                                ${v6State.selectedClanTraits.length} / ${tierObj ? tierObj.clanTraitsCount : 2}
+                            </span>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         ${currentClan.traits.map(trait => {
                             const isLocked = tierObj && tierObj.id === 'neonate' && trait.tier === 'ancilla';
@@ -2267,22 +2376,47 @@ function renderV6Step6_DisciplinesTraits() {
 
             <!-- MERITS -->
             <div>
-                <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase mb-4 flex items-center gap-2">
-                    <span>✨</span> Переваги (Merits)
-                </h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase flex items-center gap-2">
+                            <span>✨</span> Переваги / Блага (Merits)
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Оберіть блага для вашого персонажа відповідно до його рангу (${tierObj ? tierObj.name : 'Неонат'}).</p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-200 shrink-0">
+                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-500">Обрано благ:</span>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                            selectedMeritsCount === allowedMeritsCount
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs'
+                                : (selectedMeritsCount > allowedMeritsCount ? 'bg-red-100 text-red-800 border-red-300' : 'bg-amber-100 text-amber-900 border-amber-300')
+                        }">
+                            ${selectedMeritsCount} / ${allowedMeritsCount}
+                        </span>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     ${getV6Merits().map(merit => {
                         const isSel = v6State.selectedMerits.includes(merit.id);
                         return `
-                            <div onclick="toggleV6Merit('${merit.id}')" class="p-4 rounded-xl border cursor-pointer transition-all ${
+                            <div class="p-4 rounded-xl border transition-all ${
                                 isSel ? 'border-[#8b0000] bg-red-50/40 shadow-sm ring-1 ring-red-900/20' : 'border-zinc-200 bg-white hover:bg-zinc-50'
                             }">
                                 <div class="flex items-center justify-between mb-1">
                                     <h4 class="font-bold text-xs text-zinc-900">${merit.name}</h4>
-                                    <input type="checkbox" ${isSel ? 'checked' : ''} class="rounded text-[#8b0000] pointer-events-none">
+                                    <button onclick="toggleV6Merit('${merit.id}')" class="px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all ${isSel ? 'bg-[#8b0000] text-white' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'}">${isSel ? 'Обрано' : 'Обрати'}</button>
                                 </div>
                                 <div class="text-[10px] text-zinc-400 mb-2">Вимога: ${merit.prereq || 'немає'}</div>
-                                <p class="text-[11px] text-zinc-600 leading-relaxed">${merit.desc || ''}</p>
+                                <p class="text-[11px] text-zinc-600 leading-relaxed mb-3">${merit.shortDesc || ''}</p>
+                                
+                                <details class="group">
+                                    <summary class="text-[10px] text-[#8b0000] font-bold cursor-pointer select-none list-none inline-flex items-center gap-1">
+                                        <span class="group-open:hidden">▶ Повний опис</span>
+                                        <span class="hidden group-open:inline">▼ Сховати опис</span>
+                                    </summary>
+                                    <div class="mt-2 text-[11px] text-zinc-700 whitespace-pre-wrap p-2 bg-zinc-50 rounded border border-zinc-100">
+                                        ${(merit.desc || '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-zinc-900">$1</strong>')}
+                                    </div>
+                                </details>
                             </div>
                         `;
                     }).join('')}
@@ -2308,13 +2442,43 @@ function setV6DisciplineDots(discId, dots) {
     } else {
         v6State.disciplines[discId] = Math.max(minDots, dots);
     }
+    
+    // Remove selected powers that are now above the current dots
+    const currentDots = v6State.disciplines[discId] || 0;
+    const discDef = getV6Disciplines().find(d => d.id === discId);
+    if (discDef && discDef.powers) {
+        const powersToRemove = discDef.powers.filter(p => p.rank > currentDots).map(p => p.id);
+        if (powersToRemove.length > 0) {
+            v6State.selectedPowers = v6State.selectedPowers.filter(p => !powersToRemove.includes(p));
+        }
+    }
+    
     renderV6UI();
 }
 
 function toggleV6Power(powerId) {
+    if (!Array.isArray(v6State.selectedPowers)) v6State.selectedPowers = [];
     const idx = v6State.selectedPowers.indexOf(powerId);
-    if (idx >= 0) v6State.selectedPowers.splice(idx, 1);
-    else v6State.selectedPowers.push(powerId);
+    if (idx >= 0) {
+        v6State.selectedPowers.splice(idx, 1);
+    } else {
+        let powerObj = null;
+        let discObj = null;
+        const disciplines = getV6Disciplines();
+        for (const d of disciplines) {
+            const p = (d.powers || []).find(x => x.id === powerId);
+            if (p) {
+                powerObj = p;
+                discObj = d;
+                break;
+            }
+        }
+        if (powerObj && discObj) {
+            const currentDots = v6State.disciplines[discObj.id] || 0;
+            if (currentDots < powerObj.rank) return;
+        }
+        v6State.selectedPowers.push(powerId);
+    }
     renderV6UI();
 }
 
@@ -2567,6 +2731,7 @@ function openV6PowerModal(powerId, discId) {
                     <h2 class="text-xl sm:text-2xl font-bold vtm-font tracking-wide text-white drop-shadow">
                         ${targetPower.name}
                     </h2>
+                    ${targetPower.shortDesc ? `<p class="text-xs sm:text-sm text-red-200/90 font-medium mt-1">${targetPower.shortDesc}</p>` : ''}
                 </div>
             </div>
             <button type="button" onclick="closeV6PowerModal()" class="text-white/70 hover:text-white p-2 rounded-xl hover:bg-black/30 transition-colors shrink-0" title="Закрити (Esc)">
@@ -2802,25 +2967,70 @@ function renderV6Step7_HumanityNature() {
 
             <!-- NATURES SELECTION GRID -->
             <div class="mb-8">
-                <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase mb-4 flex items-center gap-2">
-                    <span>🎭</span> Оберіть вашу Натуру (Nature)
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase flex items-center gap-2">
+                            <span>🎭</span> Оберіть вашу Натуру (Nature)
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Натура визначає вашу смертну сутність, спосіб розради та специфіку емоційного спалаху (Outburst).</p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-200 shrink-0">
+                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-500">Обрана натура:</span>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-red-100 text-red-900 border-red-300">
+                            ${currentNature ? currentNature.name : 'Автократ (Autocrat)'}
+                        </span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                     ${getV6Natures().map(nat => {
                         const isSel = v6State.nature === nat.id;
                         return `
-                            <div onclick="selectV6Nature('${nat.id}')" class="p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                            <div class="p-4 md:p-5 rounded-2xl border-2 transition-all flex flex-col justify-between ${
                                 isSel 
-                                    ? 'border-[#8b0000] bg-red-50/40 shadow-md ring-2 ring-red-900/20' 
-                                    : 'border-zinc-200 bg-zinc-50/50 hover:bg-white hover:border-zinc-300'
+                                    ? 'border-[#8b0000] bg-red-50/40 shadow-sm ring-1 ring-red-900/20' 
+                                    : 'border-zinc-200 bg-white hover:bg-zinc-50/80 hover:border-zinc-300'
                             }">
                                 <div>
-                                    <h4 class="font-bold text-sm text-zinc-900 vtm-font uppercase mb-1">${nat.name}</h4>
-                                    <p class="text-xs text-zinc-600 leading-relaxed mb-3">${nat.desc || ''}</p>
-                                </div>
-                                <div class="pt-2 border-t border-zinc-200/80 text-[10px] space-y-1">
-                                    <div class="text-emerald-800 font-semibold">💖 <span class="text-zinc-600">Розрада:</span> ${nat.indulging || 'спокій'}</div>
-                                    <div class="text-red-800 font-semibold">💥 <span class="text-zinc-600">Зрив:</span> ${nat.outburstName || 'спалах'}</div>
+                                    <div class="flex items-start justify-between gap-3 mb-1.5">
+                                        <h4 class="font-bold text-sm text-zinc-900 vtm-font uppercase tracking-wide flex items-center gap-1.5">
+                                            <span>🎭</span> ${nat.name}
+                                        </h4>
+                                        <button onclick="selectV6Nature('${nat.id}')" class="px-3.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer shadow-xs ${
+                                            isSel ? 'bg-[#8b0000] text-white' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300'
+                                        }">
+                                            ${isSel ? 'Обрано' : 'Обрати'}
+                                        </button>
+                                    </div>
+                                    <p class="text-[11px] text-zinc-700 leading-relaxed mb-3">${nat.shortDesc || ''}</p>
+                                    
+                                    <details class="group border-t border-zinc-100 pt-2">
+                                        <summary class="text-[10px] text-[#8b0000] font-bold cursor-pointer select-none list-none inline-flex items-center gap-1 hover:underline">
+                                            <span class="group-open:hidden">▶ Повний опис та спалах</span>
+                                            <span class="hidden group-open:inline">▼ Сховати опис</span>
+                                        </summary>
+                                        <div class="mt-2 text-[11px] text-zinc-700 space-y-2 p-3 bg-zinc-50 rounded-xl border border-zinc-200">
+                                            <div>
+                                                <div class="font-bold text-zinc-900 mb-0.5 text-[10px] uppercase tracking-wider">Повний опис:</div>
+                                                <p class="leading-relaxed text-zinc-800">${nat.desc || ''}</p>
+                                            </div>
+                                            ${nat.indulging ? `
+                                                <div class="pt-2 border-t border-zinc-200/60">
+                                                    <div class="font-bold text-emerald-800 flex items-center gap-1 mb-0.5 text-[10px] uppercase tracking-wider">
+                                                        <span>💖</span> Розрада (Indulging):
+                                                    </div>
+                                                    <p class="leading-relaxed text-zinc-800">${nat.indulging}</p>
+                                                </div>
+                                            ` : ''}
+                                            ${nat.outburst ? `
+                                                <div class="pt-2 border-t border-zinc-200/60">
+                                                    <div class="font-bold text-red-800 flex items-center gap-1 mb-0.5 text-[10px] uppercase tracking-wider">
+                                                        <span>💥</span> Спалах Натури: ${nat.outburstName || 'Спалах'}:
+                                                    </div>
+                                                    <p class="leading-relaxed text-zinc-800">${nat.outburst}</p>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </details>
                                 </div>
                             </div>
                         `;
@@ -2864,6 +3074,15 @@ function selectV6Nature(natureId) {
 // STEP 8: RESOURCES & WEAPONS
 // -----------------------------------------------------------------------------
 function renderV6Step8_ResourcesWeapons() {
+    const tierObj = getV6Tier();
+    const allowedResourceDots = (tierObj && tierObj.freeResourceDots !== undefined) ? tierObj.freeResourceDots : 3;
+    const lpResourceBonuses = getV6LifepathResourceBonuses();
+    const spentResourceDots = Object.keys(v6State.resources || {}).reduce((acc, resId) => {
+        const lpBonus = lpResourceBonuses[resId] || 0;
+        const current = Math.max(v6State.resources[resId] || 0, lpBonus);
+        return acc + Math.max(0, current - lpBonus);
+    }, 0);
+
     return `
         <div class="bg-white p-6 md:p-10 rounded-2xl shadow-sm border border-zinc-200 animate-[fadeIn_0.3s_ease]">
             <div class="border-b border-zinc-200 pb-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2873,17 +3092,45 @@ function renderV6Step8_ResourcesWeapons() {
                 </div>
             </div>
 
+            <!-- Sticky Resource Counter -->
+            <div class="sticky top-0 z-10 bg-white/95 backdrop-blur py-3 border-b border-zinc-200 mb-6 shadow-sm rounded-b-xl px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
+                    <span class="text-zinc-500">Вільні Ресурси (без бонусів Шляхів):</span>
+                    <span class="${spentResourceDots === allowedResourceDots ? 'text-emerald-700 font-bold' : (spentResourceDots > allowedResourceDots ? 'text-red-600 font-bold' : 'text-[#8b0000] font-bold')}">
+                        Витрачено: ${spentResourceDots} / ${allowedResourceDots}
+                    </span>
+                </div>
+                <div class="text-[10px] text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded font-bold border border-zinc-200">
+                    Тір: ${tierObj ? tierObj.name : 'Неонат'} (доступно ${allowedResourceDots} вільних крапок)
+                </div>
+            </div>
+
             <!-- RESOURCES GRID -->
             <div class="mb-10">
-                <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase mb-4 flex items-center gap-2">
-                    <span>🏰</span> Ресурси та Активи (Resources)
-                </h3>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-zinc-900 vtm-font uppercase flex items-center gap-2">
+                            <span>🏰</span> Ресурси та Активи (Resources)
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Розподіліть вільні крапки ресурсів відповідно до вашого рангу (${tierObj ? tierObj.name : 'Неонат'}).</p>
+                    </div>
+                    <div class="flex items-center gap-2 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-200 shrink-0">
+                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-500">Вільні ресурси:</span>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full border transition-all ${
+                            spentResourceDots === allowedResourceDots
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs'
+                                : (spentResourceDots > allowedResourceDots ? 'bg-red-100 text-red-800 border-red-300' : 'bg-amber-100 text-amber-900 border-amber-300')
+                        }">
+                            ${spentResourceDots} / ${allowedResourceDots}
+                        </span>
+                    </div>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     ${(() => {
                         const lpResourceBonuses = getV6LifepathResourceBonuses();
                         return getV6Resources().map(res => {
-                            const currentDots = v6State.resources[res.id] || 0;
                             const lpBonus = lpResourceBonuses[res.id] || 0;
+                            const currentDots = Math.max(v6State.resources[res.id] || 0, lpBonus);
                             const hasLpBonus = lpBonus > 0;
 
                             return `
@@ -2964,10 +3211,13 @@ function renderV6Step8_ResourcesWeapons() {
 }
 
 function setV6ResourceDots(resId, dots) {
-    if (v6State.resources[resId] === dots) {
-        v6State.resources[resId] = dots - 1;
+    const lpBonus = getV6LifepathResourceBonuses()[resId] || 0;
+    const current = Math.max(v6State.resources[resId] || 0, lpBonus);
+    
+    if (current === dots) {
+        v6State.resources[resId] = Math.max(lpBonus, dots - 1);
     } else {
-        v6State.resources[resId] = dots;
+        v6State.resources[resId] = Math.max(lpBonus, dots);
     }
     renderV6UI();
 }
@@ -3004,14 +3254,25 @@ function renderV6Step9_SummarySheet() {
     };
 
     const drawHumanity = () => {
-        let html = '<div class="flex items-center gap-[4px] px-2">';
-        for (let i = 0; i < 10; i++) {
-            if (i >= 3 && i <= 6) {
-               html += '<svg width="12" height="12" viewBox="0 0 12 12" class="fill-none stroke-zinc-400 stroke-[1px]"><circle cx="6" cy="6" r="5" /><circle cx="6" cy="6" r="2" class="fill-zinc-400"/></svg>';
+        const currentScale = (v6State.humanityScale !== undefined && v6State.humanityScale !== null) ? v6State.humanityScale : 0;
+        let html = '<div class="flex items-center gap-1.5 px-1">';
+        [-3, -2, -1, 0, 1, 2, 3].forEach(val => {
+            const isSelected = currentScale === val;
+            const label = val < 0 ? `М${Math.abs(val)}` : (val === 0 ? '0' : `С${val}`);
+            if (isSelected) {
+                html += `
+                    <div class="w-[22px] h-[22px] rounded-full bg-black text-white font-bold flex items-center justify-center text-[7.5px] font-sans border-2 border-black shadow-sm shrink-0" title="Поточний стан Людяності: ${label}">
+                        ${label}
+                    </div>
+                `;
             } else {
-               html += '<svg width="12" height="12" viewBox="0 0 12 12" class="fill-none stroke-black stroke-[1.5px]"><circle cx="6" cy="6" r="5" /><circle cx="6" cy="6" r="2" class="fill-black"/></svg>';
+                html += `
+                    <div class="w-[22px] h-[22px] rounded-full bg-white text-zinc-600 font-semibold flex items-center justify-center text-[7.5px] font-sans border border-zinc-400 shrink-0">
+                        ${label}
+                    </div>
+                `;
             }
-        }
+        });
         html += '</div>';
         return html;
     };
@@ -3048,7 +3309,13 @@ function renderV6Step9_SummarySheet() {
         `;
     }).join('');
 
-    const resList = Object.entries(v6State.resources).filter(([_, d]) => d > 0);
+    const lpResourceBonuses = getV6LifepathResourceBonuses();
+    const effectiveResources = {};
+    getV6Resources().forEach(res => {
+        const total = Math.max(v6State.resources[res.id] || 0, lpResourceBonuses[res.id] || 0);
+        if (total > 0) effectiveResources[res.id] = total;
+    });
+    const resList = Object.entries(effectiveResources).filter(([_, d]) => d > 0);
     let resourcesHtml = '';
     for(let i=0; i<8; i++) {
         if(i < resList.length) {
@@ -3071,35 +3338,61 @@ function renderV6Step9_SummarySheet() {
         }
     }
 
-    const activeDiscs = Object.entries(v6State.disciplines).filter(([_, val]) => val > 0);
+    const activeDiscs = Object.entries(v6State.disciplines || {}).filter(([_, val]) => val > 0);
     let discHtml = '';
-    for(let i=0; i<4; i++) {
-        if(i < activeDiscs.length) {
-            const [discId, dots] = activeDiscs[i];
+    
+    if (activeDiscs.length > 0) {
+        activeDiscs.forEach(([discId, dots]) => {
             const disc = getV6Disciplines().find(d => d.id === discId);
             const name = disc ? disc.name.split(' (')[0] : discId;
+            const powers = (disc && Array.isArray(disc.powers))
+                ? disc.powers.filter(p => Array.isArray(v6State.selectedPowers) && v6State.selectedPowers.includes(p.id))
+                : [];
+            
             discHtml += `
-                <div class="mb-4">
-                    <div class="flex justify-between items-end border-b border-zinc-400 pb-0.5 mb-1.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider">${name}</span>
+                <div class="mb-2.5 pb-1 border-b border-zinc-200 last:border-b-0 last:pb-0">
+                    <div class="flex justify-between items-end border-b-[1.5px] border-black pb-0.5 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider font-serif text-black">${name}</span>
                         ${drawDots(dots, 5)}
                     </div>
-                    <div class="border-b border-zinc-200 h-4 mb-1"></div>
-                    <div class="border-b border-zinc-200 h-4"></div>
+                    ${powers.length > 0 ? `
+                        <div class="space-y-1 pl-1 mb-1">
+                            ${powers.map(p => `
+                                <div class="text-[8.5px] border-b border-zinc-100 last:border-0 pb-0.5 leading-tight">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="font-bold text-zinc-900 truncate">• ${p.name}</span>
+                                        <span class="text-[6.5px] text-[#8b0000] font-sans font-bold uppercase px-1 py-0.2 bg-red-50 rounded border border-red-200 shrink-0">
+                                            Ранг ${p.rank} • ${formatV6Activate(p.activate)} • ${formatV6Cost(p.cost)}
+                                        </span>
+                                    </div>
+                                    ${p.shortDesc ? `<p class="text-[7.5px] text-zinc-600 mt-0.5 leading-snug line-clamp-1">${p.shortDesc}</p>` : (p.desc ? `<p class="text-[7.5px] text-zinc-600 mt-0.5 leading-snug line-clamp-1">${p.desc.split('\n')[0]}</p>` : '')}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="pl-1 text-[7.5px] text-zinc-400 italic py-0.5">
+                            • Не обрано сил (${dots} ⬤ доступно)
+                        </div>
+                        <div class="border-b border-dashed border-zinc-200 h-2.5 mb-1"></div>
+                    `}
                 </div>
             `;
-        } else {
-            discHtml += `
-                <div class="mb-4">
-                    <div class="flex justify-between items-end border-b border-zinc-400 pb-0.5 mb-1.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-transparent">Empty</span>
-                        ${drawDots(0, 5)}
-                    </div>
-                    <div class="border-b border-zinc-200 h-4 mb-1"></div>
-                    <div class="border-b border-zinc-200 h-4"></div>
+        });
+    }
+
+    // Fill placeholder slots if less than 2
+    const totalSlots = Math.max(2, activeDiscs.length);
+    for (let i = activeDiscs.length; i < totalSlots; i++) {
+        discHtml += `
+            <div class="mb-2.5 pb-1 border-b border-zinc-200 last:border-b-0 last:pb-0">
+                <div class="flex justify-between items-end border-b-[1.5px] border-black pb-0.5 mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-300 font-serif">Дисципліна</span>
+                    ${drawDots(0, 5)}
                 </div>
-            `;
-        }
+                <div class="border-b border-zinc-200 h-3 mb-1"></div>
+                <div class="border-b border-zinc-200 h-3"></div>
+            </div>
+        `;
     }
 
     return `
@@ -3111,13 +3404,9 @@ function renderV6Step9_SummarySheet() {
                     <p class="text-xs text-zinc-500 mt-0.5">Відформатовано за шаблоном 6-ї редакції</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="printV6CharacterSheet()" class="px-4 py-2 bg-[#8b0000] hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow flex items-center gap-1.5">
+                    <button onclick="printV6CharacterSheet()" class="px-5 py-2.5 bg-[#8b0000] hover:bg-red-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow flex items-center gap-2 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         <span>Друкувати бланк</span>
-                    </button>
-                    <button onclick="saveV6DraftToFile()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow flex items-center gap-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Зберегти JSON</span>
                     </button>
                 </div>
             </div>
@@ -3253,29 +3542,29 @@ function renderV6Step9_SummarySheet() {
                     <div class="flex justify-between items-end border-b-[1.5px] border-black pb-2 mb-4 px-2">
                         <div class="flex items-center gap-2">
                             <span class="uppercase font-bold text-[9px] tracking-widest">Віте (${vitaeMax})</span>
-                            <div class="flex gap-1">${drawDots(3, 11)}</div>
+                            <div class="flex gap-1">${drawDots(0, Math.min(15, vitaeMax))}</div>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="uppercase font-bold text-[9px] tracking-widest">Сила Волі (${willpowerMax})</span>
-                            <div class="flex gap-1">${drawDots(willpowerMax, 10)}</div>
+                            <div class="flex gap-1">${drawDots(0, Math.min(15, willpowerMax))}</div>
                         </div>
                     </div>
 
                     <div class="border-[1.5px] border-black pt-5 pb-3 px-2 mb-6 text-center relative mt-4">
                         <div class="text-[10px] uppercase font-bold tracking-[0.2em] absolute -top-[9px] left-1/2 transform -translate-x-1/2 bg-white px-2">Шкала Людяності</div>
-                        <div class="flex justify-between items-center px-4">
-                            <div class="flex flex-col items-center relative -left-4">
-                                <div class="flex gap-1 mb-1">${drawDots(2, 5)}</div>
-                                <span class="text-[7.5px] font-bold uppercase tracking-wider">Звір</span>
+                        <div class="flex justify-between items-center px-3">
+                            <div class="flex flex-col items-center relative -left-1">
+                                <div class="flex gap-1 mb-1">${drawDots(v6State.beastTracker || 0, 5)}</div>
+                                <span class="text-[7.5px] font-bold uppercase tracking-wider text-red-950">Звір (${v6State.beastTracker || 0}/5)</span>
                             </div>
-                            <div class="flex-1 flex justify-center items-center gap-2 text-[9px] font-bold uppercase text-zinc-500">
-                                <span>Чудовисько</span>
+                            <div class="flex-1 flex justify-center items-center gap-1.5 text-[8.5px] font-bold uppercase text-zinc-600">
+                                <span class="text-red-950 font-serif">🐺 Чудовисько</span>
                                 ${drawHumanity()}
-                                <span>Смертний</span>
+                                <span class="text-emerald-950 font-serif">Смертний 🕊️</span>
                             </div>
-                            <div class="flex flex-col items-center relative -right-4">
-                                <div class="flex gap-1 mb-1">${drawDots(1, 5)}</div>
-                                <span class="text-[7.5px] font-bold uppercase tracking-wider">Натура</span>
+                            <div class="flex flex-col items-center relative -right-1">
+                                <div class="flex gap-1 mb-1">${drawDots(v6State.natureTracker || 0, 5)}</div>
+                                <span class="text-[7.5px] font-bold uppercase tracking-wider text-emerald-950">Натура (${v6State.natureTracker || 0}/5)</span>
                             </div>
                         </div>
                     </div>
@@ -3304,30 +3593,38 @@ function renderV6Step9_SummarySheet() {
                             </div>
                         </div>
 
-                        <!-- Col 2: Blank box & Items & Disciplines -->
-                        <div class="w-[35%] flex flex-col">
-                            <div class="border-[1.5px] border-black h-[180px] mb-5"></div>
-                            
-                            <div class="mb-5">
+                        <!-- Col 2: Disciplines & Powers, Items & Weapons, Notes -->
+                        <div class="w-[35%] flex flex-col space-y-4">
+                            <div>
                                 <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
-                                    <span class="bg-white pr-2">Предмети</span>
-                                    <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
-                                </h3>
-                                <div class="h-20 text-[9px]">
-                                    ${v6State.selectedWeapons.map(wId => {
-                                        const w = getV6Weapons().find(item => item.id === wId);
-                                        return w ? `<div class="border-b border-zinc-200 py-0.5">${w.name} (Шкода: ${w.damage || 2})</div>` : '';
-                                    }).join('')}
-                                </div>
-                            </div>
-                            
-                            <div class="flex-1">
-                                <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
-                                    <span class="bg-white pr-2">Дисципліни</span>
+                                    <span class="bg-white pr-2">Дисципліни та Сили</span>
                                     <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
                                 </h3>
                                 <div>
                                     ${discHtml}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
+                                    <span class="bg-white pr-2">Предмети та Зброя</span>
+                                    <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
+                                </h3>
+                                <div class="text-[9px] min-h-[45px] space-y-0.5">
+                                    ${v6State.selectedWeapons.length > 0 ? v6State.selectedWeapons.map(wId => {
+                                        const w = getV6Weapons().find(item => item.id === wId);
+                                        return w ? `<div class="border-b border-zinc-100 pb-0.5 flex justify-between items-center"><span class="font-medium truncate pr-1">• ${w.name}</span><span class="text-[7.5px] text-zinc-500 font-mono shrink-0">Шкода: ${w.damage || 2}</span></div>` : '';
+                                    }).join('') : '<p class="text-zinc-400 italic">Відсутні</p>'}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-1 relative">
+                                    <span class="bg-white pr-2">Нотатки</span>
+                                    <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
+                                </h3>
+                                <div class="border border-dashed border-zinc-300 min-h-[42px] p-1.5 text-[8px] text-zinc-400">
+                                    ${v6State.characterDetails.concept ? `<span class="text-zinc-700 font-semibold">Концепт: ${v6State.characterDetails.concept}</span>` : 'Місце для додаткових записів...'}
                                 </div>
                             </div>
                         </div>
@@ -3365,11 +3662,11 @@ function renderV6Step9_SummarySheet() {
                                     <span class="bg-white pr-2">Переваги</span>
                                     <div class="absolute -right-1 -top-1 w-2 h-2 border-r border-t border-black"></div>
                                 </h3>
-                                <div class="text-[9px] min-h-[45px] space-y-0.5">
-                                    ${v6State.selectedMerits.map(mId => {
+                                <div class="text-[9px] min-h-[45px] space-y-0.5 mb-4">
+                                    ${v6State.selectedMerits.length > 0 ? v6State.selectedMerits.map(mId => {
                                         const merit = getV6Merits().find(m => m.id === mId);
                                         return merit ? `<div class="border-b border-zinc-100 pb-0.5">• ${merit.name}</div>` : '';
-                                    }).join('')}
+                                    }).join('') : '<p class="text-zinc-400 italic">Відсутні</p>'}
                                 </div>
                             </div>
                             
@@ -3390,7 +3687,7 @@ function renderV6Step9_SummarySheet() {
                                 </h3>
                                 <div class="text-[9px] min-h-[45px]">
                                     <strong class="uppercase text-[9px]">${natureObj ? natureObj.name : ''}</strong>
-                                    <p class="text-zinc-600 mt-0.5 leading-tight line-clamp-3">${natureObj ? natureObj.desc : ''}</p>
+                                    <p class="text-zinc-600 mt-0.5 leading-tight">${natureObj ? (natureObj.shortDesc || natureObj.desc || '') : ''}</p>
                                 </div>
                             </div>
                             
@@ -3423,8 +3720,195 @@ function updateV6Header() {
     if (nameEl) nameEl.innerText = v6State.characterDetails.name || 'Безіменний';
 }
 
+function generateV6PrintableHTML() {
+    const sheetEl = document.getElementById('v6-official-sheet');
+    const content = sheetEl ? sheetEl.outerHTML : '';
+    const charName = (v6State.characterDetails && v6State.characterDetails.name) ? v6State.characterDetails.name : 'Бланк_VtM_v6';
+
+    return `<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${charName} — Vampire: The Masquerade 6e Playtest Sheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 4mm 5mm 4mm 5mm;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        html, body {
+            background: #f4f4f5;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .vtm-font {
+            font-family: 'Cinzel', serif;
+        }
+        .print-bar {
+            background: #18181b;
+            color: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .print-btn {
+            background: #8b0000;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 9px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .print-btn:hover {
+            background: #b91c1c;
+        }
+        .sheet-wrapper {
+            padding: 24px 0;
+            display: flex;
+            justify-content: center;
+        }
+        @media print {
+            .print-bar, .print\\:hidden {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            body {
+                background: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .sheet-wrapper {
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+            #v6-official-sheet {
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 282mm !important;
+                min-height: 282mm !important;
+                margin: 0 auto !important;
+                padding: 5mm !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-bar print:hidden">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="color: #ef4444; font-size: 24px;">🦇</span>
+            <div>
+                <div style="color: #ffffff; font-family: 'Cinzel', serif; font-size: 14px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;">
+                    Vampire: The Masquerade (6th Edition Playtest) — Бланк Персонажа
+                </div>
+                <div style="color: #a1a1aa; font-size: 12px;">
+                    Формат: 1 сторінка A4 • Характеристики, Звір, Натура, Дисципліни та Ресурси
+                </div>
+            </div>
+        </div>
+        <div>
+            <button class="print-btn" onclick="window.print()">
+                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>Роздрукувати / Зберегти як PDF (Ctrl+P)</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="sheet-wrapper">
+        ${content}
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                try {
+                    window.focus();
+                    window.print();
+                } catch(err) {
+                    console.log('Direct print notice:', err);
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>`;
+}
+
+function openV6PrintSheetInNewWindow() {
+    const htmlDoc = generateV6PrintableHTML();
+
+    let opened = false;
+    try {
+        const printWin = window.open('', '_blank');
+        if (printWin && printWin.document) {
+            printWin.document.open();
+            printWin.document.write(htmlDoc);
+            printWin.document.close();
+            opened = true;
+        }
+    } catch (e) {
+        console.warn('Direct window open document.write failed:', e);
+    }
+
+    if (!opened) {
+        try {
+            const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                a.remove();
+                URL.revokeObjectURL(blobUrl);
+            }, 30000);
+        } catch (err) {
+            console.error('Blob fallback print failed:', err);
+        }
+    }
+}
+
 function printV6CharacterSheet() {
-    window.print();
+    openV6PrintSheetInNewWindow();
+
+    try {
+        window.focus();
+        window.print();
+    } catch (e) {
+        // Ignored if blocked in iframe
+    }
 }
 
 function saveV6DraftToFile() {
@@ -3492,6 +3976,8 @@ window.selectV6Nature = selectV6Nature;
 window.setV6ResourceDots = setV6ResourceDots;
 window.toggleV6Weapon = toggleV6Weapon;
 window.printV6CharacterSheet = printV6CharacterSheet;
+window.openV6PrintSheetInNewWindow = openV6PrintSheetInNewWindow;
+window.generateV6PrintableHTML = generateV6PrintableHTML;
 window.saveV6DraftToFile = saveV6DraftToFile;
 window.rollV6Dice = rollV6Dice;
 window.v6State = v6State;
