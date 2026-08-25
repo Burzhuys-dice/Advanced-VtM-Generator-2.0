@@ -2752,6 +2752,28 @@ function formatV6Duration(val) {
     return map[val] || val;
 }
 
+function formatV6PowerType(val) {
+    if (!val) return 'Фізична';
+    const map = {
+        'physical': 'Фізична',
+        'mental': 'Ментальна',
+        'social': 'Соціальна',
+        'special': 'Особлива',
+        'sorcery': 'Чаклунська',
+        'ritual': 'Ритуал'
+    };
+    return map[val.toLowerCase()] || val;
+}
+
+function formatMaturingText(mat) {
+    if (!mat) return '';
+    return mat.replace(/\*\s*\*\*([^\*]+)\*\*\s*:?/g, '<span class="font-bold text-zinc-900 not-italic">• $1:</span>')
+              .split('\n')
+              .filter(Boolean)
+              .map(l => `<p class="mt-0.5 first:mt-0">${l}</p>`)
+              .join('');
+}
+
 // -----------------------------------------------------------------------------
 // V6 DISCIPLINE POWER MODAL HANDLER
 // -----------------------------------------------------------------------------
@@ -4231,35 +4253,78 @@ function generateV6DetailsPagesHTML() {
         </div>
     </div>`;
 
-    // Page 4+: Disciplines (Chunked pagination with dynamic typography)
+    // Page 4+: Disciplines & Powers (Full descriptions)
     let selectedPowers = [];
-    Object.keys(v6State.disciplinePowers || {}).forEach(discId => {
-        const powersArr = v6State.disciplinePowers[discId];
-        if (powersArr && powersArr.length > 0) {
-            const disc = getV6Disciplines().find(d => d.id === discId);
-            const allPowers = disc && disc.powers ? disc.powers : [];
-            powersArr.forEach(pId => {
-                const p = allPowers.find(x => x.id === pId);
+    const allDisciplines = getV6Disciplines();
+
+    // 1. From v6State.selectedPowers
+    if (Array.isArray(v6State.selectedPowers) && v6State.selectedPowers.length > 0) {
+        v6State.selectedPowers.forEach(pId => {
+            for (const d of allDisciplines) {
+                const p = (d.powers || []).find(x => x.id === pId);
                 if (p) {
-                    selectedPowers.push({ discId, discName: disc?.name || discId, power: p });
+                    if (!selectedPowers.some(sp => sp.power.id === p.id)) {
+                        selectedPowers.push({ discId: d.id, discName: d.name, power: p });
+                    }
+                    break;
                 }
-            });
-        }
-    });
+            }
+        });
+    }
+
+    // 2. From v6State.disciplinePowers (if present as an object)
+    if (v6State.disciplinePowers && typeof v6State.disciplinePowers === 'object') {
+        Object.keys(v6State.disciplinePowers).forEach(discId => {
+            const powersArr = v6State.disciplinePowers[discId];
+            if (Array.isArray(powersArr)) {
+                const d = allDisciplines.find(x => x.id === discId);
+                const allPowers = d && d.powers ? d.powers : [];
+                powersArr.forEach(pId => {
+                    const p = allPowers.find(x => x.id === pId);
+                    if (p && !selectedPowers.some(sp => sp.power.id === p.id)) {
+                        selectedPowers.push({
+                            discId: discId,
+                            discName: d ? d.name : discId,
+                            power: p
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // 3. Fallback: If no powers were explicitly chosen, but character has dots in disciplines, populate with all powers up to current dots
+    if (selectedPowers.length === 0) {
+        Object.entries(v6State.disciplines || {}).forEach(([discId, dots]) => {
+            if (dots > 0) {
+                const d = allDisciplines.find(x => x.id === discId);
+                if (d && Array.isArray(d.powers)) {
+                    d.powers.filter(p => (p.rank || p.level || 1) <= dots).forEach(p => {
+                        if (!selectedPowers.some(sp => sp.power.id === p.id)) {
+                            selectedPowers.push({
+                                discId: d.id,
+                                discName: d.name,
+                                power: p
+                            });
+                        }
+                    });
+                }
+            }
+        });
+    }
 
     let p4Html = '';
     
     if (selectedPowers.length > 0) {
-        // Group powers into pages so no single discipline page ever overflows (max 4 powers or ~1400 chars per page)
         const DISC_PAGE_MAX_POWERS = 4;
-        const DISC_PAGE_MAX_CHARS = 1300;
+        const DISC_PAGE_MAX_CHARS = 2600;
 
         let powerPages = [];
         let curPagePowers = [];
         let curPageChars = 0;
 
         selectedPowers.forEach(item => {
-            const itemChars = (item.power.name + ' ' + (item.power.desc || '')).length + 200;
+            const itemChars = (item.power.name + ' ' + (item.power.desc || '') + ' ' + (item.power.maturing || '')).length;
             if (curPagePowers.length >= DISC_PAGE_MAX_POWERS || (curPageChars + itemChars > DISC_PAGE_MAX_CHARS && curPagePowers.length > 0)) {
                 powerPages.push(curPagePowers);
                 curPagePowers = [item];
@@ -4274,53 +4339,84 @@ function generateV6DetailsPagesHTML() {
         }
 
         p4Html = powerPages.map((pagePowers, pageIdx) => {
-            const pageCharsTotal = pagePowers.reduce((acc, it) => acc + (it.power.name + ' ' + (it.power.desc || '')).length + 150, 0);
+            const pageCharsTotal = pagePowers.reduce((acc, it) => acc + (it.power.name + ' ' + (it.power.desc || '') + ' ' + (it.power.maturing || '')).length, 0);
             const dynDisc = getV6DynamicTypography(pageCharsTotal, pagePowers.length);
 
-            // Group powers on this page by discipline
-            let powersByDisc = {};
-            pagePowers.forEach(item => {
-                if (!powersByDisc[item.discId]) powersByDisc[item.discId] = { name: item.discName, powers: [] };
-                powersByDisc[item.discId].powers.push(item.power);
-            });
+            // Split evenly between left and right column on this page
+            const mid = Math.ceil(pagePowers.length / 2);
+            const leftPowers = pagePowers.slice(0, mid);
+            const rightPowers = pagePowers.slice(mid);
 
-            let discHtmlList = [];
-            Object.keys(powersByDisc).forEach(discId => {
-                const discData = powersByDisc[discId];
-                let discHtmlStr = `
-                    <div class="${dynDisc.mbSection} break-inside-avoid">
-                        <h2 class="font-serif font-bold uppercase tracking-widest mb-1" style="font-size: ${dynDisc.sectionTitleSize};">${discData.name.split(' (')[0].toUpperCase()}</h2>
-                        <div class="w-full h-0.5 bg-black mb-2"></div>
-                `;
+            const renderPowerCard = (item) => {
+                const p = item.power;
+                const pType = formatV6PowerType(p.type);
+                const pCost = formatV6Cost(p.cost);
+                const pAction = formatV6Activate(p.activate || p.action);
+                const pDuration = formatV6Duration(p.duration);
+                const pRankName = p.rankName || (p.rank ? `${p.rank}-крапкова` : (p.level ? `${p.level}-крапкова` : '1-крапкова'));
+                const discTitle = item.discName ? item.discName.split(' (')[0].toUpperCase() : item.discId.toUpperCase();
                 
-                discData.powers.forEach(p => {
-                    let pType = p.type || 'Дія';
-                    let pCost = p.cost || 'Немає';
-                    let pPrereq = p.prereq ? `Передумова: ${p.prereq}` : '';
-                    
-                    discHtmlStr += `
-                        <div class="${dynDisc.mbItem} break-inside-avoid">
-                            <h3 class="font-bold italic border-b-[1.5px] border-black pb-0.5 ${dynDisc.mbTitle}" style="font-size: ${dynDisc.itemTitleSize};">${escapeV6Html(p.name)}</h3>
-                            <p class="italic text-zinc-500 mb-1" style="font-size: ${dynDisc.metaSize};">${p.level}-крапкова Сила${pPrereq ? ` (${escapeV6Html(pPrereq)})` : ''}</p>
-                            
-                            <div class="bg-black text-white font-bold uppercase grid grid-cols-3 text-center tracking-widest mb-1" style="font-size: ${dynDisc.metaSize};">
-                                <div class="py-0.5 border-r border-zinc-700">Активація</div>
-                                <div class="py-0.5 border-r border-zinc-700">Тип</div>
-                                <div class="py-0.5">Вартість</div>
+                return `
+                    <div class="border border-zinc-400/90 bg-white p-3 rounded-lg flex flex-col ${dynDisc.mbItem} break-inside-avoid shadow-xs">
+                        <div class="flex items-start justify-between gap-2 border-b border-black pb-1 mb-1.5">
+                            <div>
+                                <div class="text-[9px] font-bold uppercase tracking-widest text-[#8b0000] font-sans">${escapeV6Html(discTitle)}</div>
+                                <h3 class="font-bold italic text-black font-serif leading-tight ${dynDisc.mbTitle}" style="font-size: ${dynDisc.itemTitleSize};">${escapeV6Html(p.name)}</h3>
                             </div>
-                            <div class="grid grid-cols-3 text-center border-b border-black mb-1.5 pb-0.5 font-medium" style="font-size: ${dynDisc.metaSize};">
-                                <div>${escapeV6Html(p.action || 'Дія')}</div>
-                                <div>${escapeV6Html(pType)}</div>
-                                <div>${escapeV6Html(pCost)}</div>
-                            </div>
-                            
-                            <p class="text-zinc-800" style="font-size: ${dynDisc.bodySize}; line-height: ${dynDisc.lineHeight};">${escapeV6Html(p.desc)}</p>
+                            <span class="text-[8.5px] font-bold px-1.5 py-0.5 bg-black text-white rounded shrink-0 font-sans">
+                                ${escapeV6Html(pRankName)}
+                            </span>
                         </div>
-                    `;
-                });
-                discHtmlStr += `</div>`;
-                discHtmlList.push(discHtmlStr);
-            });
+
+                        <!-- 4-Parameter Bar -->
+                        <div class="grid grid-cols-4 text-center bg-zinc-100/90 rounded border border-zinc-300 text-[8.5px] mb-1.5 font-sans font-medium">
+                            <div class="py-0.5 border-r border-zinc-300 px-0.5">
+                                <span class="block text-[7px] uppercase text-zinc-500 font-bold leading-tight">Активація</span>
+                                <span class="truncate block">${escapeV6Html(pAction)}</span>
+                            </div>
+                            <div class="py-0.5 border-r border-zinc-300 px-0.5">
+                                <span class="block text-[7px] uppercase text-zinc-500 font-bold leading-tight">Тип</span>
+                                <span class="truncate block">${escapeV6Html(pType)}</span>
+                            </div>
+                            <div class="py-0.5 border-r border-zinc-300 px-0.5">
+                                <span class="block text-[7px] uppercase text-zinc-500 font-bold leading-tight">Вартість</span>
+                                <span class="truncate block">${escapeV6Html(pCost)}</span>
+                            </div>
+                            <div class="py-0.5 px-0.5">
+                                <span class="block text-[7px] uppercase text-zinc-500 font-bold leading-tight">Тривалість</span>
+                                <span class="truncate block">${escapeV6Html(pDuration)}</span>
+                            </div>
+                        </div>
+
+                        ${(p.distance || (p.difficulty && p.difficulty !== 'None' && p.difficulty !== 'Немає') || p.attribute) ? `
+                            <div class="flex items-center gap-2 flex-wrap text-[8.5px] text-zinc-600 font-sans mb-1.5">
+                                ${p.distance ? `<span>📏 <strong>Дистанція:</strong> ${escapeV6Html(formatV6Distance(p.distance))}</span>` : ''}
+                                ${p.difficulty && p.difficulty !== 'None' && p.difficulty !== 'Немає' ? `<span>🎯 <strong>Складність:</strong> ${escapeV6Html(formatV6Difficulty(p.difficulty))}</span>` : ''}
+                                ${p.attribute ? `<span>🎲 <strong>Пул:</strong> ${escapeV6Html(formatV6Attribute(p.attribute))}</span>` : ''}
+                            </div>
+                        ` : ''}
+
+                        ${p.prereq ? `<div class="text-[9px] italic text-zinc-600 mb-1 leading-snug"><strong>Передумова:</strong> ${escapeV6Html(p.prereq)}</div>` : ''}
+
+                        <!-- Description -->
+                        <div class="text-zinc-800 space-y-1 mb-1.5" style="font-size: ${dynDisc.bodySize}; line-height: ${dynDisc.lineHeight};">
+                            ${(p.desc || '').split('\n\n').map(par => `<p>${escapeV6Html(par.replace(/\n/g, ' '))}</p>`).join('')}
+                        </div>
+
+                        <!-- Maturing / Дозрівання -->
+                        ${p.maturing ? `
+                            <div class="mt-auto pt-1.5 border-t border-dashed border-zinc-300 text-zinc-700 bg-amber-50/50 p-2 rounded border border-amber-200" style="font-size: ${dynDisc.metaSize};">
+                                <div class="font-bold uppercase tracking-wider text-[#8b0000] text-[8.5px] mb-0.5 flex items-center gap-1">
+                                    <span>🌱</span> Дозрівання сили (Maturing)
+                                </div>
+                                <div class="leading-snug space-y-0.5 italic">
+                                    ${formatMaturingText(p.maturing)}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            };
 
             const pageSubtitle = powerPages.length > 1 ? ` (Частина ${pageIdx + 1} з ${powerPages.length})` : '';
 
@@ -4336,12 +4432,17 @@ function generateV6DetailsPagesHTML() {
                 
                 <div class="relative z-10 h-full flex flex-col justify-between p-[4mm] overflow-hidden">
                     <div class="shrink-0">
-                        <h1 class="font-serif font-bold text-[18px] uppercase tracking-widest text-center mb-1">СИЛИ ДИСЦИПЛІН${pageSubtitle}</h1>
-                        <p class="text-center text-zinc-600 mb-3 italic text-[13px]">Дисципліни та надприродні сили персонажа ${charName}.</p>
+                        <h1 class="font-serif font-bold text-[18px] uppercase tracking-widest text-center mb-1">СИЛИ ТА ЗДАТНОСТІ ДИСЦИПЛІН${pageSubtitle}</h1>
+                        <p class="text-center text-zinc-600 mb-2 italic text-[12.5px]">Повний опис та правила використання надприродних здібностей персонажа ${charName}.</p>
                     </div>
                     
-                    <div class="columns-1 md:columns-2 gap-6 flex-1 w-full overflow-hidden" style="column-fill: auto;">
-                        ${discHtmlList.join('')}
+                    <div class="flex gap-4 flex-1 overflow-hidden items-start">
+                        <div class="w-1/2 flex flex-col overflow-hidden">
+                            ${leftPowers.map(renderPowerCard).join('')}
+                        </div>
+                        <div class="w-1/2 flex flex-col overflow-hidden">
+                            ${rightPowers.map(renderPowerCard).join('')}
+                        </div>
                     </div>
                     <div class="shrink-0 text-center text-[11px] font-bold tracking-widest uppercase pt-1">${charName}</div>
                 </div>
