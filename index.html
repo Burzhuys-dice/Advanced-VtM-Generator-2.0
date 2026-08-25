@@ -574,15 +574,16 @@
                 <input type="text" id="sire-name" placeholder="Ім'я творця..." class="w-full rounded border-gray-300 p-2 text-sm border bg-white focus:border-[#8b0000] focus:ring-[#8b0000] outline-none shadow-sm transition-colors">
             </div>
             <div>
-                <label for="generation-val" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Покоління</label>
-                <select id="generation-val" class="w-full rounded border-gray-300 p-2 text-sm border bg-white">
-                    <option value="13-те">13-те покоління (Неонат)</option>
-                    <option value="12-те">12-те покоління</option>
-                    <option value="11-те">11-те покоління</option>
-                    <option value="10-те">10-те покоління (Анцила)</option>
-                    <option value="14-те">14-те покоління (Рідкокровець)</option>
-                    <option value="15-те">15-те покоління (Рідкокровець)</option>
-                </select>
+                <label for="generation-val" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Покоління: <span id="generation-display" class="text-[#8b0000] font-bold">13-те</span>
+                </label>
+                <input type="range" id="generation-val" min="5" max="16" value="13" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#8b0000]" oninput="document.getElementById('generation-display').innerText = this.value + '-те'" onchange="handleGenerationChange(this.value)">
+                <div class="flex justify-between text-[10px] text-gray-400 px-1 mt-1 font-mono">
+                    <span>5</span>
+                    <span>10</span>
+                    <span>13</span>
+                    <span>16</span>
+                </div>
             </div>
         </div>
 
@@ -833,6 +834,14 @@
                 <div>
                     <div class="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">Вади (Flaws):</div>
                     <div id="flaws-tracker" class="px-3 py-1 text-sm font-bold rounded border tracker-badge invalid">0 / 2 ⬤</div>
+                </div>
+                <div id="tb-merits-container" class="hidden">
+                    <div class="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">Блага Рідкокровних:</div>
+                    <div id="tb-merits-tracker" class="px-3 py-1 text-sm font-bold rounded border tracker-badge invalid">0 / 1-3 ⬤</div>
+                </div>
+                <div id="tb-flaws-container" class="hidden">
+                    <div class="text-[10px] font-bold uppercase text-gray-500 mb-1 tracking-widest">Вади Рідкокровних:</div>
+                    <div id="tb-flaws-tracker" class="px-3 py-1 text-sm font-bold rounded border tracker-badge invalid">0 / 1-3 ⬤</div>
                 </div>
             </div>
             

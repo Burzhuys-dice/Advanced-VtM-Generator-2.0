@@ -614,14 +614,19 @@ function renderPredatorTypes() {
             
             let optionsHtml = '';
             if (isSelected) {
-                let discOpts = (predator.discipline_options || []).map(opt => `
-                    <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded border border-transparent hover:border-gray-200 transition-colors" onclick="event.stopPropagation()">
-                        <input type="radio" name="pred_disc" value="${opt.id}" 
-                            onchange="setPredatorChoice('discipline', '${opt.id}')"
-                            ${state.predatorChoices.discipline === opt.id ? 'checked' : ''} class="accent-[#4b0082]">
-                        ${opt.name}
-                    </label>
-                `).join('');
+                let discOpts = '';
+                if (isClanThinBlood()) {
+                    discOpts = '<div class="text-sm text-gray-500 italic p-1.5">Рідкокровні не отримують дисциплін від типу хижака.</div>';
+                } else {
+                    discOpts = (predator.discipline_options || []).map(opt => `
+                        <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded border border-transparent hover:border-gray-200 transition-colors" onclick="event.stopPropagation()">
+                            <input type="radio" name="pred_disc" value="${opt.id}" 
+                                onchange="setPredatorChoice('discipline', '${opt.id}')"
+                                ${state.predatorChoices.discipline === opt.id ? 'checked' : ''} class="accent-[#4b0082]">
+                            ${opt.name}
+                        </label>
+                    `).join('');
+                }
 
                 let skillOpts = (predator.skill_options || []).map(opt => `
                     <label class="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded border border-transparent hover:border-gray-200 transition-colors" onclick="event.stopPropagation()">
@@ -1562,30 +1567,7 @@ function renderAvailableAdvantages() {
     let sectionsHtml = '';
     let totalRenderedCategories = coreCards.length + specificCards.length + advancedCards.length;
 
-    // 1. ОСНОВНІ КАТЕГОРІЇ
-    if (coreCards.length > 0) {
-        sectionsHtml += `
-            <div class="border border-emerald-200/90 rounded-2xl p-5 bg-emerald-50/20 shadow-xs mb-8">
-                <div class="flex flex-wrap items-center justify-between border-b border-emerald-200 pb-3 mb-5 gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <span class="text-xl">🌟</span>
-                        <div>
-                            <h3 class="font-bold text-base sm:text-lg text-emerald-950 uppercase tracking-wider vtm-font">Розділ: Основні категорії</h3>
-                            <p class="text-xs text-emerald-800/80">Зовнішність, Залежності, Інше, Надбання, Психологічні, Харчування, Мови</p>
-                        </div>
-                    </div>
-                    <span class="text-xs font-bold px-3 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-full shadow-2xs">
-                        ${coreCards.length} ${getCategoriesCountWord(coreCards.length)}
-                    </span>
-                </div>
-                <div class="space-y-6">
-                    ${coreCards.join('')}
-                </div>
-            </div>
-        `;
-    }
-
-    // 2. СПЕЦИФІЧНІ КАТЕГОРІЇ
+    // 1. СПЕЦИФІЧНІ КАТЕГОРІЇ (винесені на початок)
     const isSpecificFilterActive = filterCat === 'all' || getCategorySection(filterCat) === 'specific';
     if (isSpecificFilterActive) {
         let specificContent = '';
@@ -1631,6 +1613,29 @@ function renderAvailableAdvantages() {
                 </div>
             `;
         }
+    }
+
+    // 2. ОСНОВНІ КАТЕГОРІЇ
+    if (coreCards.length > 0) {
+        sectionsHtml += `
+            <div class="border border-emerald-200/90 rounded-2xl p-5 bg-emerald-50/20 shadow-xs mb-8">
+                <div class="flex flex-wrap items-center justify-between border-b border-emerald-200 pb-3 mb-5 gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">🌟</span>
+                        <div>
+                            <h3 class="font-bold text-base sm:text-lg text-emerald-950 uppercase tracking-wider vtm-font">Розділ: Основні категорії</h3>
+                            <p class="text-xs text-emerald-800/80">Зовнішність, Залежності, Інше, Надбання, Психологічні, Харчування, Мови</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold px-3 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-full shadow-2xs">
+                        ${coreCards.length} ${getCategoriesCountWord(coreCards.length)}
+                    </span>
+                </div>
+                <div class="space-y-6">
+                    ${coreCards.join('')}
+                </div>
+            </div>
+        `;
     }
 
     // 3. ПРОСУНУТІ КАТЕГОРІЇ
@@ -1750,8 +1755,11 @@ function removeAdvantage(index) {
 }
 
 function populateClanSelects() {
+    let gen = parseInt(document.getElementById('generation-val')?.value || 13);
     let optionsHTML = '';
     for (const [key, data] of Object.entries(clansData)) {
+        if (gen >= 14 && key !== 'thin_blood' && key !== 'thin-blood') continue;
+        if (gen < 14 && (key === 'thin_blood' || key === 'thin-blood')) continue;
         optionsHTML += `<option value="${key}">${data.name}</option>`;
     }
     
@@ -1764,6 +1772,32 @@ function populateClanSelects() {
 }
 
 function changeClan(clanId) {
+    let gen = parseInt(document.getElementById('generation-val')?.value || 13);
+    if (gen >= 14 && clanId !== 'thin_blood' && clanId !== 'thin-blood') {
+        alert("Для персонажів 14 та вище покоління доступний лише клан Рідкокровних.");
+        
+        // Restore select values to thin-blood if they were changed
+        const select1 = document.getElementById('clan-select-1');
+        const select4 = document.getElementById('clan-select-4');
+        if (select1) select1.value = 'thin-blood';
+        if (select4) select4.value = 'thin-blood';
+        return;
+    }
+
+    if ((clanId === 'thin_blood' || clanId === 'thin-blood')) {
+        if (gen < 14) {
+            const genVal = document.getElementById('generation-val');
+            const genDisplay = document.getElementById('generation-display');
+            if (genVal) genVal.value = 14;
+            if (genDisplay) genDisplay.innerText = "14-те";
+            alert("Рідкокровні можуть бути лише 14 або 15 покоління. Покоління автоматично змінено на 14-те.");
+            populateClanSelects();
+        }
+        if (state.predatorChoices && state.predatorChoices.discipline) {
+            state.predatorChoices.discipline = null;
+        }
+    }
+
     state.clan = clanId;
     
     // Безпечне присвоєння значень
@@ -1838,6 +1872,7 @@ function changeClan(clanId) {
         });
     }
 
+    renderPredatorTypes();
     renderDisciplines();
     updateTrackers();
     updateHeaderInfo();
@@ -1893,24 +1928,34 @@ function goToStep(step) {
 }
 
 function updateTrackers() {
-const discCounts = { 2: 0, 1: 0 };
-    Object.entries(state.disciplines).forEach(([key, val]) => {
-        // Ігноруємо ритуали та церемонії для лічильника дисциплін
-        if (key === 'blood_sorcery_rituals' || key === 'oblivion_ceremonies') return; 
-        
-        if (val === 2) discCounts[2]++;
-        else if (val === 1) discCounts[1]++;
-        else if (val > 2) discCounts[2]++;
-    });
     const discTracker = document.getElementById('disc-tracker');
-    discTracker.innerHTML = [2, 1].map(val => {
-        const current = discCounts[val];
-        const target = 1;
-        let badgeClass = current === target ? 'valid' : (current > target ? 'exceeded' : 'invalid');
-        return `<div class="px-3 py-1 rounded border tracker-badge ${badgeClass}">
-            ${val} ⬤ : ${current} / ${target}
-        </div>`;
-    }).join('');
+    
+    if (state.clan === 'thin_blood' || isClanThinBlood()) {
+        if (discTracker) {
+            discTracker.innerHTML = `<div class="px-3 py-1 rounded border tracker-badge valid text-xs">Рідкокровний (Без обов'язкових дисциплін)</div>`;
+        }
+    } else {
+        const discCounts = { 2: 0, 1: 0 };
+        Object.entries(state.disciplines).forEach(([key, val]) => {
+            // Ігноруємо ритуали та церемонії для лічильника дисциплін
+            if (key === 'blood_sorcery_rituals' || key === 'oblivion_ceremonies') return; 
+            
+            if (val === 2) discCounts[2]++;
+            else if (val === 1) discCounts[1]++;
+            else if (val > 2) discCounts[2]++;
+        });
+        
+        if (discTracker) {
+            discTracker.innerHTML = [2, 1].map(val => {
+                const current = discCounts[val];
+                const target = 1;
+                let badgeClass = current === target ? 'valid' : (current > target ? 'exceeded' : 'invalid');
+                return `<div class="px-3 py-1 rounded border tracker-badge ${badgeClass}">
+                    ${val} ⬤ : ${current} / ${target}
+                </div>`;
+            }).join('');
+        }
+    }
 
     const attrCounts = { 4: 0, 3: 0, 2: 0, 1: 0 };
     Object.values(state.attributes).forEach(val => {
@@ -1947,16 +1992,28 @@ const discCounts = { 2: 0, 1: 0 };
 
     let totalMeritsDots = 0;
     let totalFlawsDots = 0;
+    let tbMeritsDots = 0;
+    let tbFlawsDots = 0;
+    
     state.selectedAdvantages.forEach(adv => {
         // Ігноруємо безкоштовні переваги, які дав тип хижака
         if (adv.source !== 'predator') {
-            if (adv.type === 'flaw') totalFlawsDots += adv.cost;
-            else totalMeritsDots += adv.cost; 
+            if (adv.category === 'Рідкокровні') {
+                if (adv.type === 'flaw') tbFlawsDots += adv.cost;
+                else tbMeritsDots += adv.cost;
+            } else {
+                if (adv.type === 'flaw') totalFlawsDots += adv.cost;
+                else totalMeritsDots += adv.cost; 
+            }
         }
     });
     
     const meritsEl = document.getElementById('merits-tracker');
     const flawsEl = document.getElementById('flaws-tracker');
+    const tbMeritsContainer = document.getElementById('tb-merits-container');
+    const tbFlawsContainer = document.getElementById('tb-flaws-container');
+    const tbMeritsEl = document.getElementById('tb-merits-tracker');
+    const tbFlawsEl = document.getElementById('tb-flaws-tracker');
 
     if (meritsEl) {
         meritsEl.innerText = `${totalMeritsDots} / 7 ⬤`;
@@ -1967,19 +2024,45 @@ const discCounts = { 2: 0, 1: 0 };
         flawsEl.className = `px-3 py-1 text-sm font-bold rounded border tracker-badge ${totalFlawsDots === 2 ? 'valid' : (totalFlawsDots > 2 ? 'exceeded' : 'invalid')}`;
     }
 
+    if (isClanThinBlood()) {
+        if (tbMeritsContainer) tbMeritsContainer.classList.remove('hidden');
+        if (tbFlawsContainer) tbFlawsContainer.classList.remove('hidden');
+        
+        if (tbMeritsEl) {
+            tbMeritsEl.innerText = `${tbMeritsDots} / 1-3 ⬤`;
+            tbMeritsEl.className = `px-3 py-1 text-sm font-bold rounded border tracker-badge ${tbMeritsDots >= 1 && tbMeritsDots <= 3 ? 'valid' : (tbMeritsDots > 3 ? 'exceeded' : 'invalid')}`;
+        }
+        if (tbFlawsEl) {
+            tbFlawsEl.innerText = `${tbFlawsDots} / 1-3 ⬤`;
+            tbFlawsEl.className = `px-3 py-1 text-sm font-bold rounded border tracker-badge ${(tbFlawsDots >= 1 && tbFlawsDots <= 3) && tbFlawsDots === tbMeritsDots ? 'valid' : (tbFlawsDots > 3 || tbFlawsDots !== tbMeritsDots ? 'exceeded' : 'invalid')}`;
+        }
+    } else {
+        if (tbMeritsContainer) tbMeritsContainer.classList.add('hidden');
+        if (tbFlawsContainer) tbFlawsContainer.classList.add('hidden');
+    }
+
     const selectedCountNum = document.getElementById('selected-count-num');
     if (selectedCountNum) {
         selectedCountNum.innerText = state.selectedAdvantages.length;
     }
     const summaryTracker = document.getElementById('selected-advantages-summary-tracker');
     if (summaryTracker) {
-        summaryTracker.innerHTML = `
+        let summaryHtml = `
             <span>Обрано: <strong class="text-white">${state.selectedAdvantages.length}</strong> пунктів</span>
             <span class="text-gray-500">•</span>
             <span class="${totalMeritsDots === 7 ? 'text-emerald-400 font-bold' : (totalMeritsDots > 7 ? 'text-amber-400 font-bold' : 'text-gray-300')}">Блага: ${totalMeritsDots}/7 ⬤</span>
             <span class="text-gray-500">•</span>
             <span class="${totalFlawsDots === 2 ? 'text-emerald-400 font-bold' : (totalFlawsDots > 2 ? 'text-amber-400 font-bold' : 'text-gray-300')}">Вади: ${totalFlawsDots}/2 ⬤</span>
         `;
+        if (isClanThinBlood()) {
+            summaryHtml += `
+                <span class="text-gray-500">•</span>
+                <span class="${tbMeritsDots >= 1 && tbMeritsDots <= 3 ? 'text-emerald-400 font-bold' : (tbMeritsDots > 3 ? 'text-amber-400 font-bold' : 'text-gray-300')}">TB Блага: ${tbMeritsDots}/1-3 ⬤</span>
+                <span class="text-gray-500">•</span>
+                <span class="${(tbFlawsDots >= 1 && tbFlawsDots <= 3) && tbFlawsDots === tbMeritsDots ? 'text-emerald-400 font-bold' : (tbFlawsDots > 3 || tbFlawsDots !== tbMeritsDots ? 'text-amber-400 font-bold' : 'text-gray-300')}">TB Вади: ${tbFlawsDots}/1-3 ⬤</span>
+            `;
+        }
+        summaryTracker.innerHTML = summaryHtml;
     }
 }
 
@@ -2260,16 +2343,35 @@ function finishGen() {
     let currentHumanity = 7;
     if (predator && predator.humanity_modifier) currentHumanity += predator.humanity_modifier;
 
-    let defaultGen = state.clan === 'thin_blood' ? '14-те' : '13-те';
-    const generation = document.getElementById('generation-val')?.value || defaultGen;
+    let defaultGen = isClanThinBlood() ? '14' : '13';
+    let generation = document.getElementById('generation-val')?.value || defaultGen;
+    
+    // BP calculation based on V5 rules (p. 214)
+    function getBaseBP(genStr) {
+        let gen = parseInt(genStr);
+        if (isNaN(gen)) return 1;
+        if (gen <= 4) return 7;
+        if (gen === 5) return 6;
+        if (gen === 6) return 5;
+        if (gen === 7) return 4;
+        if (gen === 8) return 3;
+        if (gen === 9) return 2;
+        if (gen === 10 || gen === 11) return 2;
+        if (gen === 12 || gen === 13) return 1;
+        if (gen >= 14) return 0;
+        return 1;
+    }
 
-    let bloodPotency = 1;
-    if (state.clan === 'thin_blood') {
+    let bloodPotency = getBaseBP(generation);
+
+    if (state.clan === 'thin_blood' || isClanThinBlood()) {
         bloodPotency = 0;
     } else if (predator && (predator.id === 'blood_leech' || predator.name?.toLowerCase().includes('п\'явка') || predator.name?.toLowerCase().includes('п’явка'))) {
-        bloodPotency = 2;
+        bloodPotency += 1;
     }
     const bpTable = getBloodPotencyTable(bloodPotency);
+
+    generation = generation + "-те"; // Format for display
 
     const stamina = state.attributes['stamina'] || 1;
     const healthMax = stamina + 3;
@@ -4293,7 +4395,30 @@ const clanImages = {
     "thin-blood": "Thinblood_symbol.png"
 };
 
+function handleGenerationChange(genStr) {
+    let gen = parseInt(genStr);
+    populateClanSelects();
+    if (gen >= 14) {
+        if (state.clan !== 'thin_blood' && state.clan !== 'thin-blood') {
+            changeClan('thin-blood');
+            alert("Покоління 14 і 15 доступні тільки для Рідкокровних. Ваш клан автоматично змінено.");
+        }
+    } else {
+        if (isClanThinBlood()) {
+            changeClan('unknown');
+            alert("Рідкокровні можуть бути лише 14 або 15 покоління. Ваш клан автоматично змінено на Каїтиф.");
+        }
+    }
+    updateTrackers();
+}
+window.handleGenerationChange = handleGenerationChange;
+
 function openClanModal() {
+    let gen = parseInt(document.getElementById('generation-val')?.value || 13);
+    if (gen >= 14) {
+        alert("Для персонажів 14 та вище покоління доступний лише клан Рідкокровних.");
+        return;
+    }
     renderClanModal();
     const modal = document.getElementById('clan-modal');
     if (modal) {

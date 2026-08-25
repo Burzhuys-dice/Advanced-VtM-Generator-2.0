@@ -169,7 +169,7 @@ const FALLBACK_SIRES = [
         id: 'unknown_sire',
         category: 'playtest',
         name: 'Невідомий Сір (Unknown Sire)',
-        desc: 'Ви ніколи не знали свого Сіра. Прокинувшись на самоті від пекучої спраги після Обітку, вам довелося покладатися лише на сирі інстинкти та чисте виживання.',
+        desc: 'Ви ніколи не знали свого Сіра. Прокинувшись на самоті від пекучої спраги після Залучення, вам довелося покладатися лише на сирі інстинкти та чисте виживання.',
         relationship: 'Сирий інстинкт виживання: відсутність наставника змусила вашу кров проявити фундаментальні фізичні сили виживання.',
         disciplineOptions: ['celerity', 'fortitude', 'potence'],
         bonusText: '+1 крапка (⬤) на вибір: Стрімкість (Celerity), Стійкість (Fortitude) або Могутність (Potence)'
@@ -207,7 +207,7 @@ const FALLBACK_SIRES = [
         id: 'obsessed_paramour',
         category: 'custom',
         name: 'Одержимий Коханець (Obsessed Paramour)',
-        desc: 'Обіток став кульмінацією фатальної пристрасті чи естетичного захоплення. Сір був засліплений вами, повʼязавши себе і вас узами крові та вічної нічної жаги.',
+        desc: 'Залучення стало кульмінацією фатальної пристрасті чи естетичного захоплення. Сір був засліплений вами, повʼязавши себе і вас узами крові та вічної нічної жаги.',
         relationship: 'Токсична пристрасть; ревнощі та постійний контроль, але й готовність захищати ціною нежиття.',
         disciplineOptions: ['presence', 'auspex', 'celerity'],
         bonusText: '+1 крапка (⬤) на вибір: Присутність, Яснобачення або Стрімкість'
@@ -3670,7 +3670,7 @@ function renderV6Step9_SummarySheet() {
 
                     <!-- ATTRIBUTES SECTION -->
                     <div class="border-[1.5px] border-black mb-4">
-                        <div class="text-center font-serif font-bold uppercase tracking-[0.3em] text-xs py-1 border-b-[1.5px] border-black">Атрибути (5e)</div>
+                        <div class="text-center font-serif font-bold uppercase tracking-[0.3em] text-xs py-1 border-b-[1.5px] border-black">Атрибути</div>
                         <div class="grid grid-cols-3">
                             <div class="border-r-[1.5px] border-black">
                                 <div class="bg-black text-white text-center font-bold uppercase text-[9px] py-1 tracking-[0.2em]">Фізичні</div>
