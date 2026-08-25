@@ -131,7 +131,7 @@ const FALLBACK_SIRES = [
         id: 'brood_child',
         category: 'playtest',
         name: 'Дитя Виводка (Brood Child)',
-        desc: 'Вас було обернено у складі групи новонароджених сородичів (виводка/гнізда). Спільне виживання, суперництво та зв\'язок із побратимами дозволили вам перейняти сили іншого клану.',
+        desc: 'Вас було обернено у складі групи новонароджених Кревних (виводка/гнізда). Спільне виживання, суперництво та зв\'язок із побратимами дозволили вам перейняти сили іншого клану.',
         relationship: 'Зв\'язок виводка: оберіть клан вашого співвиводця — ви отримуєте +1 крапку в будь-якій одній Дисципліні цього клану на вибір.',
         isClanChoice: true,
         clanChoiceType: 'broodmate',
@@ -252,7 +252,7 @@ const FALLBACK_SIRES = [
         id: 'bohemian_creator',
         category: 'custom',
         name: 'Богемний Творець (Bohemian Creator)',
-        desc: 'Митець, що шукає вічну досконалість у формі, звуці та емоціях. Вас обрали за вашу здатність пробуджувати втрачені людські почуття навіть у холодних серцях сородичів.',
+        desc: 'Митець, що шукає вічну досконалість у формі, звуці та емоціях. Вас обрали за вашу здатність пробуджувати втрачені людські почуття навіть у холодних серцях Кревних.',
         relationship: 'Творчий симбіоз; муза та майстер, що надихають одне одного у вічній ночі.',
         disciplineOptions: ['presence', 'auspex', 'celerity'],
         bonusText: '+1 крапка (⬤) на вибір: Присутність, Яснобачення або Стрімкість'
@@ -387,7 +387,7 @@ const FALLBACK_LIFEPATHS = [
         id: 'vampire_herald',
         type: 'vampire',
         name: 'Емісар Двору / Дипломат (Court Herald & Emissary)',
-        desc: 'Офіційний представник Князя або котерії в Елізіумі. Ви оголошуєте едикти, ведете тонкі переговори та захищаєте протокол сородичів.',
+        desc: 'Офіційний представник Князя або котерії в Елізіумі. Ви оголошуєте едикти, ведете тонкі переговори та захищаєте протокол Кревних.',
         skills: ['persuasion', 'expression'],
         skillsBonusText: '+1 Переконання, +1 Експресія',
         resources: ['social_status', 'social_contacts'],
@@ -417,7 +417,7 @@ const FALLBACK_LIFEPATHS = [
         id: 'vampire_keeper',
         type: 'vampire',
         name: 'Хранитель Елізіуму (Keeper of Elysium)',
-        desc: 'Господар нейтральної території сородичів. Ви гарантуєте безпеку зустрічей, де заборонено насилля та використання Дисциплін.',
+        desc: 'Господар нейтральної території Кревних. Ви гарантуєте безпеку зустрічей, де заборонено насилля та використання Дисциплін.',
         skills: ['awareness', 'knowledge'],
         skillsBonusText: '+1 Уважність, +1 Знання',
         resources: ['social_status', 'physical_haven'],
@@ -427,7 +427,7 @@ const FALLBACK_LIFEPATHS = [
         id: 'vampire_anarch_rebel',
         type: 'vampire',
         name: 'Анарх-Партизан (Anarch Guerilla & Rebel)',
-        desc: 'Борець за свободу сородичів проти тиранії Камарильї. Ваші методи — швидкі нічні рейди, конспіративні квартири та підрив влади старійшин.',
+        desc: 'Борець за свободу Кревних проти тиранії Камарильї. Ваші методи — швидкі нічні рейди, конспіративні квартири та підрив влади старійшин.',
         skills: ['athletics', 'survival'],
         skillsBonusText: '+1 Атлетика, +1 Виживання',
         resources: ['social_ally', 'physical_haven'],
@@ -1723,7 +1723,7 @@ function renderV6Step4_Lifepaths() {
             </div>
 
             <p class="text-xs text-zinc-600 mb-6 leading-relaxed">
-                Життєві шляхи діляться на <strong class="text-zinc-900 font-bold">Шляхи Смертного (Mortal)</strong> — минуле життя до Обернення, та <strong class="text-zinc-900 font-bold">Шляхи Вампіра (Vampire)</strong> — ваша діяльність і роль у спільноті сородичів. Бонусні навички та ресурси від обраних шляхів <strong class="text-emerald-700 font-bold">автоматично виділяються зеленим кольором</strong> у наступних вкладках.
+                Життєві шляхи діляться на <strong class="text-zinc-900 font-bold">Шляхи Смертного (Mortal)</strong> — минуле життя до Обернення, та <strong class="text-zinc-900 font-bold">Шляхи Вампіра (Vampire)</strong> — ваша діяльність і роль у спільноті Кревних. Бонусні навички та ресурси від обраних шляхів <strong class="text-emerald-700 font-bold">автоматично виділяються зеленим кольором</strong> у наступних вкладках.
             </p>
 
             <!-- Categorization Filter Tabs -->
@@ -1823,7 +1823,7 @@ function renderV6Step5_AttributesSkills() {
     const socialSpent = (v6State.attributes.charisma - 1) + (v6State.attributes.manipulation - 1) + (v6State.attributes.composure - 1);
     const mentalSpent = (v6State.attributes.intelligence - 1) + (v6State.attributes.wits - 1) + (v6State.attributes.resolve - 1);
     
-    const freeSkillDotsSpent = Object.keys(v6State.skills).reduce((acc, key) => {
+    const freeSkillDotsSpent = Object.keys(v6State.skills || {}).reduce((acc, key) => {
         const lpBonus = lpSkillBonuses[key] || 0;
         const current = v6State.skills[key] || 0;
         return acc + Math.max(0, current - lpBonus);
@@ -2269,7 +2269,7 @@ function renderV6Step6_DisciplinesTraits() {
     }
     
     // Calculate spent dots (subtract 1 if it's the sire discipline)
-    const spentDisciplineDots = Object.keys(v6State.disciplines).reduce((acc, discId) => {
+    const spentDisciplineDots = Object.keys(v6State.disciplines || {}).reduce((acc, discId) => {
         const isSireBonus = discId === v6State.sireBonusDiscipline;
         const count = v6State.disciplines[discId] || 0;
         return acc + Math.max(0, isSireBonus ? count - 1 : count);
@@ -2366,7 +2366,7 @@ function renderV6Step6_DisciplinesTraits() {
                                                 </span>
                                             ` : ''}
                                         </div>
-                                        <p class="text-xs text-zinc-500 mt-0.5">${disc.desc || 'Дисципліна сородичів'}</p>
+                                        <p class="text-xs text-zinc-500 mt-0.5">${disc.desc || 'Дисципліна Кревних'}</p>
                                     </div>
                                     <div class="flex gap-1 items-center">
                                         <span class="text-xs text-zinc-400 mr-2 font-bold uppercase">Крапки:</span>
@@ -3496,25 +3496,21 @@ function renderV6Step9_SummarySheet() {
     });
     const resList = Object.entries(effectiveResources).filter(([_, d]) => d > 0);
     let resourcesHtml = '';
-    for(let i=0; i<8; i++) {
-        if(i < resList.length) {
-            const [resId, dots] = resList[i];
+    if (resList.length > 0) {
+        resourcesHtml = resList.map(([resId, dots]) => {
             const res = getV6Resources().find(r => r.id === resId);
             const name = res ? res.name.split(' (')[0] : resId;
-            resourcesHtml += `
+            return `
                 <div class="flex justify-between items-center text-[9px] mb-[3px] border-b border-zinc-100 pb-[1px]">
                     <span class="truncate pr-1">${name}</span>
                     ${drawDots(dots, 5)}
                 </div>
             `;
-        } else {
-            resourcesHtml += `
-                <div class="flex justify-between items-center text-[9px] mb-[3px] border-b border-zinc-100 pb-[1px]">
-                    <span class="text-transparent">Empty</span>
-                    ${drawDots(0, 5)}
-                </div>
-            `;
-        }
+        }).join('');
+    } else {
+        resourcesHtml = `
+            <div class="text-[8.5px] italic text-zinc-400 py-0.5">Не обрано жодного ресурсу</div>
+        `;
     }
 
     const activeDiscs = Object.entries(v6State.disciplines || {}).filter(([_, val]) => val > 0);
@@ -3635,18 +3631,18 @@ function renderV6Step9_SummarySheet() {
             </div>
 
             <!-- OFFICIAL V6 PRINTABLE CHARACTER SHEET CONTAINER -->
-            <div id="v6-official-sheet" class="bg-white p-[8mm] text-black font-sans mx-auto w-[210mm] min-h-[297mm] shadow-2xl relative box-border overflow-hidden print:w-full print:h-full print:p-0 print:shadow-none print:max-w-none">
+            <div id="v6-official-sheet" class="v6-sheet-page bg-white p-[8mm] text-black font-sans mx-auto w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] shadow-2xl relative box-border overflow-hidden print:w-full print:h-[297mm] print:shadow-none print:max-w-none">
                 <!-- Outer decorative border -->
-                <div class="absolute inset-[6mm] border-[3px] border-black pointer-events-none print:inset-[4mm]">
+                <div class="absolute inset-[5mm] border-[2.5px] border-black pointer-events-none print:inset-[4mm]">
                     <div class="absolute -top-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
                     <div class="absolute -top-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
                     <div class="absolute -bottom-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
                     <div class="absolute -bottom-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
                 </div>
                 
-                <div class="relative z-10 p-[4mm] pt-[12mm] h-full flex flex-col">
+                <div class="relative z-10 p-[4mm] pt-[8.3543px] h-full flex flex-col">
                     <!-- HEADER SECTION -->
-                    <div class="flex justify-between items-start mb-6">
+                    <div class="flex justify-between items-start mb-3">
                         <div class="w-[42%] flex flex-col justify-end mt-2">
                             ${renderHeaderField("Ім'я", v6State.characterDetails.name, "sheet-header-name")}
                             ${renderHeaderField("Вік на вигляд", v6State.characterDetails.apparentAge, "sheet-header-apparentAge")}
@@ -3669,7 +3665,7 @@ function renderV6Step9_SummarySheet() {
                     </div>
 
                     <!-- ATTRIBUTES SECTION -->
-                    <div class="border-[1.5px] border-black mb-4">
+                    <div class="border-[1.5px] border-black mb-2">
                         <div class="text-center font-serif font-bold uppercase tracking-[0.3em] text-xs py-1 border-b-[1.5px] border-black">Атрибути</div>
                         <div class="grid grid-cols-3">
                             <div class="border-r-[1.5px] border-black">
@@ -3727,7 +3723,7 @@ function renderV6Step9_SummarySheet() {
                     </div>
 
                     <!-- TRACKERS SECTION -->
-                    <div class="flex justify-between items-end border-b-[1.5px] border-black pb-2 mb-4 px-2">
+                    <div class="flex justify-between items-end border-b-[1.5px] border-black pb-1 mb-2 px-2">
                         <div class="flex items-center gap-2">
                             <span class="uppercase font-bold text-[9px] tracking-widest">Віте (${vitaeMax})</span>
                             <div class="flex gap-1">${drawDots(0, Math.min(15, vitaeMax))}</div>
@@ -3738,7 +3734,7 @@ function renderV6Step9_SummarySheet() {
                         </div>
                     </div>
 
-                    <div class="border-[1.5px] border-black pt-5 pb-3 px-2 mb-6 text-center relative mt-4">
+                    <div class="border-[1.5px] border-black pt-4 pb-2 px-2 mb-3 text-center relative mt-2">
                         <div class="text-[10px] uppercase font-bold tracking-[0.2em] absolute -top-[9px] left-1/2 transform -translate-x-1/2 bg-white px-2">Шкала Людяності</div>
                         <div class="flex justify-between items-center px-3">
                             <div class="flex flex-col items-center relative -left-1">
@@ -3759,31 +3755,63 @@ function renderV6Step9_SummarySheet() {
 
                     <!-- BOTTOM GRID -->
                     <div class="flex gap-6 flex-1">
-                        <!-- Col 1: Skills & Resources -->
-                        <div class="w-[30%] flex flex-col">
-                            <div class="mb-5">
-                                <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
-                                    <span class="bg-white pr-2">Навички</span>
-                                    <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
-                                </h3>
-                                <div>
-                                    ${skillsHtml}
+                        <!-- Col Left & Middle (Span) -->
+                        <div class="w-[65%] flex flex-col gap-4">
+                            <div class="flex gap-4">
+                                <!-- Sub-Col Left: Skills & Resources -->
+                                <div class="w-1/2 flex flex-col">
+                                    <div class="mb-3">
+                                        <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
+                                            <span class="bg-white pr-2">Навички</span>
+                                            <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
+                                        </h3>
+                                        <div>
+                                            ${skillsHtml}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
+                                            <span class="bg-white pr-2">Ресурси</span>
+                                            <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
+                                        </h3>
+                                        <div>
+                                            ${resourcesHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Sub-Col Middle: Avatar, Items, Notes -->
+                                <div class="w-1/2 flex flex-col">
+                                    <!-- AVATAR PLACEHOLDER -->
+                                    <div class="border-[1.5px] border-black h-32 mb-3 relative flex items-center justify-center overflow-hidden bg-zinc-100">
+                                        <!-- Placeholder or character portrait would go here -->
+                                        <div class="text-zinc-400 font-serif italic text-xs">Портрет (в розробці)</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
+                                            <span class="bg-white pr-2">Предмети та Зброя</span>
+                                            <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
+                                        </h3>
+                                        <div class="text-[9px] min-h-[45px] space-y-0.5">
+                                            ${v6State.selectedWeapons.length > 0 ? v6State.selectedWeapons.map(wId => {
+                                                const w = getV6Weapons().find(item => item.id === wId);
+                                                return w ? `<div class="border-b border-zinc-100 pb-0.5 flex justify-between items-center"><span class="font-medium truncate pr-1">• ${w.name}</span><span class="text-[7.5px] text-zinc-500 font-mono shrink-0">Шкода: ${w.damage || 2}</span></div>` : '';
+                                            }).join('') : '<p class="text-zinc-400 italic">Відсутні</p>'}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-1 relative">
+                                            <span class="bg-white pr-2">Нотатки</span>
+                                            <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
+                                        </h3>
+                                        <div id="sheet-char-notes" class="border border-dashed border-zinc-300 min-h-[42px] p-1.5 text-[8px] text-zinc-700">
+                                            ${renderV6NotesBoxContent()}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
-                                    <span class="bg-white pr-2">Ресурси</span>
-                                    <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
-                                </h3>
-                                <div>
-                                    ${resourcesHtml}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Col 2: Disciplines & Powers, Items & Weapons, Notes -->
-                        <div class="w-[35%] flex flex-col space-y-4">
-                            <div>
+                            
+                            <!-- DISCIPLINES (Spanning across Left & Middle) -->
+                            <div class="mt-auto pt-2">
                                 <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
                                     <span class="bg-white pr-2">Дисципліни та Сили</span>
                                     <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
@@ -3792,33 +3820,10 @@ function renderV6Step9_SummarySheet() {
                                     ${discHtml}
                                 </div>
                             </div>
-                            
-                            <div>
-                                <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
-                                    <span class="bg-white pr-2">Предмети та Зброя</span>
-                                    <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
-                                </h3>
-                                <div class="text-[9px] min-h-[45px] space-y-0.5">
-                                    ${v6State.selectedWeapons.length > 0 ? v6State.selectedWeapons.map(wId => {
-                                        const w = getV6Weapons().find(item => item.id === wId);
-                                        return w ? `<div class="border-b border-zinc-100 pb-0.5 flex justify-between items-center"><span class="font-medium truncate pr-1">• ${w.name}</span><span class="text-[7.5px] text-zinc-500 font-mono shrink-0">Шкода: ${w.damage || 2}</span></div>` : '';
-                                    }).join('') : '<p class="text-zinc-400 italic">Відсутні</p>'}
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-1 relative">
-                                    <span class="bg-white pr-2">Нотатки</span>
-                                    <div class="absolute -left-1 -top-1 w-2 h-2 border-l border-t border-black"></div>
-                                </h3>
-                                <div id="sheet-char-notes" class="border border-dashed border-zinc-300 min-h-[42px] p-1.5 text-[8px] text-zinc-700">
-                                    ${renderV6NotesBoxContent()}
-                                </div>
-                            </div>
                         </div>
 
                         <!-- Col 3: Lifepaths, Clan Traits, Merits, Flaw, Nature, Beast -->
-                        <div class="w-[35%] flex flex-col space-y-4">
+                        <div class="w-[35%] flex flex-col space-y-3 border-l-[1.5px] border-black pl-5">
                             <div>
                                 <h3 class="font-bold uppercase tracking-[0.1em] border-b-[1.5px] border-black text-[11px] mb-2 relative">
                                     <span class="bg-white pr-2">Життєві Шляхи</span>
@@ -3894,6 +3899,11 @@ function renderV6Step9_SummarySheet() {
                 </div>
             </div>
 
+            <!-- AUXILIARY DETAILS PAGES (Visible in Step 9 and in Print) -->
+            <div id="v6-details-pages-wrapper" class="mt-8 space-y-8 print:mt-0 print:space-y-0">
+                ${generateV6DetailsPagesHTML()}
+            </div>
+
             <div class="flex justify-start pt-4 border-t border-zinc-100 print:hidden">
                 <button onclick="goToV6Step(8)" class="px-6 py-2.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-bold text-xs uppercase tracking-widest rounded-xl transition-all">
                     ⬅ Назад до Ресурсів
@@ -3951,6 +3961,10 @@ function updateV6CharacterDetail(field, value) {
         const sheetEl = document.getElementById('sheet-header-name');
         if (sheetEl) sheetEl.innerHTML = (value && value.trim()) ? escapeV6Html(value.trim()) : '&nbsp;';
         updateV6Header();
+        const detailsWrapper = document.getElementById('v6-details-pages-wrapper');
+        if (detailsWrapper) {
+            detailsWrapper.innerHTML = generateV6DetailsPagesHTML();
+        }
     } else if (field === 'apparentAge') {
         const sheetEl = document.getElementById('sheet-header-apparentAge');
         if (sheetEl) sheetEl.innerHTML = (value && value.trim()) ? escapeV6Html(value.trim()) : '&nbsp;';
@@ -3992,10 +4006,357 @@ function updateV6Header() {
     }
 }
 
+
+function getV6DynamicTypography(charCount, itemCount = 1) {
+    let bodySize = '13.5px';
+    let lineHeight = '1.34';
+    let itemTitleSize = '15.5px';
+    let sectionTitleSize = '17px';
+    let mbSection = 'mb-3';
+    let mbItem = 'mb-2';
+    let mbTitle = 'mb-1';
+    let metaSize = '11.5px';
+
+    if (charCount > 1300 || itemCount >= 6) {
+        bodySize = '10.5px';
+        lineHeight = '1.20';
+        itemTitleSize = '13px';
+        sectionTitleSize = '14.5px';
+        mbSection = 'mb-1.5';
+        mbItem = 'mb-1.5';
+        mbTitle = 'mb-0.5';
+        metaSize = '9.5px';
+    } else if (charCount > 900 || itemCount >= 4) {
+        bodySize = '11.5px';
+        lineHeight = '1.23';
+        itemTitleSize = '13.5px';
+        sectionTitleSize = '15px';
+        mbSection = 'mb-2';
+        mbItem = 'mb-1.5';
+        mbTitle = 'mb-0.5';
+        metaSize = '10px';
+    } else if (charCount > 600 || itemCount >= 3) {
+        bodySize = '12px';
+        lineHeight = '1.26';
+        itemTitleSize = '14.5px';
+        sectionTitleSize = '16px';
+        mbSection = 'mb-2.5';
+        mbItem = 'mb-2';
+        mbTitle = 'mb-1';
+        metaSize = '11px';
+    } else if (charCount > 350) {
+        bodySize = '13px';
+        lineHeight = '1.30';
+        itemTitleSize = '15px';
+        sectionTitleSize = '16.5px';
+        mbSection = 'mb-2.5';
+        mbItem = 'mb-2';
+        mbTitle = 'mb-1';
+        metaSize = '11.5px';
+    }
+
+    return {
+        bodySize,
+        lineHeight,
+        itemTitleSize,
+        sectionTitleSize,
+        mbSection,
+        mbItem,
+        mbTitle,
+        metaSize
+    };
+}
+
+function generateV6DetailsPagesHTML() {
+    const clanObj = getV6Clan();
+    const natureObj = getV6Nature();
+    const rawName = (v6State.characterDetails && v6State.characterDetails.name) ? v6State.characterDetails.name.trim() : '';
+    const charName = rawName ? escapeV6Html(rawName) : 'ПЕРСОНАЖ';
+    
+    // Page 2: Lifepaths, Merits, Clan Traits
+    const selectedLps = (v6State.lifepaths || []).map(lpId => getV6Lifepaths().find(p => p.id === lpId)).filter(Boolean);
+    const selectedMers = (v6State.selectedMerits || []).map(mId => getV6Merits().find(m => m.id === mId)).filter(Boolean);
+    const selectedTraits = (v6State.selectedClanTraits || []).map(tId => (clanObj ? clanObj.traits : []).find(t => t.id === tId)).filter(Boolean);
+
+    const leftCharsP2 = selectedLps.reduce((acc, lp) => acc + (lp.name + ' ' + (lp.desc || '')).length, 0) +
+                        selectedMers.reduce((acc, m) => acc + (m.name + ' ' + (m.prereq || '') + ' ' + (m.desc || '')).length, 0);
+    const rightCharsP2 = selectedTraits.reduce((acc, t) => acc + (t.name + ' ' + (t.prereq || '') + ' ' + (t.desc || '')).length, 0);
+    const dynP2 = getV6DynamicTypography(Math.max(leftCharsP2, rightCharsP2), Math.max(selectedLps.length + selectedMers.length, selectedTraits.length));
+
+    let p2Html = `
+    <div class="v6-sheet-page v6-details-page bg-white text-black font-sans mx-auto w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] relative box-border overflow-hidden print:w-full print:h-[297mm] print:shadow-none print:max-w-none shadow-2xl p-[8mm] flex flex-col mb-8 print:mb-0">
+        <!-- Outer border -->
+        <div class="absolute inset-[5mm] border-[2.5px] border-black pointer-events-none print:inset-[4mm]">
+            <div class="absolute -top-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+            <div class="absolute -top-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+            <div class="absolute -bottom-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+            <div class="absolute -bottom-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+        </div>
+        
+        <div class="relative z-10 h-full flex flex-col justify-between p-[4mm] overflow-hidden">
+            <div class="shrink-0">
+                <h1 class="font-serif font-bold text-[18px] uppercase tracking-widest text-center mb-1">${charName.toUpperCase()} — ДЕТАЛІ ПЕРСОНАЖА</h1>
+                <p class="text-center text-zinc-600 mb-3 italic text-[13px]">Детальний опис життєвого шляху, переваг та кланових рис персонажа ${charName}.</p>
+            </div>
+            
+            <div class="flex gap-6 flex-1 overflow-hidden items-start">
+                <!-- Left Column: Lifepaths, Merits -->
+                <div class="w-1/2 flex flex-col ${dynP2.mbSection} overflow-hidden">
+                    <div class="${dynP2.mbSection}">
+                        <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP2.sectionTitleSize};">Життєві Шляхи (Lifepaths)</h2>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP2.metaSize};">Професії та життєвий досвід ${charName}, і те, куди завели його життя та не-життя.</p>
+                        ${selectedLps.map(lp => `
+                            <div class="${dynP2.mbItem}">
+                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP2.mbTitle}" style="font-size: ${dynP2.itemTitleSize};">${escapeV6Html(lp.name)}</h3>
+                                <p class="text-zinc-800" style="font-size: ${dynP2.bodySize}; line-height: ${dynP2.lineHeight};">${escapeV6Html(lp.desc)}</p>
+                            </div>
+                        `).join('') || `<p class="italic text-zinc-400" style="font-size: ${dynP2.bodySize};">Відсутні</p>`}
+                    </div>
+                    <div>
+                        <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP2.sectionTitleSize};">Переваги (Merits)</h2>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP2.metaSize};">Природні таланти та унікальні характеристики ${charName}.</p>
+                        ${selectedMers.map(merit => {
+                            let prq = merit.prereq ? `<p class="italic text-zinc-500 mb-0.5" style="font-size: ${dynP2.metaSize};">Передумова: ${escapeV6Html(merit.prereq)}</p>` : '';
+                            return `<div class="${dynP2.mbItem}">
+                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP2.mbTitle}" style="font-size: ${dynP2.itemTitleSize};">${escapeV6Html(merit.name)}</h3>
+                                ${prq}
+                                <p class="text-zinc-800" style="font-size: ${dynP2.bodySize}; line-height: ${dynP2.lineHeight};">${escapeV6Html(merit.desc)}</p>
+                            </div>`;
+                        }).join('') || `<p class="italic text-zinc-400" style="font-size: ${dynP2.bodySize};">Відсутні</p>`}
+                    </div>
+                </div>
+                
+                <!-- Right Column: Clan Traits -->
+                <div class="w-1/2 flex flex-col ${dynP2.mbSection} overflow-hidden">
+                    <div>
+                        <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP2.sectionTitleSize};">Кланові Риси (Clan Traits)</h2>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP2.metaSize};">Надприродні таланти ${charName}, успадковані через кров.</p>
+                        ${selectedTraits.map(trait => {
+                            let prq = trait.prereq ? `<p class="italic text-zinc-500 mb-0.5" style="font-size: ${dynP2.metaSize};">Передумова: ${escapeV6Html(trait.prereq)}</p>` : '';
+                            return `<div class="${dynP2.mbItem}">
+                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP2.mbTitle}" style="font-size: ${dynP2.itemTitleSize};">${escapeV6Html(trait.name)}</h3>
+                                ${prq}
+                                <p class="text-zinc-800" style="font-size: ${dynP2.bodySize}; line-height: ${dynP2.lineHeight};">${escapeV6Html(trait.desc)}</p>
+                            </div>`;
+                        }).join('') || `<p class="italic text-zinc-400" style="font-size: ${dynP2.bodySize};">Відсутні</p>`}
+                    </div>
+                </div>
+            </div>
+            <div class="shrink-0 text-center text-[11px] font-bold tracking-widest uppercase pt-1">${charName}</div>
+        </div>
+    </div>`;
+    
+    // Page 3: Nature, Clan Aspects (Balanced Two-Column layout with dynamic font scaling & tight line-heights)
+    const natureName = natureObj ? (natureObj.name || '') : '';
+    const natureDesc = natureObj ? (natureObj.desc || natureObj.shortDesc || '') : '';
+    const beastName = clanObj ? (clanObj.beast || '') : '';
+    const beastDesc = clanObj ? (clanObj.beastDesc || 'Звір прагне задовольнити свою природу.') : '';
+    const curseName = clanObj ? (clanObj.curse || '') : '';
+    const curseDesc = clanObj ? (clanObj.curseDesc || 'Прокляття, що передається в крові клану.') : '';
+    const frenzyName = clanObj ? (clanObj.frenzy || '') : '';
+    const frenzyDesc = clanObj ? (clanObj.frenzyDesc || 'Стан неконтрольованої люті та інстинктів.') : '';
+
+    const leftCharsP3 = (natureName + ' ' + natureDesc).length + (beastName + ' ' + beastDesc).length;
+    const rightCharsP3 = (curseName + ' ' + curseDesc).length + (frenzyName + ' ' + frenzyDesc).length;
+    const dynP3 = getV6DynamicTypography(Math.max(leftCharsP3, rightCharsP3), 2);
+
+    let p3Html = `
+    <div class="v6-sheet-page v6-details-page bg-white text-black font-sans mx-auto w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] relative box-border overflow-hidden print:w-full print:h-[297mm] print:shadow-none print:max-w-none shadow-2xl p-[8mm] flex flex-col mb-8 print:mb-0">
+        <!-- Outer border -->
+        <div class="absolute inset-[5mm] border-[2.5px] border-black pointer-events-none print:inset-[4mm]">
+            <div class="absolute -top-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+            <div class="absolute -top-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+            <div class="absolute -bottom-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+            <div class="absolute -bottom-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+        </div>
+        
+        <div class="relative z-10 h-full flex flex-col justify-between p-[4mm] overflow-hidden">
+            <div class="shrink-0">
+                <h1 class="font-serif font-bold text-[18px] uppercase tracking-widest text-center mb-1">НАТУРА ТА КЛАНОВІ АСПЕКТИ</h1>
+                <p class="text-center text-zinc-600 mb-3 italic text-[13px]">Внутрішні рушії, прокляття та прояви Звіра персонажа ${charName}.</p>
+            </div>
+
+            <div class="flex gap-6 flex-1 overflow-hidden items-start">
+                <!-- Left Column: Nature & Clan Beast -->
+                <div class="w-1/2 flex flex-col overflow-hidden">
+                    <div class="${dynP3.mbSection}">
+                        <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP3.sectionTitleSize};">Натура (Nature)</h2>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP3.metaSize};">Природа ${charName}, смертні імпульси в його основі та пов'язаний спалах.</p>
+                        ${natureObj ? `
+                            <div class="${dynP3.mbItem}">
+                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP3.mbTitle}" style="font-size: ${dynP3.itemTitleSize};">${escapeV6Html(natureObj.name)}</h3>
+                                <p class="text-zinc-800" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(natureDesc)}</p>
+                            </div>
+                        ` : `<p class="italic text-zinc-400" style="font-size: ${dynP3.bodySize};">Не обрано</p>`}
+                    </div>
+
+                    <div class="${dynP3.mbSection}">
+                        <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP3.sectionTitleSize};">Клановий Звір (Clan Beast)</h2>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP3.metaSize};">Первинна форма внутрішнього хижака клану ${clanObj ? clanObj.name.split(' (')[0] : ''}.</p>
+                        ${clanObj ? `
+                            <div class="${dynP3.mbItem}">
+                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP3.mbTitle}" style="font-size: ${dynP3.itemTitleSize};">${escapeV6Html(beastName)}</h3>
+                                <p class="text-zinc-800" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(beastDesc)}</p>
+                            </div>
+                        ` : `<p class="italic text-zinc-400" style="font-size: ${dynP3.bodySize};">Не обрано</p>`}
+                    </div>
+                </div>
+                
+                <!-- Right Column: Clan Curse & Clan Frenzy -->
+                <div class="w-1/2 flex flex-col overflow-hidden">
+                    <div class="${dynP3.mbSection}">
+                        <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP3.sectionTitleSize};">Прокляття Клану (Clan Curse)</h2>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP3.metaSize};">Вічний тягар та слабкість, що передаються в крові ${clanObj ? clanObj.name.split(' (')[0] : ''}.</p>
+                        ${clanObj ? `
+                            <div class="${dynP3.mbItem}">
+                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP3.mbTitle}" style="font-size: ${dynP3.itemTitleSize};">${escapeV6Html(curseName)}</h3>
+                                <p class="text-zinc-800" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(curseDesc)}</p>
+                            </div>
+                        ` : `<p class="italic text-zinc-400" style="font-size: ${dynP3.bodySize};">Не обрано</p>`}
+                    </div>
+
+                    <div class="${dynP3.mbSection}">
+                        <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP3.sectionTitleSize};">Шаленство (Frenzy)</h2>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP3.metaSize};">Стан неконтрольованої люті та специфічна поведінка Звіра під час зриву.</p>
+                        ${clanObj ? `
+                            <div class="${dynP3.mbItem}">
+                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP3.mbTitle}" style="font-size: ${dynP3.itemTitleSize};">${escapeV6Html(frenzyName)}</h3>
+                                <p class="text-zinc-800" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(frenzyDesc)}</p>
+                            </div>
+                        ` : `<p class="italic text-zinc-400" style="font-size: ${dynP3.bodySize};">Не обрано</p>`}
+                    </div>
+                </div>
+            </div>
+            <div class="shrink-0 text-center text-[11px] font-bold tracking-widest uppercase pt-1">${charName}</div>
+        </div>
+    </div>`;
+
+    // Page 4+: Disciplines (Chunked pagination with dynamic typography)
+    let selectedPowers = [];
+    Object.keys(v6State.disciplinePowers || {}).forEach(discId => {
+        const powersArr = v6State.disciplinePowers[discId];
+        if (powersArr && powersArr.length > 0) {
+            const disc = getV6Disciplines().find(d => d.id === discId);
+            const allPowers = disc && disc.powers ? disc.powers : [];
+            powersArr.forEach(pId => {
+                const p = allPowers.find(x => x.id === pId);
+                if (p) {
+                    selectedPowers.push({ discId, discName: disc?.name || discId, power: p });
+                }
+            });
+        }
+    });
+
+    let p4Html = '';
+    
+    if (selectedPowers.length > 0) {
+        // Group powers into pages so no single discipline page ever overflows (max 4 powers or ~1400 chars per page)
+        const DISC_PAGE_MAX_POWERS = 4;
+        const DISC_PAGE_MAX_CHARS = 1300;
+
+        let powerPages = [];
+        let curPagePowers = [];
+        let curPageChars = 0;
+
+        selectedPowers.forEach(item => {
+            const itemChars = (item.power.name + ' ' + (item.power.desc || '')).length + 200;
+            if (curPagePowers.length >= DISC_PAGE_MAX_POWERS || (curPageChars + itemChars > DISC_PAGE_MAX_CHARS && curPagePowers.length > 0)) {
+                powerPages.push(curPagePowers);
+                curPagePowers = [item];
+                curPageChars = itemChars;
+            } else {
+                curPagePowers.push(item);
+                curPageChars += itemChars;
+            }
+        });
+        if (curPagePowers.length > 0) {
+            powerPages.push(curPagePowers);
+        }
+
+        p4Html = powerPages.map((pagePowers, pageIdx) => {
+            const pageCharsTotal = pagePowers.reduce((acc, it) => acc + (it.power.name + ' ' + (it.power.desc || '')).length + 150, 0);
+            const dynDisc = getV6DynamicTypography(pageCharsTotal, pagePowers.length);
+
+            // Group powers on this page by discipline
+            let powersByDisc = {};
+            pagePowers.forEach(item => {
+                if (!powersByDisc[item.discId]) powersByDisc[item.discId] = { name: item.discName, powers: [] };
+                powersByDisc[item.discId].powers.push(item.power);
+            });
+
+            let discHtmlList = [];
+            Object.keys(powersByDisc).forEach(discId => {
+                const discData = powersByDisc[discId];
+                let discHtmlStr = `
+                    <div class="${dynDisc.mbSection} break-inside-avoid">
+                        <h2 class="font-serif font-bold uppercase tracking-widest mb-1" style="font-size: ${dynDisc.sectionTitleSize};">${discData.name.split(' (')[0].toUpperCase()}</h2>
+                        <div class="w-full h-0.5 bg-black mb-2"></div>
+                `;
+                
+                discData.powers.forEach(p => {
+                    let pType = p.type || 'Дія';
+                    let pCost = p.cost || 'Немає';
+                    let pPrereq = p.prereq ? `Передумова: ${p.prereq}` : '';
+                    
+                    discHtmlStr += `
+                        <div class="${dynDisc.mbItem} break-inside-avoid">
+                            <h3 class="font-bold italic border-b-[1.5px] border-black pb-0.5 ${dynDisc.mbTitle}" style="font-size: ${dynDisc.itemTitleSize};">${escapeV6Html(p.name)}</h3>
+                            <p class="italic text-zinc-500 mb-1" style="font-size: ${dynDisc.metaSize};">${p.level}-крапкова Сила${pPrereq ? ` (${escapeV6Html(pPrereq)})` : ''}</p>
+                            
+                            <div class="bg-black text-white font-bold uppercase grid grid-cols-3 text-center tracking-widest mb-1" style="font-size: ${dynDisc.metaSize};">
+                                <div class="py-0.5 border-r border-zinc-700">Активація</div>
+                                <div class="py-0.5 border-r border-zinc-700">Тип</div>
+                                <div class="py-0.5">Вартість</div>
+                            </div>
+                            <div class="grid grid-cols-3 text-center border-b border-black mb-1.5 pb-0.5 font-medium" style="font-size: ${dynDisc.metaSize};">
+                                <div>${escapeV6Html(p.action || 'Дія')}</div>
+                                <div>${escapeV6Html(pType)}</div>
+                                <div>${escapeV6Html(pCost)}</div>
+                            </div>
+                            
+                            <p class="text-zinc-800" style="font-size: ${dynDisc.bodySize}; line-height: ${dynDisc.lineHeight};">${escapeV6Html(p.desc)}</p>
+                        </div>
+                    `;
+                });
+                discHtmlStr += `</div>`;
+                discHtmlList.push(discHtmlStr);
+            });
+
+            const pageSubtitle = powerPages.length > 1 ? ` (Частина ${pageIdx + 1} з ${powerPages.length})` : '';
+
+            return `
+            <div class="v6-sheet-page v6-details-page bg-white text-black font-sans mx-auto w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] relative box-border overflow-hidden print:w-full print:h-[297mm] print:shadow-none print:max-w-none shadow-2xl p-[8mm] flex flex-col mb-8 print:mb-0">
+                <!-- Outer border -->
+                <div class="absolute inset-[5mm] border-[2.5px] border-black pointer-events-none print:inset-[4mm]">
+                    <div class="absolute -top-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+                    <div class="absolute -top-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+                    <div class="absolute -bottom-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+                    <div class="absolute -bottom-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+                </div>
+                
+                <div class="relative z-10 h-full flex flex-col justify-between p-[4mm] overflow-hidden">
+                    <div class="shrink-0">
+                        <h1 class="font-serif font-bold text-[18px] uppercase tracking-widest text-center mb-1">СИЛИ ДИСЦИПЛІН${pageSubtitle}</h1>
+                        <p class="text-center text-zinc-600 mb-3 italic text-[13px]">Дисципліни та надприродні сили персонажа ${charName}.</p>
+                    </div>
+                    
+                    <div class="columns-1 md:columns-2 gap-6 flex-1 w-full overflow-hidden" style="column-fill: auto;">
+                        ${discHtmlList.join('')}
+                    </div>
+                    <div class="shrink-0 text-center text-[11px] font-bold tracking-widest uppercase pt-1">${charName}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    return p2Html + p3Html + p4Html;
+}
+
 function generateV6PrintableHTML() {
     const sheetEl = document.getElementById('v6-official-sheet');
     const content = sheetEl ? sheetEl.outerHTML : '';
-    const charName = (v6State.characterDetails && v6State.characterDetails.name) ? v6State.characterDetails.name : 'Бланк_VtM_v6';
+    const rawName = (v6State.characterDetails && v6State.characterDetails.name) ? v6State.characterDetails.name.trim() : '';
+    const charName = rawName ? escapeV6Html(rawName) : 'Бланк_VtM_v6';
 
     return `<!DOCTYPE html>
 <html lang="uk">
@@ -4010,7 +4371,7 @@ function generateV6PrintableHTML() {
     <style>
         @page {
             size: A4 portrait;
-            margin: 4mm 5mm 4mm 5mm;
+            margin: 0 !important;
         }
         *, *::before, *::after {
             box-sizing: border-box !important;
@@ -4061,9 +4422,15 @@ function generateV6PrintableHTML() {
         .sheet-wrapper {
             padding: 24px 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
         }
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0 !important;
+            }
             .print-bar, .print\\:hidden {
                 display: none !important;
                 visibility: hidden !important;
@@ -4080,17 +4447,30 @@ function generateV6PrintableHTML() {
                 padding: 0 !important;
                 margin: 0 !important;
                 display: block !important;
+                gap: 0 !important;
             }
-            #v6-official-sheet {
+            .v6-sheet-page,
+            #v6-official-sheet,
+            .v6-details-page {
                 box-shadow: none !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                height: 282mm !important;
-                min-height: 282mm !important;
+                width: 210mm !important;
+                max-width: 210mm !important;
+                height: 297mm !important;
+                min-height: 297mm !important;
+                max-height: 297mm !important;
                 margin: 0 auto !important;
-                padding: 5mm !important;
+                padding: 8mm !important;
                 page-break-inside: avoid !important;
                 break-inside: avoid !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                overflow: hidden !important;
+                box-sizing: border-box !important;
+            }
+            .v6-sheet-page:last-child,
+            .v6-details-page:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
         }
     </style>
@@ -4101,10 +4481,10 @@ function generateV6PrintableHTML() {
             <span style="color: #ef4444; font-size: 24px;">🦇</span>
             <div>
                 <div style="color: #ffffff; font-family: 'Cinzel', serif; font-size: 14px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase;">
-                    Vampire: The Masquerade (6th Edition Playtest) — Бланк Персонажа
+                    Vampire: The Masquerade (6th Edition Playtest) — Бланк та Деталі Персонажа
                 </div>
                 <div style="color: #a1a1aa; font-size: 12px;">
-                    Формат: 1 сторінка A4 • Характеристики, Звір, Натура, Дисципліни та Ресурси
+                    Офіційний бланк A4 + Допоміжні сторінки опису деталей, натури та здібностей
                 </div>
             </div>
         </div>
@@ -4118,6 +4498,7 @@ function generateV6PrintableHTML() {
 
     <div class="sheet-wrapper">
         ${content}
+        ${generateV6DetailsPagesHTML()}
     </div>
 
     <script>

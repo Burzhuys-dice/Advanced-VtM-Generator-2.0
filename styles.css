@@ -1038,6 +1038,38 @@ h1, h2, h3, .vtm-font {
         break-after: avoid !important;
     }
 
+    /* V6 Sheet and Auxiliary Details Pages */
+    .v6-sheet-page,
+    #v6-official-sheet,
+    .v6-details-page {
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        width: 210mm !important;
+        max-width: 210mm !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
+        min-height: 297mm !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 8mm !important;
+        margin: 0 auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        page-break-after: always !important;
+        break-after: page !important;
+    }
+
+    .v6-sheet-page:last-child,
+    .v6-details-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
     .vtm-sheet-border {
         border: 2px solid #000000 !important;
         padding: 2.5mm !important;

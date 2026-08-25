@@ -3,19 +3,19 @@ async function init() {
     state.manualDisciplines = []; // Ініціалізація ручних дисциплін
     await fetchAllData();
     
-    let discKeys = Array.isArray(disciplinesData) ? disciplinesData.map(d => d.id) : Object.keys(disciplinesData);
+    let discKeys = Array.isArray(disciplinesData) ? disciplinesData.map(d => d.id) : Object.keys(disciplinesData || {});
     discKeys.forEach(d => {
         if(state.disciplines[d] === undefined) state.disciplines[d] = 0;
     });
-    Object.values(attributesData).flat().forEach(a => {
+    Object.values(attributesData || {}).flat().forEach(a => {
         if(state.attributes[a.id] === undefined) state.attributes[a.id] = 1;
     });
-    Object.values(skillsData).flat().forEach(s => {
+    Object.values(skillsData || {}).flat().forEach(s => {
         if(state.skills[s.id] === undefined) state.skills[s.id] = 0;
     });
 
     populateClanSelects();
-    changeClan(Object.keys(clansData)[0] || 'unknown'); 
+    changeClan(Object.keys(clansData || {})[0] || 'unknown'); 
     renderAttributes();
     renderSkills();
     populateCustomSpecDropdown();
@@ -96,7 +96,7 @@ async function fetchAllData() {
         if(discRes.ok) {
             const dJson = await discRes.json();
             
-            let discKeys = Array.isArray(disciplinesData) ? disciplinesData.map(d => d.id) : Object.keys(disciplinesData);
+            let discKeys = Array.isArray(disciplinesData) ? disciplinesData.map(d => d.id) : Object.keys(disciplinesData || {});
             discKeys.forEach(k => {
                 disciplinesPowersMap[k] = [];
             });
@@ -373,10 +373,10 @@ function applyAttributeArchetype(archId) {
     }
 
     // Скидаємо всі характеристики до базового рівня (1)
-    Object.keys(state.attributes).forEach(k => state.attributes[k] = 1);
+    Object.keys(state.attributes || {}).forEach(k => state.attributes[k] = 1);
 
     // Застосовуємо значення з архетипу
-    for (const [key, val] of Object.entries(archetype.values)) {
+    for (const [key, val] of Object.entries(archetype.values || {})) {
         if (state.attributes[key] !== undefined) {
             state.attributes[key] = val;
         }
@@ -419,10 +419,10 @@ function applySkillArchetype(archId) {
     }
 
     // Скидаємо всі навички до базового рівня (0)
-    Object.keys(state.skills).forEach(k => state.skills[k] = 0);
+    Object.keys(state.skills || {}).forEach(k => state.skills[k] = 0);
 
     // Застосовуємо значення з архетипу
-    for (const [key, val] of Object.entries(archetype.values)) {
+    for (const [key, val] of Object.entries(archetype.values || {})) {
         if (state.skills[key] !== undefined) {
             state.skills[key] = val;
         }
@@ -441,7 +441,7 @@ function populateManualDisciplineDropdown() {
     if (Array.isArray(disciplinesData)) {
         options = disciplinesData.map(d => ({ id: d.id, name: d.name || d.id }));
     } else {
-        options = Object.keys(disciplinesData).map(k => ({ id: k, name: disciplinesData[k].name || k }));
+        options = Object.keys(disciplinesData || {}).map(k => ({ id: k, name: disciplinesData[k].name || k }));
     }
 
     options.sort((a, b) => a.name.localeCompare(b.name));
@@ -1757,7 +1757,7 @@ function removeAdvantage(index) {
 function populateClanSelects() {
     let gen = parseInt(document.getElementById('generation-val')?.value || 13);
     let optionsHTML = '';
-    for (const [key, data] of Object.entries(clansData)) {
+    for (const [key, data] of Object.entries(clansData || {})) {
         if (gen >= 14 && key !== 'thin_blood' && key !== 'thin-blood') continue;
         if (gen < 14 && (key === 'thin_blood' || key === 'thin-blood')) continue;
         optionsHTML += `<option value="${key}">${data.name}</option>`;
@@ -1860,7 +1860,7 @@ function changeClan(clanId) {
         }
     }
     
-    Object.keys(state.disciplines).forEach(k => state.disciplines[k] = 0);
+    Object.keys(state.disciplines || {}).forEach(k => state.disciplines[k] = 0);
     state.disciplinePowers = {}; 
     state.manualDisciplines = []; // Скидаємо вручну додані дисципліни при зміні клану
 
@@ -1898,7 +1898,7 @@ function populateCustomSpecDropdown() {
     const select = document.getElementById('spec-custom-skill');
     select.innerHTML = '<option value="">-- Оберіть навичку --</option>';
     let allSkills = [];
-    Object.values(skillsData).forEach(arr => { allSkills = allSkills.concat(arr); });
+    Object.values(skillsData || {}).forEach(arr => { allSkills = allSkills.concat(arr); });
     allSkills.sort((a, b) => a.name.localeCompare(b.name));
     allSkills.forEach(skill => {
         select.innerHTML += `<option value="${skill.id}">${skill.name}</option>`;
@@ -1936,7 +1936,7 @@ function updateTrackers() {
         }
     } else {
         const discCounts = { 2: 0, 1: 0 };
-        Object.entries(state.disciplines).forEach(([key, val]) => {
+        Object.entries(state.disciplines || {}).forEach(([key, val]) => {
             // Ігноруємо ритуали та церемонії для лічильника дисциплін
             if (key === 'blood_sorcery_rituals' || key === 'oblivion_ceremonies') return; 
             
@@ -1958,7 +1958,7 @@ function updateTrackers() {
     }
 
     const attrCounts = { 4: 0, 3: 0, 2: 0, 1: 0 };
-    Object.values(state.attributes).forEach(val => {
+    Object.values(state.attributes || {}).forEach(val => {
         if (val >= 1 && val <= 4) attrCounts[val]++;
     });
     const attrTracker = document.getElementById('attr-tracker');
@@ -1972,7 +1972,7 @@ function updateTrackers() {
     }).join('');
 
     const skillCounts = { 4: 0, 3: 0, 2: 0, 1: 0 };
-    Object.values(state.skills).forEach(val => {
+    Object.values(state.skills || {}).forEach(val => {
         if (val >= 1 && val <= 4) skillCounts[val]++;
     });
     const target = skillTargets[state.distribution];
@@ -3972,7 +3972,7 @@ function generateDiceOptgroup() {
     
     // Attributes
     html += '<optgroup label="Характеристики">';
-    Object.keys(attributesData).forEach(cat => {
+    Object.keys(attributesData || {}).forEach(cat => {
         attributesData[cat].forEach(attr => {
             html += `<option value="attr_${attr.id}">${attr.name}</option>`;
         });
@@ -3981,7 +3981,7 @@ function generateDiceOptgroup() {
     
     // Skills
     html += '<optgroup label="Навички">';
-    Object.keys(skillsData).forEach(cat => {
+    Object.keys(skillsData || {}).forEach(cat => {
         skillsData[cat].forEach(skill => {
             html += `<option value="skill_${skill.id}">${skill.name}</option>`;
         });
@@ -4550,7 +4550,7 @@ window.openBgModal = function() {
                 <strong>Каїтиф (або вільний вибір):</strong> Для вашого персонажа немає суворих кланових обмежень передісторії. Ви можете обрати будь-яку з наведених нижче історій:
             </div>
         `;
-        for (const [clanId, clan] of Object.entries(clansData)) {
+        for (const [clanId, clan] of Object.entries(clansData || {})) {
             html += renderClanCard(clanId, clan);
         }
     }
