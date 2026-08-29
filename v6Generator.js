@@ -894,7 +894,7 @@ function renderV6UI() {
                     { step: 4, title: "4. Життєві Шляхи", icon: "📜" },
                     { step: 5, title: "5. Атрибути й Навички", icon: "⚡" },
                     { step: 6, title: "6. Дисципліни й Риси", icon: "🔮" },
-                    { step: 7, title: "7. Людяність і Натура", icon: "⚖️" },
+                    { step: 7, title: "7. Натура", icon: "🎭" },
                     { step: 8, title: "8. Ресурси і Зброя", icon: "🗡️" },
                     { step: 9, title: "9. Підсумок і Бланк", icon: "📄" }
                 ].map(item => `
@@ -914,8 +914,55 @@ function renderV6UI() {
         <main class="transition-all duration-300">
             ${renderCurrentV6StepContent()}
         </main>
+
+        <!-- Global Info Drawer -->
+        <div id="v6-info-drawer-overlay" class="fixed inset-0 bg-black/60 z-[100] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm" onclick="closeV6InfoDrawer()"></div>
+        <div id="v6-info-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#141416] shadow-2xl z-[110] transform translate-x-full transition-transform duration-300 flex flex-col border-l border-red-900/40">
+            <div id="v6-info-drawer-header" class="p-5 border-b border-red-900/40 flex justify-between items-start bg-gradient-to-r from-[#2a0808] to-[#141416] shrink-0">
+                <h3 id="v6-info-drawer-title" class="font-bold text-lg sm:text-xl vtm-font tracking-wide text-white flex items-center gap-3"></h3>
+                <button onclick="closeV6InfoDrawer()" class="w-8 h-8 flex items-center justify-center rounded-xl bg-black/40 hover:bg-red-900/60 text-zinc-400 hover:text-white transition-colors border border-transparent hover:border-red-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="v6-info-drawer-content" class="p-6 overflow-y-auto flex-1 text-sm text-zinc-300 custom-scrollbar pb-24"></div>
+        </div>
     `;
     updateV6Header();
+}
+
+function openV6InfoDrawer(title, content) {
+    const overlay = document.getElementById('v6-info-drawer-overlay');
+    const drawer = document.getElementById('v6-info-drawer');
+    const titleEl = document.getElementById('v6-info-drawer-title');
+    const contentEl = document.getElementById('v6-info-drawer-content');
+    
+    if (overlay && drawer && titleEl && contentEl) {
+        titleEl.innerHTML = title;
+        contentEl.innerHTML = content;
+        
+        overlay.classList.remove('hidden');
+        // trigger reflow
+        void overlay.offsetWidth;
+        overlay.classList.remove('opacity-0');
+        overlay.classList.add('opacity-100');
+        
+        drawer.classList.remove('translate-x-full');
+    }
+}
+
+function closeV6InfoDrawer() {
+    const overlay = document.getElementById('v6-info-drawer-overlay');
+    const drawer = document.getElementById('v6-info-drawer');
+    
+    if (overlay && drawer) {
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        drawer.classList.add('translate-x-full');
+        
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+    }
 }
 
 function goToV6Step(stepNum) {
@@ -1167,33 +1214,12 @@ function renderV6Step2_Clan() {
                     </div>
 
                     <div class="flex flex-col gap-2 pt-4 border-t border-red-900/60 text-xs">
-                        <details class="bg-black/30 rounded-xl border border-red-900/30 group [&_summary::-webkit-details-marker]:hidden">
-                            <summary class="p-3.5 cursor-pointer outline-none flex items-center justify-between hover:bg-white/5 transition-colors">
-                                <span class="text-red-400 font-bold uppercase tracking-wider block">🐾 Клановий Звір: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.beast}</span></span>
-                                <span class="text-red-400 transition-transform duration-200 group-open:-rotate-180 text-[10px]">▼</span>
-                            </summary>
-                            <div class="px-3.5 pb-4 border-t border-red-900/20 pt-3">
-                                <p class="text-zinc-400 text-[11px] leading-relaxed">${currentClan.beastDesc || ''}</p>
-                            </div>
-                        </details>
-                        <details class="bg-black/30 rounded-xl border border-red-900/30 group [&_summary::-webkit-details-marker]:hidden">
-                            <summary class="p-3.5 cursor-pointer outline-none flex items-center justify-between hover:bg-white/5 transition-colors">
-                                <span class="text-red-400 font-bold uppercase tracking-wider block">⚡ Прокляття: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.curse}</span></span>
-                                <span class="text-red-400 transition-transform duration-200 group-open:-rotate-180 text-[10px]">▼</span>
-                            </summary>
-                            <div class="px-3.5 pb-4 border-t border-red-900/20 pt-3">
-                                <p class="text-zinc-400 text-[11px] leading-relaxed">${currentClan.curseDesc || ''}</p>
-                            </div>
-                        </details>
-                        <details class="bg-black/30 rounded-xl border border-red-900/30 group [&_summary::-webkit-details-marker]:hidden">
-                            <summary class="p-3.5 cursor-pointer outline-none flex items-center justify-between hover:bg-white/5 transition-colors">
-                                <span class="text-red-400 font-bold uppercase tracking-wider block">🔥 Шаленство: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.frenzy || 'Специфічне'}</span></span>
-                                <span class="text-red-400 transition-transform duration-200 group-open:-rotate-180 text-[10px]">▼</span>
-                            </summary>
-                            <div class="px-3.5 pb-4 border-t border-red-900/20 pt-3">
-                                <p class="text-zinc-400 text-[11px] leading-relaxed">${currentClan.frenzyDesc || ''}</p>
-                            </div>
-                        </details>
+                        <button onclick="openV6ClanDrawer('${currentClan.id}')" class="w-full text-left p-3.5 bg-black/30 hover:bg-black/50 rounded-xl border border-red-900/30 transition-colors flex items-center justify-between group">
+                            <span class="text-red-400 font-bold uppercase tracking-wider block group-hover:text-red-300">
+                                📖 Читати правила Клану (Звір, Прокляття, Шаленство)
+                            </span>
+                            <span class="text-zinc-500">▶</span>
+                        </button>
                     </div>
                 </div>
             ` : ''}
@@ -1820,51 +1846,11 @@ function toggleV6Lifepath(lpId, maxCount) {
 // -----------------------------------------------------------------------------
 // STEP 5: ATTRIBUTES (5e KEYS) & CONDENSED SKILLS (13 SKILLS + FOCUSES)
 // -----------------------------------------------------------------------------
-function renderV6Step5_AttributesSkills() {
-    const tierObj = getV6Tier();
-    const attrDots = tierObj ? tierObj.attributeDots : [7, 5, 3];
-    const freeSkillDotsAllowed = tierObj ? tierObj.freeSkillDots : 8;
-
-    const lpSkillBonuses = getV6LifepathSkillBonuses();
-
-    if (!v6State.attributePriority) v6State.attributePriority = ['physical', 'social', 'mental'];
-    const attrLimits = {
-        [v6State.attributePriority[0]]: attrDots[0],
-        [v6State.attributePriority[1]]: attrDots[1],
-        [v6State.attributePriority[2]]: attrDots[2]
-    };
-
-    const physicalSpent = (v6State.attributes.strength - 1) + (v6State.attributes.dexterity - 1) + (v6State.attributes.stamina - 1);
-    const socialSpent = (v6State.attributes.charisma - 1) + (v6State.attributes.manipulation - 1) + (v6State.attributes.composure - 1);
-    const mentalSpent = (v6State.attributes.intelligence - 1) + (v6State.attributes.wits - 1) + (v6State.attributes.resolve - 1);
-    
-    const freeSkillDotsSpent = Object.keys(v6State.skills || {}).reduce((acc, key) => {
-        const lpBonus = lpSkillBonuses[key] || 0;
-        const current = v6State.skills[key] || 0;
-        return acc + Math.max(0, current - lpBonus);
-    }, 0);
-
-    const ATTR_DOT_DESCS = {
-        1: "Погано (Poor) — Слабкий, нижче середнього.",
-        2: "Середньо (Average) — Звичайний рівень для більшості людей.",
-        3: "Добре (Good) — Вище середнього, тренований.",
-        4: "Видатно (Exceptional) — Високий професіоналізм, експерт.",
-        5: "Винятково (Outstanding) — Світовий клас, пік людських можливостей."
-    };
-
-    const getLimitColor = (spent, limit) => {
-        if (spent === limit) return 'text-emerald-700';
-        if (spent > limit) return 'text-red-600 font-bold';
-        return 'text-[#8b0000]';
-    };
-
-    // Official 5e / V6 playtest Ukrainian attribute definitions
-    const ATTRIBUTE_CATEGORIES = [
+const V6_ATTRIBUTE_CATEGORIES_DATA = [
         {
             key: 'physical',
             label: 'Фізичні Атрибути',
             icon: '💪',
-            spent: physicalSpent,
             attrs: [
                 { 
                     id: 'strength', 
@@ -1908,7 +1894,6 @@ function renderV6Step5_AttributesSkills() {
             key: 'social',
             label: 'Соціальні Атрибути',
             icon: '🗣️',
-            spent: socialSpent,
             attrs: [
                 { 
                     id: 'charisma', 
@@ -1952,7 +1937,6 @@ function renderV6Step5_AttributesSkills() {
             key: 'mental',
             label: 'Ментальні Атрибути',
             icon: '🧠',
-            spent: mentalSpent,
             attrs: [
                 { 
                     id: 'intelligence', 
@@ -1992,6 +1976,51 @@ function renderV6Step5_AttributesSkills() {
                 }
             ]
         }
+    ];
+
+function renderV6Step5_AttributesSkills() {
+    const tierObj = getV6Tier();
+    const attrDots = tierObj ? tierObj.attributeDots : [7, 5, 3];
+    const freeSkillDotsAllowed = tierObj ? tierObj.freeSkillDots : 8;
+
+    const lpSkillBonuses = getV6LifepathSkillBonuses();
+
+    if (!v6State.attributePriority) v6State.attributePriority = ['physical', 'social', 'mental'];
+    const attrLimits = {
+        [v6State.attributePriority[0]]: attrDots[0],
+        [v6State.attributePriority[1]]: attrDots[1],
+        [v6State.attributePriority[2]]: attrDots[2]
+    };
+
+    const physicalSpent = (v6State.attributes.strength - 1) + (v6State.attributes.dexterity - 1) + (v6State.attributes.stamina - 1);
+    const socialSpent = (v6State.attributes.charisma - 1) + (v6State.attributes.manipulation - 1) + (v6State.attributes.composure - 1);
+    const mentalSpent = (v6State.attributes.intelligence - 1) + (v6State.attributes.wits - 1) + (v6State.attributes.resolve - 1);
+    
+    const freeSkillDotsSpent = Object.keys(v6State.skills || {}).reduce((acc, key) => {
+        const lpBonus = lpSkillBonuses[key] || 0;
+        const current = v6State.skills[key] || 0;
+        return acc + Math.max(0, current - lpBonus);
+    }, 0);
+
+    const ATTR_DOT_DESCS = {
+        1: "Погано (Poor) — Слабкий, нижче середнього.",
+        2: "Середньо (Average) — Звичайний рівень для більшості людей.",
+        3: "Добре (Good) — Вище середнього, тренований.",
+        4: "Видатно (Exceptional) — Високий професіоналізм, експерт.",
+        5: "Винятково (Outstanding) — Світовий клас, пік людських можливостей."
+    };
+
+    const getLimitColor = (spent, limit) => {
+        if (spent === limit) return 'text-emerald-700';
+        if (spent > limit) return 'text-red-600 font-bold';
+        return 'text-[#8b0000]';
+    };
+
+    // Official 5e / V6 playtest Ukrainian attribute definitions
+        const ATTRIBUTE_CATEGORIES = [
+        { ...V6_ATTRIBUTE_CATEGORIES_DATA[0], spent: physicalSpent },
+        { ...V6_ATTRIBUTE_CATEGORIES_DATA[1], spent: socialSpent },
+        { ...V6_ATTRIBUTE_CATEGORIES_DATA[2], spent: mentalSpent }
     ];
 
     return `
@@ -2074,9 +2103,11 @@ function renderV6Step5_AttributesSkills() {
                                                     `).join('')}
                                                 </div>
                                             </div>
-                                            <div class="space-y-1">
-                                                <p class="text-[10px] text-zinc-500 leading-snug">${attr.desc}</p>
-                                                <p class="text-[10px] text-[#8b0000] font-bold italic leading-snug bg-red-50 p-1.5 rounded border border-red-100">${attr.dots[v6State.attributes[attr.id]] || ''}</p>
+                                            <div class="space-y-1 mt-1.5">
+                                                <p class="text-[10px] text-zinc-500 leading-snug line-clamp-2">${attr.desc}</p>
+                                                <button onclick="openV6AttributeDrawer('${attr.id}')" class="text-[10px] text-zinc-600 hover:text-[#8b0000] underline decoration-dashed underline-offset-4 flex items-center gap-1 mt-1 font-medium transition-colors">
+                                                    <span>📖</span> Читати правила (${attr.name.split(' (')[0]})
+                                                </button>
                                             </div>
                                         </div>
                                     `).join('')}
@@ -2147,7 +2178,12 @@ function renderV6Step5_AttributesSkills() {
                                                 }).join('')}
                                             </div>
                                         </div>
-                                        <p class="text-[11px] text-zinc-500 leading-tight mb-3">${skill.desc || 'Навичка'}</p>
+                                        <div class="space-y-1 mt-1.5 mb-3">
+                                            <p class="text-[10px] text-zinc-500 leading-snug line-clamp-2">${skill.desc || 'Навичка'}</p>
+                                            <button onclick="openV6SkillDrawer('${skill.id}')" class="text-[10px] text-zinc-600 hover:text-[#8b0000] underline decoration-dashed underline-offset-4 flex items-center gap-1 mt-1 font-medium transition-colors">
+                                                <span>📖</span> Читати правила (${skill.name.split(' (')[0]})
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Focus selection input -->
@@ -2588,15 +2624,9 @@ function renderV6Step6_DisciplinesTraits() {
                                     ` : ''}
                                 </div>
                                 
-                                <details class="group border-t border-zinc-100 pt-2 mt-auto">
-                                    <summary class="text-[10px] text-[#8b0000] font-bold cursor-pointer select-none list-none inline-flex items-center gap-1 hover:underline">
-                                        <span class="group-open:hidden">▶ Повний опис</span>
-                                        <span class="hidden group-open:inline">▼ Сховати опис</span>
-                                    </summary>
-                                    <div class="mt-2 text-[11px] text-zinc-700 whitespace-pre-wrap p-2.5 bg-zinc-50 rounded-xl border border-zinc-100">
-                                        ${(merit.desc || '').replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-zinc-900">$1</strong>')}
-                                    </div>
-                                </details>
+                                <button onclick="openV6MeritDrawer('${merit.id}')" class="mt-auto border-t border-zinc-100 pt-2 text-[10px] text-zinc-600 hover:text-[#8b0000] font-medium flex items-center gap-1 transition-colors w-full text-left">
+                                    <span>📖</span> Читати повний опис
+                                </button>
                             </div>
                         `;
                     }).join('')}
@@ -2816,10 +2846,6 @@ function openV6PowerModal(powerId, discId) {
 
     if (!targetPower || !targetDisc) return;
 
-    const modal = document.getElementById('v6-power-modal');
-    const content = document.getElementById('v6-power-modal-content');
-    if (!modal || !content) return;
-
     const currentDots = v6State.disciplines[targetDisc.id] || 0;
     const isLearned = v6State.selectedPowers.includes(targetPower.id);
     const canLearn = currentDots >= targetPower.rank;
@@ -2866,48 +2892,6 @@ function openV6PowerModal(powerId, discId) {
                         Посилення [Maturing]
                     </h4>
                 </div>
-                <div class="space-y-2.5">
-                    ${targetPower.maturingLevels.map(lvl => {
-                        const isUnlocked = currentDots >= lvl.dots;
-                        return `
-                            <div class="p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                                isUnlocked 
-                                    ? 'bg-amber-950/20 border-amber-800/60 shadow-sm ring-1 ring-amber-500/20' 
-                                    : 'bg-zinc-900/50 border-zinc-800/80 opacity-70'
-                            }">
-                                <div class="flex items-start gap-2.5">
-                                    <span class="font-mono text-sm font-black tracking-widest ${isUnlocked ? 'text-amber-400' : 'text-zinc-500'} shrink-0 pt-0.5">
-                                        ${lvl.dotsSymbol || '•'.repeat(lvl.dots)}
-                                    </span>
-                                    <p class="text-xs sm:text-sm ${isUnlocked ? 'text-zinc-200 font-medium' : 'text-zinc-400'} leading-snug">
-                                        ${lvl.desc.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')}
-                                    </p>
-                                </div>
-                                <div class="shrink-0 self-end sm:self-center">
-                                    ${isUnlocked 
-                                        ? `<span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-700/60 flex items-center gap-1">
-                                            ✓ Активно (${currentDots} ⬤)
-                                           </span>`
-                                        : `<span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-500 border border-zinc-700 flex items-center gap-1">
-                                            🔒 Потрібно ${lvl.dots} ⬤
-                                           </span>`
-                                    }
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-        `;
-    } else if (targetPower.maturing) {
-        maturingHtml = `
-            <div class="mt-5 pt-4 border-t border-zinc-800/80">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="text-amber-500 text-base">📈</span>
-                    <h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300">
-                        Посилення [Maturing]
-                    </h4>
-                </div>
                 <div class="p-3.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-xs sm:text-sm text-zinc-300 leading-relaxed">
                     ${targetPower.maturing.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')}
                 </div>
@@ -2915,149 +2899,93 @@ function openV6PowerModal(powerId, discId) {
         `;
     }
 
-    content.innerHTML = `
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-[#8b0000] via-[#5c0000] to-zinc-950 p-5 flex items-start justify-between gap-4 shrink-0 border-b border-red-950">
-            <div class="flex items-start gap-3.5">
-                <div class="w-12 h-12 rounded-2xl bg-black/50 border border-red-500/30 flex items-center justify-center shrink-0 shadow-lg p-2 mt-0.5">
-                    ${discIcon ? `<img src="${discIcon}" alt="${targetDisc.name}" class="w-full h-full object-contain filter drop-shadow" />` : `<span class="text-2xl">🔮</span>`}
-                </div>
-                <div>
-                    <div class="flex items-center gap-2 flex-wrap mb-1">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-red-300 bg-black/40 px-2.5 py-0.5 rounded-full border border-red-800/50">
-                            ${targetDisc.name}
-                        </span>
-                        <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${typeBadgeClass}">
-                            ${targetPower.rankName || `Ранг ${targetPower.rank} ⬤ • ${targetPower.type || 'Physical'}`}
-                        </span>
-                    </div>
-                    <h2 class="text-xl sm:text-2xl font-bold vtm-font tracking-wide text-white drop-shadow">
-                        ${targetPower.name}
-                    </h2>
-                    ${targetPower.shortDesc ? `<p class="text-xs sm:text-sm text-red-200/90 font-medium mt-1">${targetPower.shortDesc}</p>` : ''}
-                </div>
-            </div>
-            <button type="button" onclick="closeV6PowerModal()" class="text-white/70 hover:text-white p-2 rounded-xl hover:bg-black/30 transition-colors shrink-0" title="Закрити (Esc)">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+    const titleHtml = `
+        <div class="flex flex-col gap-1">
+            <span class="text-[10px] font-bold text-red-400 uppercase tracking-widest">${targetDisc.name.split(' (')[0]} • Ранг ${targetPower.rank}</span>
+            <span>${targetPower.name}</span>
         </div>
+    `;
 
-        <!-- Scrollable Body -->
-        <div class="p-5 sm:p-6 overflow-y-auto flex-1 custom-scrollbar space-y-5 bg-zinc-950">
-            <!-- Attribute & Parameter Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
-                        <span>⚡</span> Активація:
-                    </div>
-                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
-                        ${formatV6Activate(targetPower.activate)}
-                    </div>
-                </div>
-
-                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
-                        <span>🎯</span> Складність:
-                    </div>
-                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
-                        ${formatV6Difficulty(targetPower.difficulty)}
-                    </div>
-                </div>
-
-                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
-                        <span>🎲</span> Характеристика:
-                    </div>
-                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
-                        ${formatV6Attribute(targetPower.attribute)}
-                    </div>
-                </div>
-
-                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
-                        <span>🩸</span> Вартість:
-                    </div>
-                    <div class="text-xs sm:text-sm font-bold text-red-400 font-mono">
-                        ${formatV6Cost(targetPower.cost)}
-                    </div>
-                </div>
-
-                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
-                        <span>📏</span> Дистанція:
-                    </div>
-                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
-                        ${formatV6Distance(targetPower.distance)}
-                    </div>
-                </div>
-
-                <div class="bg-zinc-900/80 border border-zinc-800 p-3 rounded-xl">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1 flex items-center gap-1.5">
-                        <span>⏳</span> Тривалість:
-                    </div>
-                    <div class="text-xs sm:text-sm font-bold text-white font-mono">
-                        ${formatV6Duration(targetPower.duration)}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Description Block -->
-            <div>
-                <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-                    <span>📖</span> Опис та правила використання
-                </h4>
-                <div class="bg-zinc-900/40 p-4 sm:p-5 rounded-2xl border border-zinc-800/80 shadow-inner">
-                    ${formatDescription(targetPower.desc)}
-                </div>
-            </div>
-
-            <!-- Maturing Block -->
-            ${maturingHtml}
-        </div>
-
-        <!-- Footer Actions -->
-        <div class="bg-zinc-900 p-4 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-            <div class="flex items-center gap-2 text-xs text-zinc-400">
-                <span>Ваш рівень у ${targetDisc.name.split(' (')[0]}:</span>
-                <span class="font-bold text-white bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">${currentDots} ⬤</span>
+    const contentHtml = `
+        <div class="space-y-4 mb-4">
+            <div class="flex items-center gap-2 flex-wrap mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${typeBadgeClass}">
+                    ${targetPower.rankName || `Ранг ${targetPower.rank} ⬤ • ${targetPower.type || 'Physical'}`}
+                </span>
             </div>
             
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <button type="button" onclick="closeV6PowerModal()" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-xl hover:bg-zinc-700 hover:text-white transition-colors">
-                    Закрити
-                </button>
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">⚡ Активація:</div>
+                    <div class="text-sm font-bold text-white font-mono">${formatV6Activate(targetPower.activate)}</div>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">🎯 Складність:</div>
+                    <div class="text-sm font-bold text-white font-mono">${formatV6Difficulty(targetPower.difficulty)}</div>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">🎲 Пул:</div>
+                    <div class="text-sm font-bold text-white font-mono">${formatV6Attribute(targetPower.attribute)}</div>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">🩸 Вартість:</div>
+                    <div class="text-sm font-bold text-red-400 font-mono">${formatV6Cost(targetPower.cost)}</div>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">📏 Дистанція:</div>
+                    <div class="text-sm font-bold text-white font-mono">${formatV6Distance(targetPower.distance)}</div>
+                </div>
+                <div class="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">⏳ Тривалість:</div>
+                    <div class="text-sm font-bold text-white font-mono">${formatV6Duration(targetPower.duration)}</div>
+                </div>
+            </div>
 
-                ${isLearned 
-                    ? `<button type="button" onclick="toggleV6Power('${targetPower.id}'); openV6PowerModal('${targetPower.id}', '${targetDisc.id}')" class="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-[#8b0000] hover:bg-red-700 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
-                        <span>✓</span> Сила обрана (Скасувати)
-                       </button>`
-                    : (canLearn 
-                        ? `<button type="button" onclick="toggleV6Power('${targetPower.id}'); openV6PowerModal('${targetPower.id}', '${targetDisc.id}')" class="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-zinc-800 hover:bg-[#8b0000] border border-zinc-700 hover:border-red-600 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
-                            <span>➕</span> Обрати цю силу
-                           </button>`
-                        : `<button type="button" disabled class="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500 bg-zinc-800/40 border border-zinc-800 rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5">
-                            <span>🔒</span> Потрібно ${targetPower.rank} ⬤
-                           </button>`
-                      )
-                }
+            <!-- Description -->
+            <div class="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50 mt-4 relative overflow-hidden">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3 border-b border-zinc-800/60 pb-2">
+                    Система та Ефект
+                </h4>
+                <div class="text-zinc-300">
+                    ${formatDescription(targetPower.desc)}
+                </div>
+                
+                ${targetPower.system ? `
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3 border-b border-zinc-800/60 pb-2 mt-5">
+                        Механіка (System)
+                    </h4>
+                    <div class="text-zinc-300">
+                        ${formatDescription(targetPower.system)}
+                    </div>
+                ` : ''}
+
+                ${maturingHtml}
+            </div>
+            
+            <div class="pt-6 pb-2">
+                ${isLearned ? `
+                    <button onclick="toggleV6Power('${targetPower.id}'); closeV6PowerModal();" class="w-full px-5 py-3 rounded-xl text-sm font-bold bg-zinc-800/80 text-zinc-400 hover:bg-red-950/50 hover:text-red-400 border border-zinc-700/50 hover:border-red-900/60 transition-colors uppercase tracking-wider flex items-center justify-center gap-2">
+                        <span>Забути силу</span>
+                    </button>
+                ` : (canLearn ? `
+                    <button onclick="toggleV6Power('${targetPower.id}'); closeV6PowerModal();" class="w-full px-5 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-red-900 to-red-800 hover:from-red-800 hover:to-red-700 text-white shadow-lg shadow-red-900/20 uppercase tracking-wider transition-all flex items-center justify-center gap-2">
+                        <span>🩸</span> <span>Вивчити цю силу</span>
+                    </button>
+                ` : `
+                    <div class="w-full text-zinc-500 text-xs uppercase font-bold px-4 py-3 border border-zinc-800/50 bg-black/20 rounded-xl text-center flex items-center justify-center gap-2">
+                        <span>🔒</span> Потрібно ${targetPower.rank} ⬤ у ${targetDisc.name.split(' (')[0]}
+                    </div>
+                `)}
             </div>
         </div>
     `;
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    document.body.style.overflow = 'hidden';
+    openV6InfoDrawer(titleHtml, contentHtml);
 }
 
 function closeV6PowerModal() {
-    const modal = document.getElementById('v6-power-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-    document.body.style.overflow = '';
+    closeV6InfoDrawer();
 }
-
 // Global exposure
 if (typeof window !== 'undefined') {
     window.openV6PowerModal = openV6PowerModal;
@@ -3111,34 +3039,10 @@ function renderV6Step7_HumanityNature() {
             <div class="border-b border-zinc-200 pb-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <span class="text-xs font-bold text-[#8b0000] uppercase tracking-widest">Крок 7 із 9 • Alpha 1.0</span>
-                    <h2 class="text-3xl font-bold text-zinc-900 vtm-font uppercase mt-1">Шкала Людяності та Ваша Натура</h2>
+                    <h2 class="text-3xl font-bold text-zinc-900 vtm-font uppercase mt-1">Ваша Натура</h2>
                 </div>
                 <div class="text-xs text-zinc-500 bg-zinc-50 px-4 py-2 rounded-xl border border-zinc-200">
-                    Вічна дуальність між Монструозним Звіром та Смертною Натурою.
-                </div>
-            </div>
-
-            <!-- 7-POINT HUMANITY SCALE VISUALIZER -->
-            <div class="bg-gradient-to-r from-red-950/20 via-zinc-50 to-emerald-950/20 p-6 rounded-2xl border border-zinc-200 mb-8">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="text-xs font-bold text-red-900 uppercase tracking-wider">🐺 Монструозне (Monstrous)</span>
-                    <span class="text-xs font-bold text-zinc-700 uppercase tracking-widest">Нейтральний стан (Баланс)</span>
-                    <span class="text-xs font-bold text-emerald-900 uppercase tracking-wider">🕊️ Смертне (Mortal)</span>
-                </div>
-                <div class="flex items-center justify-between gap-2 max-w-xl mx-auto py-2">
-                    ${[-3, -2, -1, 0, 1, 2, 3].map(val => {
-                        const isCurrent = v6State.humanityScale === val;
-                        const label = val < 0 ? `М${Math.abs(val)}` : (val === 0 ? '0' : `С${val}`);
-                        return `
-                            <button onclick="setV6HumanityScale(${val})" class="w-10 h-10 rounded-2xl flex flex-col items-center justify-center font-bold text-xs transition-all ${
-                                isCurrent 
-                                    ? (val < 0 ? 'bg-red-900 text-white scale-110 shadow-lg' : (val === 0 ? 'bg-zinc-800 text-white scale-110 shadow-lg' : 'bg-emerald-800 text-white scale-110 shadow-lg'))
-                                    : 'bg-white border border-zinc-300 text-zinc-600 hover:bg-zinc-100'
-                            }">
-                                <span>${label}</span>
-                            </button>
-                        `;
-                    }).join('')}
+                    Натура визначає вашу смертну сутність, спосіб розради та специфіку емоційного спалаху.
                 </div>
             </div>
 
@@ -3180,34 +3084,9 @@ function renderV6Step7_HumanityNature() {
                                     </div>
                                     <p class="text-[11px] text-zinc-700 leading-relaxed mb-3">${nat.shortDesc || ''}</p>
                                     
-                                    <details class="group border-t border-zinc-100 pt-2">
-                                        <summary class="text-[10px] text-[#8b0000] font-bold cursor-pointer select-none list-none inline-flex items-center gap-1 hover:underline">
-                                            <span class="group-open:hidden">▶ Повний опис та спалах</span>
-                                            <span class="hidden group-open:inline">▼ Сховати опис</span>
-                                        </summary>
-                                        <div class="mt-2 text-[11px] text-zinc-700 space-y-2 p-3 bg-zinc-50 rounded-xl border border-zinc-200">
-                                            <div>
-                                                <div class="font-bold text-zinc-900 mb-0.5 text-[10px] uppercase tracking-wider">Повний опис:</div>
-                                                <p class="leading-relaxed text-zinc-800">${nat.desc || ''}</p>
-                                            </div>
-                                            ${nat.indulging ? `
-                                                <div class="pt-2 border-t border-zinc-200/60">
-                                                    <div class="font-bold text-emerald-800 flex items-center gap-1 mb-0.5 text-[10px] uppercase tracking-wider">
-                                                        <span>💖</span> Розрада (Indulging):
-                                                    </div>
-                                                    <p class="leading-relaxed text-zinc-800">${nat.indulging}</p>
-                                                </div>
-                                            ` : ''}
-                                            ${nat.outburst ? `
-                                                <div class="pt-2 border-t border-zinc-200/60">
-                                                    <div class="font-bold text-red-800 flex items-center gap-1 mb-0.5 text-[10px] uppercase tracking-wider">
-                                                        <span>💥</span> Спалах Натури: ${nat.outburstName || 'Спалах'}:
-                                                    </div>
-                                                    <p class="leading-relaxed text-zinc-800">${nat.outburst}</p>
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    </details>
+                                    <button onclick="openV6NatureDrawer('${nat.id}')" class="mt-auto border-t border-zinc-100 pt-2 text-[10px] text-zinc-600 hover:text-[#8b0000] font-medium flex items-center gap-1 transition-colors w-full text-left">
+                                        <span>📖</span> Читати повний опис та спалах
+                                    </button>
                                 </div>
                             </div>
                         `;
@@ -3516,60 +3395,85 @@ function renderV6Step9_SummarySheet() {
     }
 
     const activeDiscs = Object.entries(v6State.disciplines || {}).filter(([_, val]) => val > 0);
+    const hasAnyPowers = Array.isArray(v6State.selectedPowers) && v6State.selectedPowers.length > 0;
     let discHtml = '';
-    
-    if (activeDiscs.length > 0) {
-        activeDiscs.forEach(([discId, dots]) => {
-            const disc = getV6Disciplines().find(d => d.id === discId);
-            const name = disc ? disc.name.split(' (')[0] : discId;
-            const powers = (disc && Array.isArray(disc.powers))
-                ? disc.powers.filter(p => Array.isArray(v6State.selectedPowers) && v6State.selectedPowers.includes(p.id))
-                : [];
-            
+
+    if (!hasAnyPowers) {
+        discHtml = `
+            <div class="bg-red-50/50 border border-red-200 rounded-xl p-4 text-center mt-2 mx-1 mb-3">
+                <div class="text-base mb-1">⚠️</div>
+                <div class="text-[10px] font-bold text-red-900 uppercase tracking-wider mb-1">Сили не обрані</div>
+                <div class="text-[8px] text-red-700 leading-relaxed max-w-[200px] mx-auto">
+                    Будь ласка, поверніться на <button onclick="goToV6Step(6)" class="underline font-bold hover:text-red-900">Крок 6</button> та оберіть Сили Крові.
+                </div>
+            </div>
+        `;
+        for (let i = 0; i < 2; i++) {
             discHtml += `
                 <div class="mb-2.5 pb-1 border-b border-zinc-200 last:border-b-0 last:pb-0">
                     <div class="flex justify-between items-end border-b-[1.5px] border-black pb-0.5 mb-1">
-                        <span class="text-[10px] font-bold uppercase tracking-wider font-serif text-black">${name}</span>
-                        ${drawDots(dots, 5)}
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-300 font-serif">Дисципліна</span>
+                        ${drawDots(0, 5)}
                     </div>
-                    ${powers.length > 0 ? `
-                        <div class="space-y-1 pl-1 mb-1">
-                            ${powers.map(p => `
-                                <div class="text-[8.5px] border-b border-zinc-100 last:border-0 pb-0.5 leading-tight">
-                                    <div class="flex items-center justify-between gap-1">
-                                        <span class="font-bold text-zinc-900 truncate">• ${p.name}</span>
-                                        <span class="text-[6.5px] text-[#8b0000] font-sans font-bold uppercase px-1 py-0.2 bg-red-50 rounded border border-red-200 shrink-0">
-                                            Ранг ${p.rank} • ${formatV6Activate(p.activate)} • ${formatV6Cost(p.cost)}
-                                        </span>
-                                    </div>
-                                    ${p.shortDesc ? `<p class="text-[7.5px] text-zinc-600 mt-0.5 leading-snug line-clamp-1">${p.shortDesc}</p>` : (p.desc ? `<p class="text-[7.5px] text-zinc-600 mt-0.5 leading-snug line-clamp-1">${p.desc.split('\n')[0]}</p>` : '')}
-                                </div>
-                            `).join('')}
-                        </div>
-                    ` : `
-                        <div class="pl-1 text-[7.5px] text-zinc-400 italic py-0.5">
-                            • Не обрано сил (${dots} ⬤ доступно)
-                        </div>
-                        <div class="border-b border-dashed border-zinc-200 h-2.5 mb-1"></div>
-                    `}
+                    <div class="border-b border-zinc-200 h-3 mb-1"></div>
+                    <div class="border-b border-zinc-200 h-3"></div>
                 </div>
             `;
-        });
-    }
-
-    // Fill placeholder slots if less than 2
-    const totalSlots = Math.max(2, activeDiscs.length);
-    for (let i = activeDiscs.length; i < totalSlots; i++) {
-        discHtml += `
-            <div class="mb-2.5 pb-1 border-b border-zinc-200 last:border-b-0 last:pb-0">
-                <div class="flex justify-between items-end border-b-[1.5px] border-black pb-0.5 mb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-300 font-serif">Дисципліна</span>
-                    ${drawDots(0, 5)}
+        }
+    } else {
+        if (activeDiscs.length > 0) {
+            activeDiscs.forEach(([discId, dots]) => {
+                const disc = getV6Disciplines().find(d => d.id === discId);
+                const name = disc ? disc.name.split(' (')[0] : discId;
+                const powers = (disc && Array.isArray(disc.powers))
+                    ? disc.powers.filter(p => Array.isArray(v6State.selectedPowers) && v6State.selectedPowers.includes(p.id))
+                    : [];
+                
+                discHtml += `
+                    <div class="mb-2.5 pb-1 border-b border-zinc-200 last:border-b-0 last:pb-0">
+                        <div class="flex justify-between items-end border-b-[1.5px] border-black pb-0.5 mb-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider font-serif text-black">${name}</span>
+                            ${drawDots(dots, 5)}
+                        </div>
+                        ${powers.length > 0 ? `
+                            <div class="space-y-1 pl-1 mb-1">
+                                ${powers.map(p => `
+                                    <div class="text-[8.5px] border-b border-zinc-100 last:border-0 pb-0.5 leading-tight">
+                                        <div class="flex items-center justify-between gap-1">
+                                            <span class="font-bold text-zinc-900 truncate">• ${p.name}</span>
+                                            <span class="text-[6.5px] text-[#8b0000] font-sans font-bold uppercase px-1 py-0.2 bg-red-50 rounded border border-red-200 shrink-0">
+                                                Ранг ${p.rank} • ${formatV6Activate(p.activate)} • ${formatV6Cost(p.cost)}
+                                            </span>
+                                        </div>
+                                        ${p.shortDesc ? `<p class="text-[7.5px] text-zinc-600 mt-0.5 leading-snug line-clamp-1">${p.shortDesc}</p>` : (p.desc ? `<p class="text-[7.5px] text-zinc-600 mt-0.5 leading-snug line-clamp-1">${p.desc.split('\n')[0]}</p>` : '')}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="pl-1 text-[7.5px] text-zinc-400 italic py-0.5">
+                                • Не обрано сил (${dots} ⬤ доступно)
+                            </div>
+                            <div class="border-b border-dashed border-zinc-200 h-2.5 mb-1"></div>
+                        `}
+                    </div>
+                `;
+            });
+        }
+        
+        // Fill placeholder slots if less than 2
+        const totalSlots = Math.max(2, activeDiscs.length);
+        for (let i = activeDiscs.length; i < totalSlots; i++) {
+            discHtml += `
+                <div class="mb-2.5 pb-1 border-b border-zinc-200 last:border-b-0 last:pb-0">
+                    <div class="flex justify-between items-end border-b-[1.5px] border-black pb-0.5 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-300 font-serif">Дисципліна</span>
+                        ${drawDots(0, 5)}
+                    </div>
+                    <div class="border-b border-zinc-200 h-3 mb-1"></div>
+                    <div class="border-b border-zinc-200 h-3"></div>
                 </div>
-                <div class="border-b border-zinc-200 h-3 mb-1"></div>
-                <div class="border-b border-zinc-200 h-3"></div>
-            </div>
-        `;
+            `;
+        }
     }
 
     return `
@@ -4293,27 +4197,45 @@ function generateV6DetailsPagesHTML() {
         });
     }
 
-    // 3. Fallback: If no powers were explicitly chosen, but character has dots in disciplines, populate with all powers up to current dots
-    if (selectedPowers.length === 0) {
-        Object.entries(v6State.disciplines || {}).forEach(([discId, dots]) => {
-            if (dots > 0) {
-                const d = allDisciplines.find(x => x.id === discId);
-                if (d && Array.isArray(d.powers)) {
-                    d.powers.filter(p => (p.rank || p.level || 1) <= dots).forEach(p => {
-                        if (!selectedPowers.some(sp => sp.power.id === p.id)) {
-                            selectedPowers.push({
-                                discId: d.id,
-                                discName: d.name,
-                                power: p
-                            });
-                        }
-                    });
-                }
-            }
-        });
-    }
-
+        // If no powers were explicitly chosen, generate a placeholder page
     let p4Html = '';
+    
+    if (selectedPowers.length === 0) {
+        p4Html = `
+            <div class="v6-sheet-page v6-details-page bg-white text-black font-sans mx-auto w-[210mm] h-[297mm] min-h-[297mm] max-h-[297mm] relative box-border overflow-hidden print:w-full print:h-[297mm] print:shadow-none print:max-w-none shadow-2xl p-[8mm] flex flex-col mb-8 print:mb-0">
+                <!-- Outer border -->
+                <div class="absolute inset-[5mm] border-[2.5px] border-black pointer-events-none print:inset-[4mm]">
+                    <div class="absolute -top-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+                    <div class="absolute -top-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+                    <div class="absolute -bottom-[1.5px] -left-[1.5px] w-2 h-2 bg-black"></div>
+                    <div class="absolute -bottom-[1.5px] -right-[1.5px] w-2 h-2 bg-black"></div>
+                </div>
+                
+                <div class="relative z-10 h-full flex flex-col justify-between p-[4mm] overflow-hidden">
+                    <div class="shrink-0">
+                        <h1 class="font-serif font-bold text-[18px] uppercase tracking-widest text-center mb-1">СИЛИ ТА ЗДАТНОСТІ ДИСЦИПЛІН</h1>
+                        <p class="text-center text-zinc-600 mb-2 italic text-[12.5px]">Повний опис та правила використання надприродних здібностей персонажа ${charName}.</p>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col items-center justify-center p-10">
+                        <div class="bg-red-50/50 border-2 border-dashed border-red-200 rounded-3xl p-10 text-center max-w-md w-full mx-auto print:hidden">
+                            <div class="text-4xl mb-4">⚠️</div>
+                            <h2 class="text-xl font-bold text-red-900 uppercase tracking-widest mb-2 font-serif">Сили не обрані</h2>
+                            <p class="text-sm text-red-700 leading-relaxed">
+                                Будь ласка, поверніться на <button onclick="goToV6Step(6)" class="underline font-bold hover:text-red-900">Крок 6</button> та оберіть Сили Крові для ваших Дисциплін, щоб вони з'явились на цьому аркуші.
+                            </p>
+                        </div>
+                        <div class="hidden print:block text-center max-w-md w-full mx-auto p-10 border-2 border-dashed border-zinc-300 rounded-3xl">
+                            <div class="text-2xl mb-2 text-zinc-400">Сили не обрані</div>
+                            <p class="text-xs text-zinc-500">Заповніть цей аркуш власноруч або поверніться в конструктор.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="shrink-0 text-center text-[11px] font-bold tracking-widest uppercase pt-1">${charName}</div>
+                </div>
+            </div>
+        `;
+    }
     
     if (selectedPowers.length > 0) {
         const DISC_PAGE_MAX_POWERS = 4;
@@ -4739,3 +4661,164 @@ window.sanitizeV6InvalidSelections = sanitizeV6InvalidSelections;
 window.updateV6CharacterDetail = updateV6CharacterDetail;
 window.escapeV6Html = escapeV6Html;
 window.v6State = v6State;
+
+window.openV6AttributeDrawer = function(attrId) {
+    let foundAttr = null;
+    let foundCat = null;
+    for (const cat of V6_ATTRIBUTE_CATEGORIES_DATA) {
+        const attr = cat.attrs.find(a => a.id === attrId);
+        if (attr) {
+            foundAttr = attr;
+            foundCat = cat;
+            break;
+        }
+    }
+    if (!foundAttr) return;
+    
+    const dotsHtml = [1,2,3,4,5].map(d => `
+        <div class="mb-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800/80 hover:border-red-900/30 transition-colors">
+            <strong class="text-white block mb-1">Оцінка ${d} ${'⬤'.repeat(d).padEnd(5, '〇')}</strong>
+            <span class="text-zinc-400 text-sm leading-relaxed">${foundAttr.dots[d]}</span>
+        </div>
+    `).join('');
+    
+    const content = `
+        <div class="mb-6 bg-red-950/20 p-4 rounded-xl border border-red-900/30 text-zinc-300">
+            <p class="leading-relaxed text-sm">${foundAttr.desc}</p>
+        </div>
+        <h4 class="font-bold uppercase tracking-widest text-[10px] text-zinc-500 mb-3 border-b border-zinc-800 pb-2">Рівні майстерності</h4>
+        <div class="space-y-2">${dotsHtml}</div>
+    `;
+    
+    openV6InfoDrawer(`<span class="text-2xl">${foundCat.icon}</span> <span>${foundAttr.name.split(' (')[0]}</span>`, content);
+}
+
+window.openV6SkillDrawer = function(skillId) {
+    const skills = getV6Skills();
+    const skill = skills.find(s => s.id === skillId);
+    if (!skill) return;
+    
+    const content = `
+        <div class="mb-6 bg-red-950/20 p-4 rounded-xl border border-red-900/30 text-zinc-300">
+            <p class="leading-relaxed text-sm">${skill.desc}</p>
+        </div>
+        ${skill.focuses && skill.focuses.length > 0 ? `
+            <h4 class="font-bold uppercase tracking-widest text-[10px] text-zinc-500 mb-3 border-b border-zinc-800 pb-2">Приклади Фокусів</h4>
+            <div class="flex flex-wrap gap-2">
+                ${skill.focuses.map(f => `<span class="px-2.5 py-1 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-300">${f}</span>`).join('')}
+            </div>
+        ` : ''}
+    `;
+    
+    openV6InfoDrawer(`<span>🧠</span> <span>${skill.name.split(' (')[0]}</span>`, content);
+}
+
+window.openV6MeritDrawer = function(meritId) {
+    const merits = getV6Merits();
+    const merit = merits.find(m => m.id === meritId);
+    if (!merit) return;
+
+    const formattedDesc = (merit.desc || merit.shortDesc || '').replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>');
+    
+    const content = `
+        <div class="mb-4">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1 block">Вимоги</span>
+            <div class="text-xs font-bold text-red-400">
+                ${merit.prereq || 'Немає'}
+            </div>
+        </div>
+        
+        <div class="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50 mt-4 relative overflow-hidden">
+            <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3 border-b border-zinc-800/60 pb-2">
+                Система та Ефект
+            </h4>
+            <div class="text-zinc-300 text-sm whitespace-pre-wrap leading-relaxed">
+                ${formattedDesc}
+            </div>
+        </div>
+        
+        <div class="mt-6">
+            <button onclick="toggleV6Merit('${merit.id}'); closeV6InfoDrawer();" class="w-full px-5 py-3 rounded-xl text-sm font-bold bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white border border-zinc-700/50 transition-colors uppercase tracking-wider flex items-center justify-center gap-2">
+                ${v6State.selectedMerits && v6State.selectedMerits.includes(merit.id) ? '<span>✅</span> Обрано (Натисніть щоб скасувати)' : 'ОБРАТИ ЦЕ БЛАГО'}
+            </button>
+        </div>
+    `;
+    
+    openV6InfoDrawer(`<span>✨</span> <span>${merit.name}</span>`, content);
+}
+
+window.openV6ClanDrawer = function(clanId) {
+    const clans = getV6Clans();
+    const clan = clans.find(c => c.id === clanId);
+    if (!clan) return;
+    
+    const content = `
+        <div class="space-y-4">
+            <div class="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-2">
+                    <span>🐾</span> Клановий Звір: <span class="text-white capitalize">${clan.beast}</span>
+                </h4>
+                <div class="text-zinc-300 text-sm leading-relaxed">${clan.beastDesc || 'Опис відсутній'}</div>
+            </div>
+            
+            <div class="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-2">
+                    <span>⚡</span> Прокляття: <span class="text-white capitalize">${clan.curse}</span>
+                </h4>
+                <div class="text-zinc-300 text-sm leading-relaxed">${clan.curseDesc || 'Опис відсутній'}</div>
+            </div>
+            
+            <div class="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-2">
+                    <span>🔥</span> Шаленство: <span class="text-white capitalize">${clan.frenzy || 'Специфічне'}</span>
+                </h4>
+                <div class="text-zinc-300 text-sm leading-relaxed">${clan.frenzyDesc || 'Опис відсутній'}</div>
+            </div>
+        </div>
+    `;
+    
+    openV6InfoDrawer(`<span>🩸</span> <span>${clan.name}</span>`, content);
+}
+
+window.openV6NatureDrawer = function(natureId) {
+    const natures = getV6Natures();
+    const nat = natures.find(n => n.id === natureId);
+    if (!nat) return;
+    
+    const content = `
+        <div class="space-y-4">
+            <div class="bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-2">
+                    Повний опис
+                </h4>
+                <div class="text-zinc-300 text-sm leading-relaxed">${nat.desc || 'Опис відсутній'}</div>
+            </div>
+            
+            ${nat.indulging ? `
+                <div class="bg-emerald-950/20 p-4 rounded-xl border border-emerald-900/30">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-emerald-500/70 mb-2 flex items-center gap-2">
+                        <span>💖</span> Розрада (Indulging)
+                    </h4>
+                    <div class="text-zinc-300 text-sm leading-relaxed">${nat.indulging}</div>
+                </div>
+            ` : ''}
+            
+            ${nat.outburst ? `
+                <div class="bg-red-950/20 p-4 rounded-xl border border-red-900/30">
+                    <h4 class="text-xs font-bold uppercase tracking-widest text-red-500/70 mb-2 flex items-center gap-2">
+                        <span>💥</span> Спалах Натури: <span class="text-red-400 capitalize">${nat.outburstName || 'Спалах'}</span>
+                    </h4>
+                    <div class="text-zinc-300 text-sm leading-relaxed">${nat.outburst}</div>
+                </div>
+            ` : ''}
+        </div>
+        
+        <div class="mt-6">
+            <button onclick="selectV6Nature('${nat.id}'); closeV6InfoDrawer();" class="w-full px-5 py-3 rounded-xl text-sm font-bold bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white border border-zinc-700/50 transition-colors uppercase tracking-wider flex items-center justify-center gap-2">
+                ${v6State.nature === nat.id ? '<span>✅</span> Обрано' : 'ОБРАТИ ЦЮ НАТУРУ'}
+            </button>
+        </div>
+    `;
+    
+    openV6InfoDrawer(`<span>🎭</span> <span>${nat.name}</span>`, content);
+}
