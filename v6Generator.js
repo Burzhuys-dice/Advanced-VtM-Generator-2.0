@@ -1166,19 +1166,34 @@ function renderV6Step2_Clan() {
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-red-900/60 text-xs">
-                        <div class="bg-black/30 p-4 rounded-xl border border-red-900/30">
-                            <span class="text-red-400 font-bold uppercase tracking-wider block mb-1">🐾 Клановий Звір: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.beast}</span></span>
-                            <p class="text-zinc-400 mt-2 text-[11px] leading-relaxed">${currentClan.beastDesc || ''}</p>
-                        </div>
-                        <div class="bg-black/30 p-4 rounded-xl border border-red-900/30">
-                            <span class="text-red-400 font-bold uppercase tracking-wider block mb-1">⚡ Прокляття: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.curse}</span></span>
-                            <p class="text-zinc-400 mt-2 text-[11px] leading-relaxed">${currentClan.curseDesc || ''}</p>
-                        </div>
-                        <div class="bg-black/30 p-4 rounded-xl border border-red-900/30">
-                            <span class="text-red-400 font-bold uppercase tracking-wider block mb-1">🔥 Шаленство: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.frenzy || 'Специфічне'}</span></span>
-                            <p class="text-zinc-400 mt-2 text-[11px] leading-relaxed">${currentClan.frenzyDesc || ''}</p>
-                        </div>
+                    <div class="flex flex-col gap-2 pt-4 border-t border-red-900/60 text-xs">
+                        <details class="bg-black/30 rounded-xl border border-red-900/30 group [&_summary::-webkit-details-marker]:hidden">
+                            <summary class="p-3.5 cursor-pointer outline-none flex items-center justify-between hover:bg-white/5 transition-colors">
+                                <span class="text-red-400 font-bold uppercase tracking-wider block">🐾 Клановий Звір: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.beast}</span></span>
+                                <span class="text-red-400 transition-transform duration-200 group-open:-rotate-180 text-[10px]">▼</span>
+                            </summary>
+                            <div class="px-3.5 pb-4 border-t border-red-900/20 pt-3">
+                                <p class="text-zinc-400 text-[11px] leading-relaxed">${currentClan.beastDesc || ''}</p>
+                            </div>
+                        </details>
+                        <details class="bg-black/30 rounded-xl border border-red-900/30 group [&_summary::-webkit-details-marker]:hidden">
+                            <summary class="p-3.5 cursor-pointer outline-none flex items-center justify-between hover:bg-white/5 transition-colors">
+                                <span class="text-red-400 font-bold uppercase tracking-wider block">⚡ Прокляття: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.curse}</span></span>
+                                <span class="text-red-400 transition-transform duration-200 group-open:-rotate-180 text-[10px]">▼</span>
+                            </summary>
+                            <div class="px-3.5 pb-4 border-t border-red-900/20 pt-3">
+                                <p class="text-zinc-400 text-[11px] leading-relaxed">${currentClan.curseDesc || ''}</p>
+                            </div>
+                        </details>
+                        <details class="bg-black/30 rounded-xl border border-red-900/30 group [&_summary::-webkit-details-marker]:hidden">
+                            <summary class="p-3.5 cursor-pointer outline-none flex items-center justify-between hover:bg-white/5 transition-colors">
+                                <span class="text-red-400 font-bold uppercase tracking-wider block">🔥 Шаленство: <span class="text-zinc-200 ml-1 font-normal capitalize">${currentClan.frenzy || 'Специфічне'}</span></span>
+                                <span class="text-red-400 transition-transform duration-200 group-open:-rotate-180 text-[10px]">▼</span>
+                            </summary>
+                            <div class="px-3.5 pb-4 border-t border-red-900/20 pt-3">
+                                <p class="text-zinc-400 text-[11px] leading-relaxed">${currentClan.frenzyDesc || ''}</p>
+                            </div>
+                        </details>
                     </div>
                 </div>
             ` : ''}
@@ -3127,45 +3142,6 @@ function renderV6Step7_HumanityNature() {
                 </div>
             </div>
 
-            <!-- DUALITY TRACKERS (BEAST & NATURE) -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- BEAST TRACKER -->
-                <div class="bg-red-50/50 p-6 rounded-2xl border border-red-200">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-bold text-red-950 vtm-font uppercase">Трекер Звіра (Beast Tracker)</h4>
-                        <span class="text-xs font-bold text-red-800">${v6State.beastTracker} / 5 заповнено</span>
-                    </div>
-                    <p class="text-xs text-red-900/80 mb-4">Звір клану: <strong class="text-red-950 font-bold">${currentClan ? currentClan.beast : 'Anti-Authority'}</strong>. 5 заповнених комірок провокують шаленство Звіра.</p>
-                    <div class="flex gap-3">
-                        ${[1, 2, 3, 4, 5].map(idx => `
-                            <button onclick="setV6BeastTracker(${idx})" class="w-8 h-8 rounded-xl border-2 transition-all flex items-center justify-center font-bold text-xs ${
-                                idx <= v6State.beastTracker ? 'border-red-800 bg-red-900 text-white shadow-sm' : 'border-red-300 bg-white text-red-900 hover:bg-red-50'
-                            }">
-                                ${idx}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <!-- NATURE TRACKER -->
-                <div class="bg-emerald-50/50 p-6 rounded-2xl border border-emerald-200">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-bold text-emerald-950 vtm-font uppercase">Трекер Натури (Nature Tracker)</h4>
-                        <span class="text-xs font-bold text-emerald-800">${v6State.natureTracker} / 5 заповнено</span>
-                    </div>
-                    <p class="text-xs text-emerald-900/80 mb-4">Натура: <strong class="text-emerald-950 font-bold">${currentNature ? currentNature.name : 'Автократ'}</strong>. 5 заповнених комірок викликають спалах (Outburst).</p>
-                    <div class="flex gap-3">
-                        ${[1, 2, 3, 4, 5].map(idx => `
-                            <button onclick="setV6NatureTracker(${idx})" class="w-8 h-8 rounded-xl border-2 transition-all flex items-center justify-center font-bold text-xs ${
-                                idx <= v6State.natureTracker ? 'border-emerald-800 bg-emerald-900 text-white shadow-sm' : 'border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-50'
-                            }">
-                                ${idx}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-
             <!-- NATURES SELECTION GRID -->
             <div class="mb-8">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
@@ -3503,9 +3479,11 @@ function renderV6Step9_SummarySheet() {
             }
         }
         return `
-            <div class="flex justify-between items-center text-[9px] mb-[2px] border-b border-zinc-100 pb-[1px]">
-                <span class="truncate pr-1">${SKILLS_MAP[skId]}${focusesStr ? ` <span class="text-[7px] italic text-zinc-500 font-sans">(${focusesStr})</span>` : ''}</span>
-                ${drawDots(dots, 5)}
+            <div class="flex justify-between items-start text-[9px] mb-[2px] border-b border-zinc-100 pb-[1px]">
+                <span class="pr-1 flex-1 leading-tight break-words">${SKILLS_MAP[skId]}${focusesStr ? ` <span class="text-[7px] italic text-zinc-500 font-sans">(${focusesStr})</span>` : ''}</span>
+                <div class="shrink-0 mt-[1px]">
+                    ${drawDots(dots, 5)}
+                </div>
             </div>
         `;
     }).join('');
@@ -3523,9 +3501,11 @@ function renderV6Step9_SummarySheet() {
             const res = getV6Resources().find(r => r.id === resId);
             const name = res ? res.name.split(' (')[0] : resId;
             return `
-                <div class="flex justify-between items-center text-[9px] mb-[3px] border-b border-zinc-100 pb-[1px]">
-                    <span class="truncate pr-1">${name}</span>
-                    ${drawDots(dots, 5)}
+                <div class="flex justify-between items-start text-[9px] mb-[3px] border-b border-zinc-100 pb-[1px]">
+                    <span class="pr-1 flex-1 leading-tight break-words">${name}</span>
+                    <div class="shrink-0 mt-[1px]">
+                        ${drawDots(dots, 5)}
+                    </div>
                 </div>
             `;
         }).join('');
@@ -4171,6 +4151,8 @@ function generateV6DetailsPagesHTML() {
     // Page 3: Nature, Clan Aspects (Balanced Two-Column layout with dynamic font scaling & tight line-heights)
     const natureName = natureObj ? (natureObj.name || '') : '';
     const natureDesc = natureObj ? (natureObj.desc || natureObj.shortDesc || '') : '';
+    const natureIndulging = natureObj ? (natureObj.indulging || '') : '';
+    const natureOutburst = natureObj ? ((natureObj.outburstName || '') + ' ' + (natureObj.outburst || '')) : '';
     const beastName = clanObj ? (clanObj.beast || '') : '';
     const beastDesc = clanObj ? (clanObj.beastDesc || 'Звір прагне задовольнити свою природу.') : '';
     const curseName = clanObj ? (clanObj.curse || '') : '';
@@ -4178,7 +4160,7 @@ function generateV6DetailsPagesHTML() {
     const frenzyName = clanObj ? (clanObj.frenzy || '') : '';
     const frenzyDesc = clanObj ? (clanObj.frenzyDesc || 'Стан неконтрольованої люті та інстинктів.') : '';
 
-    const leftCharsP3 = (natureName + ' ' + natureDesc).length + (beastName + ' ' + beastDesc).length;
+    const leftCharsP3 = (natureName + ' ' + natureDesc + ' ' + natureIndulging + ' ' + natureOutburst).length + (beastName + ' ' + beastDesc).length;
     const rightCharsP3 = (curseName + ' ' + curseDesc).length + (frenzyName + ' ' + frenzyDesc).length;
     const dynP3 = getV6DynamicTypography(Math.max(leftCharsP3, rightCharsP3), 2);
 
@@ -4203,11 +4185,29 @@ function generateV6DetailsPagesHTML() {
                 <div class="w-1/2 flex flex-col overflow-hidden">
                     <div class="${dynP3.mbSection}">
                         <h2 class="font-bold uppercase tracking-wider mb-1" style="font-size: ${dynP3.sectionTitleSize};">Натура (Nature)</h2>
-                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP3.metaSize};">Природа ${charName}, смертні імпульси в його основі та пов'язаний спалах.</p>
+                        <p class="text-zinc-500 mb-2 leading-snug" style="font-size: ${dynP3.metaSize};">Природа ${charName}, смертні імпульси в його основі, розрада та спалах.</p>
                         ${natureObj ? `
-                            <div class="${dynP3.mbItem}">
-                                <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP3.mbTitle}" style="font-size: ${dynP3.itemTitleSize};">${escapeV6Html(natureObj.name)}</h3>
-                                <p class="text-zinc-800" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(natureDesc)}</p>
+                            <div class="${dynP3.mbItem} space-y-1.5">
+                                <div>
+                                    <h3 class="font-bold italic border-b border-black pb-0.5 ${dynP3.mbTitle}" style="font-size: ${dynP3.itemTitleSize};">${escapeV6Html(natureObj.name)}</h3>
+                                    <p class="text-zinc-800 mt-1" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(natureDesc)}</p>
+                                </div>
+                                ${natureObj.indulging ? `
+                                    <div class="p-2 rounded bg-zinc-50 border border-zinc-200">
+                                        <div class="font-bold text-emerald-900 flex items-center gap-1 mb-0.5 uppercase tracking-wider" style="font-size: ${dynP3.metaSize};">
+                                            <span>💖</span> Розрада (Indulging)
+                                        </div>
+                                        <p class="text-zinc-800 italic" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(natureObj.indulging)}</p>
+                                    </div>
+                                ` : ''}
+                                ${natureObj.outburst ? `
+                                    <div class="p-2 rounded bg-red-50/60 border border-red-200">
+                                        <div class="font-bold text-[#8b0000] flex items-center gap-1 mb-0.5 uppercase tracking-wider" style="font-size: ${dynP3.metaSize};">
+                                            <span>💥</span> Спалах Натури (Outburst): ${escapeV6Html(natureObj.outburstName || 'Спалах')}
+                                        </div>
+                                        <p class="text-zinc-800 italic" style="font-size: ${dynP3.bodySize}; line-height: ${dynP3.lineHeight};">${escapeV6Html(natureObj.outburst)}</p>
+                                    </div>
+                                ` : ''}
                             </div>
                         ` : `<p class="italic text-zinc-400" style="font-size: ${dynP3.bodySize};">Не обрано</p>`}
                     </div>
